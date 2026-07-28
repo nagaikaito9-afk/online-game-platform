@@ -31,7 +31,8 @@ git push -u origin main
 2. ダッシュボードの **「Add New...」** -> **「Project」** ボタンを押します。
 3. 先ほど GitHub に作成した `online-game-platform` リポジトリの横にある **「Import」** をクリックします。
 4. 設定は自動認識（Vercel用の `vercel.json` を同梱済み）されているため、そのまま **「Deploy」** ボタンを押すだけです！
-5. 約15秒でビルドが完了し、**`https://online-game-platform-xxx.vercel.app`** のような公開用カスタムURLが発行されます。
+### 🎉 公開URL
+- **本番サイト**: [https://online-game-platform-three.vercel.app/](https://online-game-platform-three.vercel.app/)
 
 ---
 
