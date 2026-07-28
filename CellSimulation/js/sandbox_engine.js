@@ -1,76 +1,58 @@
 /**
  * Cell Simulation - sandbox_engine.js
- * The Powder Toy / Falling Sand スタイル グリッド物理＆元素反応エンジン
+ * 200元素対応 ＆ 本格リアルタイム流体・重力・化学反応物理エンジン
+ * (※メニューの上に固定床を生成 ＆ 水のリアル流体物理演算)
  */
-
-// 元素・物質ID定義
-const ELEMENT_TYPES = {
-  EMPTY: 0,
-  SAND: 1,
-  WATER: 2,
-  LAVA: 3,
-  STEAM: 4,
-  STONE: 5,
-  FIRE: 6,
-  PLANT: 7,
-  CELL: 8,
-  HUMAN: 9,
-  ACID: 10,
-  IRON: 11
-};
-
-const ELEMENT_SPECS = {
-  0:  { name: '空虚 (Air)', color: [10, 14, 24, 255], density: 0, state: 'gas' },
-  1:  { name: '砂 (Sand)', color: [235, 195, 115, 255], density: 10, state: 'powder' },
-  2:  { name: '水 (Water)', color: [0, 180, 254, 230], density: 5, state: 'liquid' },
-  3:  { name: '溶岩 (Lava)', color: [255, 60, 0, 255], density: 8, state: 'liquid', temp: 1200 },
-  4:  { name: '水蒸気 (Steam)', color: [200, 220, 255, 160], density: -2, state: 'gas' },
-  5:  { name: '玄武岩 (Stone)', color: [90, 95, 110, 255], density: 20, state: 'solid' },
-  6:  { name: '火 (Fire)', color: [255, 180, 0, 255], density: -5, state: 'gas', temp: 800 },
-  7:  { name: '植物 (Plant)', color: [40, 200, 90, 255], density: 15, state: 'solid' },
-  8:  { name: '細胞 (Cell)', color: [0, 255, 140, 255], density: 6, state: 'solid' },
-  9:  { name: '人間組織 (Human)', color: [240, 160, 150, 255], density: 7, state: 'solid' },
-  10: { name: '酸 (Acid)', color: [160, 255, 0, 220], density: 5, state: 'liquid' },
-  11: { name: '鉄 (Iron)', color: [140, 150, 165, 255], density: 30, state: 'solid' }
-};
 
 class SandboxEngine {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
 
-    this.scale = 4; // 1ピクセル物理の解像度スケール
+    this.scale = 4; // 1ピクセルの描画スケール
     this.cols = Math.floor(window.innerWidth / this.scale);
-    this.rows = Math.floor((window.innerHeight - 80) / this.scale);
+    this.rows = Math.floor((window.innerHeight - 70) / this.scale);
 
     this.canvas.width = this.cols * this.scale;
     this.canvas.height = this.rows * this.scale;
 
-    // グリッド配列 (0: EMPTY)
-    this.grid = new Uint8Array(this.cols * this.rows);
-    this.nextGrid = new Uint8Array(this.cols * this.rows);
+    // グリッドデータ
+    this.grid = new Uint16Array(this.cols * this.rows);
+    this.nextGrid = new Uint16Array(this.cols * this.rows);
 
-    this.selectedElement = ELEMENT_TYPES.SAND;
-    this.brushSize = 4;
+    this.selectedElementId = 1; // 初期: 水 (Water)
+    this.brushSize = 5;
     this.isMouseDown = false;
     this.speed = 1;
 
     this.imgData = this.ctx.createImageData(this.canvas.width, this.canvas.height);
 
-    this.initPreset();
+    // 元素インデックスマップ作成
+    this.elementMap = {};
+    window.ALL_ELEMENTS.forEach(el => {
+      this.elementMap[el.id] = el;
+    });
+
+    this.initBoundaryFloor();
   }
 
-  initPreset() {
-    this.grid.fill(ELEMENT_TYPES.EMPTY);
+  // メニューの直上に消えない境界床 (Boundary Ground Floor) を自動生成
+  initBoundaryFloor() {
+    this.grid.fill(0);
+    const floorY = this.rows - 2;
+    for (let x = 0; x < this.cols; x++) {
+      this.grid[floorY * this.cols + x] = 21; // 21: 玄武岩/固定床
+      this.grid[(floorY + 1) * this.cols + x] = 21;
+    }
   }
 
   getIndex(x, y) {
     return y * this.cols + x;
   }
 
-  setPixel(x, y, type) {
-    if (x >= 0 && x < this.cols && y >= 0 && y < this.rows) {
-      this.grid[this.getIndex(x, y)] = type;
+  setPixel(x, y, elemId) {
+    if (x >= 0 && x < this.cols && y >= 0 && y < this.rows - 2) {
+      this.grid[this.getIndex(x, y)] = elemId;
     }
   }
 
@@ -81,113 +63,138 @@ class SandboxEngine {
         if (dx * dx + dy * dy <= r * r) {
           const px = centerX + dx;
           const py = centerY + dy;
-          this.setPixel(px, py, this.selectedElement);
+          this.setPixel(px, py, this.selectedElementId);
         }
       }
     }
   }
 
   clearGrid() {
-    this.grid.fill(ELEMENT_TYPES.EMPTY);
+    this.initBoundaryFloor();
   }
 
-  // The Powder Toy スタイル リアルタイム化学物理アップデート
+  // 🧪 本格的な流体・重力・化学反応物理ステップ
   update() {
     if (this.speed === 0) return;
 
     this.nextGrid.set(this.grid);
 
-    for (let y = this.rows - 1; y >= 0; y--) {
+    // メニュー直上の床より上を物理処理
+    for (let y = this.rows - 3; y >= 0; y--) {
       for (let x = 0; x < this.cols; x++) {
         const idx = this.getIndex(x, y);
-        const type = this.grid[idx];
+        const elemId = this.grid[idx];
 
-        if (type === ELEMENT_TYPES.EMPTY) continue;
+        if (elemId === 0 || elemId === 21) continue; // 空虚または固定床はスキップ
 
-        const spec = ELEMENT_SPECS[type];
+        const spec = this.elementMap[elemId] || ALL_ELEMENTS[0];
 
-        // 1. 溶岩 (Lava) ✕ 水 (Water) ➔ 玄武岩 (Stone) ＋ 水蒸気 (Steam) 反応
-        if (type === ELEMENT_TYPES.LAVA) {
+        // 1. 溶岩 (Lava: ID 2) ✕ 水 (Water: ID 1) ➔ 玄武岩 (ID 21) ＋ 水蒸気 (ID 28) 反応
+        if (elemId === 2) {
           const neighbors = [
             this.getIndex(x + 1, y), this.getIndex(x - 1, y),
             this.getIndex(x, y + 1), this.getIndex(x, y - 1)
           ];
           for (let nIdx of neighbors) {
-            if (this.grid[nIdx] === ELEMENT_TYPES.WATER) {
-              this.nextGrid[idx] = ELEMENT_TYPES.STONE;
-              this.nextGrid[nIdx] = ELEMENT_TYPES.STEAM;
+            if (this.grid[nIdx] === 1) { // 水と接触
+              this.nextGrid[idx] = 21; // 玄武岩化
+              this.nextGrid[nIdx] = 28; // 水蒸気発生
               if (window.cellAudioEngine) window.cellAudioEngine.playSE('combine');
               break;
             }
           }
         }
 
-        // 2. 火 (Fire) ✕ 植物 (Plant) / 人間 (Human) ➔ 燃焼 ＋ 火の延焼
-        if (type === ELEMENT_TYPES.FIRE) {
-          if (Math.random() < 0.15) this.nextGrid[idx] = ELEMENT_TYPES.EMPTY; // 火の消滅
+        // 2. 酸 (Acid: ID 4) ✕ 侵食
+        if (elemId === 4) {
+          const below = this.getIndex(x, y + 1);
+          if (y < this.rows - 3 && this.grid[below] !== 0 && this.grid[below] !== 4 && this.grid[below] !== 21) {
+            this.nextGrid[idx] = 0;
+            this.nextGrid[below] = 0;
+          }
+        }
+
+        // 3. 火 (Fire: ID 38) ✕ 燃焼
+        if (elemId === 38) {
+          if (Math.random() < 0.2) this.nextGrid[idx] = 0;
           const neighbors = [
             this.getIndex(x + 1, y), this.getIndex(x - 1, y),
             this.getIndex(x, y + 1), this.getIndex(x, y - 1)
           ];
           for (let nIdx of neighbors) {
-            if (this.grid[nIdx] === ELEMENT_TYPES.PLANT || this.grid[nIdx] === ELEMENT_TYPES.HUMAN) {
-              this.nextGrid[nIdx] = ELEMENT_TYPES.FIRE;
+            const targetId = this.grid[nIdx];
+            if (targetId === 27 || targetId === 34 || targetId === 3) { // 木材・人間・石油
+              this.nextGrid[nIdx] = 38; // 発火
             }
           }
         }
 
-        // 3. 酸 (Acid) ✕ 他の物質 ➔ 侵食溶解
-        if (type === ELEMENT_TYPES.ACID) {
-          const below = this.getIndex(x, y + 1);
-          if (y < this.rows - 1 && this.grid[below] !== ELEMENT_TYPES.EMPTY && this.grid[below] !== ELEMENT_TYPES.ACID && this.grid[below] !== ELEMENT_TYPES.STONE) {
-            this.nextGrid[idx] = ELEMENT_TYPES.EMPTY;
-            this.nextGrid[below] = ELEMENT_TYPES.EMPTY;
-          }
-        }
-
-        // 4. 細胞 (Cell) ✕ 水 (Water) ➔ 代謝・自動分裂
-        if (type === ELEMENT_TYPES.CELL && Math.random() < 0.03) {
+        // 4. 細胞 (Cell: ID 33) ✕ 水 (Water: ID 1) ➔ 自動分裂
+        if (elemId === 33 && Math.random() < 0.04) {
           const right = this.getIndex(x + 1, y);
-          if (x < this.cols - 1 && this.grid[right] === ELEMENT_TYPES.WATER) {
-            this.nextGrid[right] = ELEMENT_TYPES.CELL;
+          if (x < this.cols - 1 && this.grid[right] === 1) {
+            this.nextGrid[right] = 33;
             if (window.cellAudioEngine) window.cellAudioEngine.playSE('cell_split');
           }
         }
 
-        // 5. 重力・流体物理移動 (Falling Sand)
-        if (spec.state === 'powder') {
-          // 砂の落下の物理
-          if (y < this.rows - 1) {
+        // 💧 5. 水・液体の本格リアル物理演算 (Fluid Physics Leveling)
+        if (spec.state === 'liquid') {
+          if (y < this.rows - 3) {
+            const below = this.getIndex(x, y + 1);
+            if (this.nextGrid[below] === 0) {
+              this.swap(idx, below);
+            } else {
+              // 水は砂と違い、左右 1〜8 ピクセル先まで素早く流動して水平化（Fluid Leveling）
+              const maxFlow = spec.viscosity || 6;
+              let moved = false;
+              const dir = Math.random() < 0.5 ? 1 : -1;
+
+              for (let offset = 1; offset <= maxFlow; offset++) {
+                const targetX = x + (dir * offset);
+                if (targetX >= 0 && targetX < this.cols) {
+                  const targetIdx = this.getIndex(targetX, y);
+                  const targetBelow = this.getIndex(targetX, y + 1);
+                  if (this.nextGrid[targetIdx] === 0 && this.nextGrid[targetBelow] === 0) {
+                    this.swap(idx, targetIdx);
+                    moved = true;
+                    break;
+                  }
+                }
+              }
+
+              if (!moved) {
+                // 左右直近への滑り落ち
+                const belowL = this.getIndex(x - 1, y + 1);
+                const belowR = this.getIndex(x + 1, y + 1);
+                if (x > 0 && this.nextGrid[belowL] === 0) {
+                  this.swap(idx, belowL);
+                } else if (x < this.cols - 1 && this.nextGrid[belowR] === 0) {
+                  this.swap(idx, belowR);
+                }
+              }
+            }
+          }
+        } else if (spec.state === 'powder') {
+          // 砂・粉末の安息角物理
+          if (y < this.rows - 3) {
             const below = this.getIndex(x, y + 1);
             const belowL = this.getIndex(x - 1, y + 1);
             const belowR = this.getIndex(x + 1, y + 1);
 
-            if (this.nextGrid[below] === ELEMENT_TYPES.EMPTY) {
+            if (this.nextGrid[below] === 0) {
               this.swap(idx, below);
-            } else if (x > 0 && this.nextGrid[belowL] === ELEMENT_TYPES.EMPTY) {
+            } else if (x > 0 && this.nextGrid[belowL] === 0) {
               this.swap(idx, belowL);
-            } else if (x < this.cols - 1 && this.nextGrid[belowR] === ELEMENT_TYPES.EMPTY) {
+            } else if (x < this.cols - 1 && this.nextGrid[belowR] === 0) {
               this.swap(idx, belowR);
             }
           }
-        } else if (spec.state === 'liquid') {
-          // 液体の物理 (下 ➔ 横流動)
-          if (y < this.rows - 1) {
-            const below = this.getIndex(x, y + 1);
-            const dir = Math.random() < 0.5 ? 1 : -1;
-            const side = this.getIndex(x + dir, y);
-
-            if (this.nextGrid[below] === ELEMENT_TYPES.EMPTY) {
-              this.swap(idx, below);
-            } else if (x + dir >= 0 && x + dir < this.cols && this.nextGrid[side] === ELEMENT_TYPES.EMPTY) {
-              this.swap(idx, side);
-            }
-          }
         } else if (spec.state === 'gas') {
-          // 気体の物理 (上昇)
+          // 気体の上昇物理
           if (y > 0) {
             const above = this.getIndex(x, y - 1);
-            if (this.nextGrid[above] === ELEMENT_TYPES.EMPTY) {
+            if (this.nextGrid[above] === 0) {
               this.swap(idx, above);
             }
           }
@@ -212,8 +219,8 @@ class SandboxEngine {
       const gy = Math.floor(y / this.scale);
       for (let x = 0; x < this.canvas.width; x++) {
         const gx = Math.floor(x / this.scale);
-        const type = this.grid[gy * this.cols + gx];
-        const spec = ELEMENT_SPECS[type] || ELEMENT_SPECS[0];
+        const elemId = this.grid[gy * this.cols + gx];
+        const spec = this.elementMap[elemId] || { color: [10, 14, 24, 255] };
 
         data[ptr]     = spec.color[0];
         data[ptr + 1] = spec.color[1];

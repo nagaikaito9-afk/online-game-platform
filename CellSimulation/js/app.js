@@ -1,19 +1,19 @@
 /**
  * Cell Simulation - app.js
- * The Powder Toy スタイル メイン操作・UI制御 (※alert一切全廃)
+ * メインコントロール・全200種類物質カタログ＆リアルタイム検索UI
  */
 
 class CellSimulationApp {
   constructor() {
     this.canvas = document.getElementById('sim-canvas');
     this.engine = new SandboxEngine(this.canvas);
+    this.currentSearchCategory = 'ALL';
 
     this.bindEvents();
-    this.renderElementPalette();
+    this.renderCatalogGrid();
     this.startLoop();
   }
 
-  // 自前カスタムトースト通知 (alertの代わり)
   showToast(message) {
     const toast = document.getElementById('custom-toast');
     if (!toast) return;
@@ -57,11 +57,35 @@ class CellSimulationApp {
       });
     });
 
-    // 画面清掃 (Clear) ボタン (※confirm無し)
+    // 画面清掃 (Clear) ボタン
     document.getElementById('btn-clear-canvas').addEventListener('click', () => {
       if (window.cellAudioEngine) window.cellAudioEngine.playSE('click');
       this.engine.clearGrid();
-      this.showToast('🧹 キャンバス上のすべての物質を消去しました');
+      this.showToast('🧹 キャンバス上の物質をクリアしました');
+    });
+
+    // 「🧪 物質」カタログラージボタン
+    document.getElementById('btn-open-material-catalog').addEventListener('click', () => {
+      if (window.cellAudioEngine) window.cellAudioEngine.playSE('click');
+      document.getElementById('modal-material-catalog').classList.add('active');
+    });
+
+    // 物質検索入力フィルター
+    document.getElementById('catalog-search-input').addEventListener('input', (e) => {
+      this.renderCatalogGrid(e.target.value.trim());
+    });
+
+    // カテゴリフィルタータブ
+    document.querySelectorAll('.catalog-cat-tab').forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        if (window.cellAudioEngine) window.cellAudioEngine.playSE('click');
+        document.querySelectorAll('.catalog-cat-tab').forEach(t => t.classList.remove('active'));
+        e.target.classList.add('active');
+
+        this.currentSearchCategory = e.target.dataset.cat;
+        const searchKeyword = document.getElementById('catalog-search-input').value.trim();
+        this.renderCatalogGrid(searchKeyword);
+      });
     });
 
     // プリセット配置 (溶岩 ✕ 水 実験)
@@ -69,50 +93,20 @@ class CellSimulationApp {
       if (window.cellAudioEngine) window.cellAudioEngine.playSE('combine');
       this.engine.clearGrid();
 
-      // 下部に溶岩、上部に水を生成
       const cx = Math.floor(this.engine.cols / 2);
       const cy = Math.floor(this.engine.rows / 2);
 
       for (let y = cy; y < cy + 20; y++) {
+        for (let x = cx - 35; x < cx + 35; x++) {
+          this.engine.setPixel(x, y, 2); // 2: 溶岩
+        }
+      }
+      for (let y = cy - 30; y < cy - 5; y++) {
         for (let x = cx - 30; x < cx + 30; x++) {
-          this.engine.setPixel(x, y, ELEMENT_TYPES.LAVA);
+          this.engine.setPixel(x, y, 1); // 1: 水
         }
       }
-      for (let y = cy - 25; y < cy - 5; y++) {
-        for (let x = cx - 25; x < cx + 25; x++) {
-          this.engine.setPixel(x, y, ELEMENT_TYPES.WATER);
-        }
-      }
-      this.showToast('🌋 溶岩 ✕ 水 の実験プリセットを配置しました！');
-    });
-
-    // 人間組織 ✕ 酸 実験プリセット
-    document.getElementById('btn-preset-human-acid').addEventListener('click', () => {
-      if (window.cellAudioEngine) window.cellAudioEngine.playSE('combine');
-      this.engine.clearGrid();
-
-      const cx = Math.floor(this.engine.cols / 2);
-      const cy = Math.floor(this.engine.rows / 2);
-
-      // 人間組織のブロック
-      for (let y = cy; y < cy + 25; y++) {
-        for (let x = cx - 15; x < cx + 15; x++) {
-          this.engine.setPixel(x, y, ELEMENT_TYPES.HUMAN);
-        }
-      }
-      // 上から強酸を降らせる
-      for (let y = cy - 20; y < cy - 5; y++) {
-        for (let x = cx - 10; x < cx + 10; x++) {
-          this.engine.setPixel(x, y, ELEMENT_TYPES.ACID);
-        }
-      }
-      this.showToast('🚶 人間組織 ✕ 強酸 の侵食実験プリセットを配置しました！');
-    });
-
-    // 情報モーダル
-    document.getElementById('btn-open-info-modal').addEventListener('click', () => {
-      if (window.cellAudioEngine) window.cellAudioEngine.playSE('click');
-      document.getElementById('modal-info').classList.add('active');
+      this.showToast('🌋 溶岩 ✕ 水 の流体・爆発反応実験プリセットを配置しました！');
     });
 
     document.querySelectorAll('.modal-close-btn').forEach(btn => {
@@ -130,30 +124,49 @@ class CellSimulationApp {
     this.engine.drawBrush(mx, my);
   }
 
-  // 元素パレットボタンの動的生成
-  renderElementPalette() {
-    const container = document.getElementById('element-palette-grid');
-    if (!container) return;
-    container.innerHTML = '';
+  // 200種類物質カタログモーダルの描画 ＆ 検索
+  renderCatalogGrid(keyword = '') {
+    const grid = document.getElementById('catalog-materials-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
 
-    Object.keys(ELEMENT_TYPES).forEach(key => {
-      const id = ELEMENT_TYPES[key];
-      const spec = ELEMENT_SPECS[id];
+    const filtered = window.ALL_ELEMENTS.filter(el => {
+      const matchCat = (this.currentSearchCategory === 'ALL' || el.cat === this.currentSearchCategory);
+      const matchKey = (!keyword || el.name.toLowerCase().includes(keyword.toLowerCase()) || el.desc.includes(keyword));
+      return matchCat && matchKey;
+    });
 
-      const btn = document.createElement('button');
-      btn.className = `element-palette-btn ${id === this.engine.selectedElement ? 'active' : ''}`;
-      btn.style.borderColor = `rgba(${spec.color[0]}, ${spec.color[1]}, ${spec.color[2]}, 0.8)`;
-      btn.innerHTML = `<span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:rgb(${spec.color[0]},${spec.color[1]},${spec.color[2]}); margin-right:6px;"></span>${spec.name}`;
+    document.getElementById('catalog-count-info').textContent = `表示中: ${filtered.length} / 200 種類`;
 
-      btn.addEventListener('click', () => {
+    filtered.forEach(el => {
+      const card = document.createElement('div');
+      const isSelected = el.id === this.engine.selectedElementId;
+      card.className = `catalog-card ${isSelected ? 'selected' : ''}`;
+      card.style.cssText = `
+        background: rgba(255,255,255,0.04);
+        border: 1px solid ${isSelected ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.1)'};
+        border-radius: 12px;
+        padding: 0.8rem;
+        cursor: pointer;
+        transition: all 0.15s ease;
+      `;
+      card.innerHTML = `
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.3rem;">
+          <span style="display:inline-block; width:16px; height:16px; border-radius:50%; background:rgb(${el.color[0]},${el.color[1]},${el.color[2]});"></span>
+          <span style="font-weight:bold; font-size:0.95rem;">${el.name}</span>
+        </div>
+        <div style="font-size:0.75rem; color:var(--text-sub);">${el.desc}</div>
+      `;
+
+      card.addEventListener('click', () => {
         if (window.cellAudioEngine) window.cellAudioEngine.playSE('click');
-        document.querySelectorAll('.element-palette-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        this.engine.selectedElement = id;
-        document.getElementById('current-selected-elem-text').textContent = spec.name;
+        this.engine.selectedElementId = el.id;
+        document.getElementById('current-selected-material-display').textContent = el.name;
+        document.getElementById('modal-material-catalog').classList.remove('active');
+        this.showToast(`🧪 選択物質: 【${el.name}】`);
       });
 
-      container.appendChild(btn);
+      grid.appendChild(card);
     });
   }
 
