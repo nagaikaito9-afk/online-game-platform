@@ -1,57 +1,118 @@
 /**
  * Cell Simulation - app.js
- * メインコントローラー・地球物理計算 ＆ 学術ダッシュボードUI
+ * The Powder Toy スタイル メイン操作・UI制御 (※alert一切全廃)
  */
 
 class CellSimulationApp {
   constructor() {
     this.canvas = document.getElementById('sim-canvas');
-    this.renderer = new Earth3DRenderer(this.canvas);
-    this.timeSpeedYearsPerSec = 1000000; // 初期1秒 = 100万年
+    this.engine = new SandboxEngine(this.canvas);
 
     this.bindEvents();
+    this.renderElementPalette();
     this.startLoop();
   }
 
+  // 自前カスタムトースト通知 (alertの代わり)
+  showToast(message) {
+    const toast = document.getElementById('custom-toast');
+    if (!toast) return;
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+
   bindEvents() {
-    // タイムコントロール (停止, 10万年/s, 100万年/s, 1000万年/s, 1億年/s)
+    // マウスドラッグで塗り描き
+    this.canvas.addEventListener('mousedown', (e) => {
+      this.engine.isMouseDown = true;
+      this.drawAtMouse(e);
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (this.engine.isMouseDown) {
+        this.drawAtMouse(e);
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      this.engine.isMouseDown = false;
+    });
+
+    // ペンサイズスライダー
+    document.getElementById('slider-brush-size').addEventListener('input', (e) => {
+      this.engine.brushSize = parseInt(e.target.value);
+      document.getElementById('brush-size-val').textContent = `${e.target.value} px`;
+    });
+
+    // タイムコントロール (Pause, 1x, 5x, 10x)
     document.querySelectorAll('.time-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         if (window.cellAudioEngine) window.cellAudioEngine.playSE('click');
         document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
         e.target.classList.add('active');
 
-        const speed = parseInt(e.target.dataset.years);
-        this.timeSpeedYearsPerSec = speed;
+        const speed = parseInt(e.target.dataset.speed);
+        this.engine.speed = speed;
       });
     });
 
-    // 実験: 小惑星衝突 (Asteroid Impact)
-    document.getElementById('btn-exp-asteroid').addEventListener('click', () => {
-      if (window.cellAudioEngine) window.cellAudioEngine.playSE('combine');
-      this.renderer.model.triggerAsteroidImpact();
-      alert('💥 巨大小惑星が衝突！ 表面温度が急上昇し大気中に大量のCO2と灰が散布されました。');
-    });
-
-    // 実験: 火山噴火スパイク
-    document.getElementById('btn-exp-volcano').addEventListener('click', () => {
-      if (window.cellAudioEngine) window.cellAudioEngine.playSE('combine');
-      this.renderer.model.atmosphere.CO2 += 2.0;
-      this.renderer.model.surfaceTemperatureK += 50;
-    });
-
-    // リセットボタン
-    document.getElementById('btn-reset-earth').addEventListener('click', () => {
-      if (confirm('地球を46億年前の誕生直後(初期状態)へリセットしますか？')) {
-        this.renderer.model = new EarthPhysicsModel();
-        if (window.cellAudioEngine) window.cellAudioEngine.playSE('click');
-      }
-    });
-
-    // 学術図鑑モーダル
-    document.getElementById('btn-open-academic-modal').addEventListener('click', () => {
+    // 画面清掃 (Clear) ボタン (※confirm無し)
+    document.getElementById('btn-clear-canvas').addEventListener('click', () => {
       if (window.cellAudioEngine) window.cellAudioEngine.playSE('click');
-      document.getElementById('modal-academic').classList.add('active');
+      this.engine.clearGrid();
+      this.showToast('🧹 キャンバス上のすべての物質を消去しました');
+    });
+
+    // プリセット配置 (溶岩 ✕ 水 実験)
+    document.getElementById('btn-preset-lava-water').addEventListener('click', () => {
+      if (window.cellAudioEngine) window.cellAudioEngine.playSE('combine');
+      this.engine.clearGrid();
+
+      // 下部に溶岩、上部に水を生成
+      const cx = Math.floor(this.engine.cols / 2);
+      const cy = Math.floor(this.engine.rows / 2);
+
+      for (let y = cy; y < cy + 20; y++) {
+        for (let x = cx - 30; x < cx + 30; x++) {
+          this.engine.setPixel(x, y, ELEMENT_TYPES.LAVA);
+        }
+      }
+      for (let y = cy - 25; y < cy - 5; y++) {
+        for (let x = cx - 25; x < cx + 25; x++) {
+          this.engine.setPixel(x, y, ELEMENT_TYPES.WATER);
+        }
+      }
+      this.showToast('🌋 溶岩 ✕ 水 の実験プリセットを配置しました！');
+    });
+
+    // 人間組織 ✕ 酸 実験プリセット
+    document.getElementById('btn-preset-human-acid').addEventListener('click', () => {
+      if (window.cellAudioEngine) window.cellAudioEngine.playSE('combine');
+      this.engine.clearGrid();
+
+      const cx = Math.floor(this.engine.cols / 2);
+      const cy = Math.floor(this.engine.rows / 2);
+
+      // 人間組織のブロック
+      for (let y = cy; y < cy + 25; y++) {
+        for (let x = cx - 15; x < cx + 15; x++) {
+          this.engine.setPixel(x, y, ELEMENT_TYPES.HUMAN);
+        }
+      }
+      // 上から強酸を降らせる
+      for (let y = cy - 20; y < cy - 5; y++) {
+        for (let x = cx - 10; x < cx + 10; x++) {
+          this.engine.setPixel(x, y, ELEMENT_TYPES.ACID);
+        }
+      }
+      this.showToast('🚶 人間組織 ✕ 強酸 の侵食実験プリセットを配置しました！');
+    });
+
+    // 情報モーダル
+    document.getElementById('btn-open-info-modal').addEventListener('click', () => {
+      if (window.cellAudioEngine) window.cellAudioEngine.playSE('click');
+      document.getElementById('modal-info').classList.add('active');
     });
 
     document.querySelectorAll('.modal-close-btn').forEach(btn => {
@@ -62,69 +123,47 @@ class CellSimulationApp {
     });
   }
 
-  updateDashboardUI() {
-    const m = this.renderer.model;
-    const years = m.ageYears;
-    const billionYears = (years / 1000000000).toFixed(2);
-    const millionYears = Math.floor((years % 1000000000) / 1000000);
+  drawAtMouse(e) {
+    const rect = this.canvas.getBoundingClientRect();
+    const mx = Math.floor((e.clientX - rect.left) / this.engine.scale);
+    const my = Math.floor((e.clientY - rect.top) / this.engine.scale);
+    this.engine.drawBrush(mx, my);
+  }
 
-    // 時代・経過時間
-    document.getElementById('display-earth-age').textContent = `地球齢: ${billionYears}億 ${millionYears}万年 前`;
-    document.getElementById('display-temp-c').textContent = `${m.surfaceTemperatureC} ℃`;
-    document.getElementById('display-ocean-cover').textContent = `${m.oceanCoverage.toFixed(1)} %`;
-    document.getElementById('display-pressure').textContent = `${m.atmosphericPressureBar.toFixed(1)} bar`;
-    document.getElementById('display-ph').textContent = `pH ${m.oceanPH.toFixed(1)}`;
+  // 元素パレットボタンの動的生成
+  renderElementPalette() {
+    const container = document.getElementById('element-palette-grid');
+    if (!container) return;
+    container.innerHTML = '';
 
-    // 大気成分プロポーション
-    document.getElementById('bar-co2').style.width = `${Math.min(100, m.atmosphere.CO2)}%`;
-    document.getElementById('text-co2').textContent = `CO₂: ${m.atmosphere.CO2.toFixed(2)}%`;
+    Object.keys(ELEMENT_TYPES).forEach(key => {
+      const id = ELEMENT_TYPES[key];
+      const spec = ELEMENT_SPECS[id];
 
-    document.getElementById('bar-n2').style.width = `${Math.min(100, m.atmosphere.N2)}%`;
-    document.getElementById('text-n2').textContent = `N₂: ${m.atmosphere.N2.toFixed(1)}%`;
+      const btn = document.createElement('button');
+      btn.className = `element-palette-btn ${id === this.engine.selectedElement ? 'active' : ''}`;
+      btn.style.borderColor = `rgba(${spec.color[0]}, ${spec.color[1]}, ${spec.color[2]}, 0.8)`;
+      btn.innerHTML = `<span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:rgb(${spec.color[0]},${spec.color[1]},${spec.color[2]}); margin-right:6px;"></span>${spec.name}`;
 
-    document.getElementById('bar-o2').style.width = `${Math.min(100, m.atmosphere.O2 * 4)}%`;
-    document.getElementById('text-o2').textContent = `O₂: ${m.atmosphere.O2.toFixed(2)}%`;
+      btn.addEventListener('click', () => {
+        if (window.cellAudioEngine) window.cellAudioEngine.playSE('click');
+        document.querySelectorAll('.element-palette-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.engine.selectedElement = id;
+        document.getElementById('current-selected-elem-text').textContent = spec.name;
+      });
 
-    // 生態・文明指標
-    const bioText = document.getElementById('display-bio-status');
-    if (m.civilizationIndex > 1) {
-      bioText.textContent = '🏛️ 知的生命 ＆ 現代都市文明 (City Lights)';
-      bioText.style.color = '#ffb703';
-    } else if (m.multiCellBiomass > 0) {
-      bioText.textContent = '🐟 多細胞生物 ＆ 陸上植物';
-      bioText.style.color = '#00ff87';
-    } else if (m.singleCellBiomass > 0) {
-      bioText.textContent = '🦠 光合成シアノバクテリア (大酸化イベント)';
-      bioText.style.color = '#00f2fe';
-    } else if (m.aminoAcidConcentration > 10) {
-      bioText.textContent = '🧪 熱水噴出孔でのアミノ酸・有機物合成';
-      bioText.style.color = '#7209b7';
-    } else {
-      bioText.textContent = '🌋 灼熱のマグマオーシャン (無生命)';
-      bioText.style.color = '#d90429';
-    }
+      container.appendChild(btn);
+    });
   }
 
   startLoop() {
-    let lastTime = performance.now();
-
-    const loop = (now) => {
-      const dt = (now - lastTime) / 1000;
-      lastTime = now;
-
-      // 物理ステップ進行
-      if (this.timeSpeedYearsPerSec > 0) {
-        this.renderer.model.step(this.timeSpeedYearsPerSec * dt);
-      }
-
-      // 3Dレンダリング ＆ ダッシュボード更新
-      this.renderer.updateEarthVisuals();
-      this.updateDashboardUI();
-
+    const loop = () => {
+      this.engine.update();
+      this.engine.render();
       requestAnimationFrame(loop);
     };
-
-    requestAnimationFrame(loop);
+    loop();
   }
 }
 

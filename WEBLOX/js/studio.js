@@ -231,7 +231,6 @@ class WebloxStudio {
           obj.material.emissive.setHex(0xff3366);
           obj.material.emissiveIntensity = 0.5;
         }
-        alert('✨ スクリプトを保存しました！');
       }
     });
   }
@@ -264,7 +263,6 @@ class WebloxStudio {
     if (window.WEBLOX_WORLDS) window.WEBLOX_WORLDS.unshift(newGame);
 
     if (window.audioEngine) window.audioEngine.playSE('coin');
-    alert(`🎉 ゲーム「${newGame.name}」の公開 (Publish) に成功しました！\nRoblox Discover 画面から遊べます！`);
   }
 
   render() {
