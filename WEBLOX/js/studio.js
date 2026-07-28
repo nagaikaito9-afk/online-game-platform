@@ -1,6 +1,7 @@
 /**
  * WEBLOX - studio.js
- * ブラウザ完全再現型 3Dゲーム制作エンジン (Roblox Studio Clone)
+ * ブラウザ完全再現型 3Dゲーム制作エンジン (WEBLOX Studio)
+ * パーツ配置、ドラッグ移動、スクリプト付与、ゲーム公開
  */
 
 class WebloxStudio {
@@ -8,8 +9,8 @@ class WebloxStudio {
     this.canvas = canvas;
     this.workspaceObjects = [];
     this.selectedObject = null;
-    this.currentTool = 'select'; // select, move, rotate, scale, delete
-    this.scriptEditorTarget = null;
+    this.currentTool = 'select'; // select, move, scale, delete
+    this.isDragging = false;
 
     this.initThree();
     this.setupWorkspace();
@@ -22,14 +23,13 @@ class WebloxStudio {
     this.scene.background = new THREE.Color(0x181920);
 
     this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    this.camera.position.set(18, 18, 24);
+    this.camera.position.set(20, 20, 25);
     this.camera.lookAt(0, 0, 0);
 
     this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.shadowMap.enabled = true;
 
-    // Roblox Studio ライティング
     const ambient = new THREE.AmbientLight(0xffffff, 0.65);
     this.scene.add(ambient);
 
@@ -40,24 +40,23 @@ class WebloxStudio {
 
     this.raycaster = new THREE.Raycaster();
     this.mouse = new THREE.Vector2();
+    this.plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
   }
 
   setupWorkspace() {
-    // Roblox 公式 Baseplate (ベースプレート)
     const grid = new THREE.GridHelper(100, 50, 0x00a2ff, 0x333344);
     grid.position.y = 0.01;
     this.scene.add(grid);
 
-    const baseplateGeo = new THREE.BoxGeometry(100, 1, 100);
-    const baseplateMat = new THREE.MeshStandardMaterial({ color: 0x222431, roughness: 0.8 });
-    const baseplate = new THREE.Mesh(baseplateGeo, baseplateMat);
+    const baseGeo = new THREE.BoxGeometry(100, 1, 100);
+    const baseMat = new THREE.MeshStandardMaterial({ color: 0x222431, roughness: 0.8 });
+    const baseplate = new THREE.Mesh(baseGeo, baseMat);
     baseplate.position.y = -0.5;
     baseplate.receiveShadow = true;
     baseplate.name = 'Baseplate';
     baseplate.userData = { id: 'baseplate', type: 'Baseplate', anchored: true };
     this.scene.add(baseplate);
 
-    // デフォルト SpawnLocation
     this.addPart('spawn', 0, 0.1, 0, 'SpawnLocation');
   }
 
@@ -102,7 +101,7 @@ class WebloxStudio {
       id: 'part_' + Date.now() + Math.random().toString(36).substr(2, 4),
       type: type,
       scriptType: scriptType,
-      anchored: true
+      scriptCode: scriptType === 'kill' ? 'function onTouch()\n  script.Parent.Humanoid:TakeDamage(100)\nend' : ''
     };
 
     this.scene.add(mesh);
@@ -119,7 +118,7 @@ class WebloxStudio {
   }
 
   bindEvents() {
-    this.canvas.addEventListener('click', (e) => {
+    this.canvas.addEventListener('mousedown', (e) => {
       const rect = this.canvas.getBoundingClientRect();
       this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
@@ -138,9 +137,35 @@ class WebloxStudio {
           if (window.audioEngine) window.audioEngine.playSE('hit');
         } else {
           this.selectObject(obj);
+          this.isDragging = true;
         }
       }
     });
+
+    this.canvas.addEventListener('mousemove', (e) => {
+      if (this.isDragging && this.selectedObject && this.currentTool === 'move') {
+        const rect = this.canvas.getBoundingClientRect();
+        this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+        const intersectPoint = new THREE.Vector3();
+        this.raycaster.ray.intersectPlane(this.plane, intersectPoint);
+        if (intersectPoint) {
+          this.selectedObject.position.x = Math.round(intersectPoint.x);
+          this.selectedObject.position.z = Math.round(intersectPoint.z);
+          this.updatePropertiesPanel();
+        }
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      this.isDragging = false;
+    });
+  }
+
+  setTool(tool) {
+    this.currentTool = tool;
   }
 
   updateExplorer() {
@@ -179,16 +204,11 @@ class WebloxStudio {
       <div style="font-weight:bold; color:#fff; margin-bottom:0.5rem;">${obj.name} のプロパティ</div>
       <table style="width:100%; font-size:0.8rem; color:var(--rbx-text-sub);">
         <tr><td style="padding:0.2rem;">Name</td><td><input type="text" id="prop-name-input" value="${obj.name}" style="background:#111216; color:#fff; border:1px solid #333; width:100%;"></td></tr>
-        <tr><td style="padding:0.2rem;">PosX</td><td><input type="number" id="prop-pos-x" value="${obj.position.x.toFixed(1)}" step="0.5" style="background:#111216; color:#fff; border:1px solid #333; width:100%;"></td></tr>
-        <tr><td style="padding:0.2rem;">PosY</td><td><input type="number" id="prop-pos-y" value="${obj.position.y.toFixed(1)}" step="0.5" style="background:#111216; color:#fff; border:1px solid #333; width:100%;"></td></tr>
-        <tr><td style="padding:0.2rem;">PosZ</td><td><input type="number" id="prop-pos-z" value="${obj.position.z.toFixed(1)}" step="0.5" style="background:#111216; color:#fff; border:1px solid #333; width:100%;"></td></tr>
+        <tr><td style="padding:0.2rem;">PosX</td><td><input type="number" id="prop-pos-x" value="${obj.position.x.toFixed(1)}" step="1" style="background:#111216; color:#fff; border:1px solid #333; width:100%;"></td></tr>
+        <tr><td style="padding:0.2rem;">PosY</td><td><input type="number" id="prop-pos-y" value="${obj.position.y.toFixed(1)}" step="1" style="background:#111216; color:#fff; border:1px solid #333; width:100%;"></td></tr>
+        <tr><td style="padding:0.2rem;">PosZ</td><td><input type="number" id="prop-pos-z" value="${obj.position.z.toFixed(1)}" step="1" style="background:#111216; color:#fff; border:1px solid #333; width:100%;"></td></tr>
         <tr><td style="padding:0.2rem;">Script</td><td>
-          <select id="prop-script-select" style="background:#111216; color:#fff; border:1px solid #333; width:100%;">
-            <option value="none" ${obj.userData.scriptType === 'none' ? 'selected' : ''}>なし (Normal)</option>
-            <option value="kill" ${obj.userData.scriptType === 'kill' ? 'selected' : ''}>🔥 マグマキル (KillBlock)</option>
-            <option value="coin" ${obj.userData.scriptType === 'coin' ? 'selected' : ''}>🪙 コイン獲得 (Coin)</option>
-            <option value="boost" ${obj.userData.scriptType === 'boost' ? 'selected' : ''}>⚡ ハイパージャンプ (Boost)</option>
-          </select>
+          <button id="btn-edit-script" style="background:var(--rbx-primary); color:#fff; border:none; padding:0.3rem 0.6rem; border-radius:4px; cursor:pointer; width:100%;">📝 スクリプト編集 (Lua)</button>
         </td></tr>
       </table>
     `;
@@ -200,27 +220,32 @@ class WebloxStudio {
     document.getElementById('prop-pos-x').addEventListener('change', (e) => { obj.position.x = parseFloat(e.target.value) || 0; });
     document.getElementById('prop-pos-y').addEventListener('change', (e) => { obj.position.y = parseFloat(e.target.value) || 0; });
     document.getElementById('prop-pos-z').addEventListener('change', (e) => { obj.position.z = parseFloat(e.target.value) || 0; });
-    document.getElementById('prop-script-select').addEventListener('change', (e) => {
-      obj.userData.scriptType = e.target.value;
-      if (e.target.value === 'kill') {
-        obj.material.color.setHex(0xff3366);
-        obj.material.emissive.setHex(0xff3366);
-        obj.material.emissiveIntensity = 0.5;
+
+    document.getElementById('btn-edit-script').addEventListener('click', () => {
+      const code = prompt('Luaスクリプトを入力・編集:', obj.userData.scriptCode || 'function onTouch()\n  print("Touched!")\nend');
+      if (code !== null) {
+        obj.userData.scriptCode = code;
+        if (code.includes('Damage') || code.includes('Kill')) {
+          obj.userData.scriptType = 'kill';
+          obj.material.color.setHex(0xff3366);
+          obj.material.emissive.setHex(0xff3366);
+          obj.material.emissiveIntensity = 0.5;
+        }
+        alert('✨ スクリプトを保存しました！');
       }
     });
   }
 
-  // 作成したオリジナルゲームを保存して WEBLOX ポータルへ一発公開！
   publishCurrentGame(title, desc) {
     const myGames = JSON.parse(localStorage.getItem('weblox_my_games') || '[]');
     const newGame = {
-      id: 'studio_game_' + Date.now(),
+      id: 'custom_game_' + Date.now(),
       name: title || '自作Robloxワールド',
       category: 'WEBLOX Studio作品',
       author: localStorage.getItem('weblox_username') || 'RobloxStudioPro',
       likes: '100%',
       playing: '1',
-      desc: desc || 'WEBLOX Studioでフルカスタマイズ制作された完全オリジナルゲーム！',
+      desc: desc || 'WEBLOX Studioでフル制作されたオリジナルワールド！',
       icon: '🎮',
       bg: '#00a2ff',
       objects: this.workspaceObjects.map(o => ({
@@ -239,7 +264,7 @@ class WebloxStudio {
     if (window.WEBLOX_WORLDS) window.WEBLOX_WORLDS.unshift(newGame);
 
     if (window.audioEngine) window.audioEngine.playSE('coin');
-    alert(`🎉 ゲーム「${newGame.name}」の公開 (Publish) に成功しました！\nRoblox Discover 画面に追加されました！`);
+    alert(`🎉 ゲーム「${newGame.name}」の公開 (Publish) に成功しました！\nRoblox Discover 画面から遊べます！`);
   }
 
   render() {

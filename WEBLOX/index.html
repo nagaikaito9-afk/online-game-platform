@@ -8,7 +8,6 @@
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="shortcut icon" href="favicon.png">
   <link rel="stylesheet" href="style.css">
-  <!-- Three.js 3Dグラフィックライブラリ -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
@@ -44,8 +43,6 @@
        ------------------------------------------------------------------------ -->
   <section id="screen-portal" class="screen-view">
     <div class="main-portal-layout">
-      
-      <!-- 公式トップヘッダーバー -->
       <header class="rbx-top-header">
         <div class="header-left">
           <div id="nav-brand-logo" class="header-logo">
@@ -66,7 +63,6 @@
         </div>
       </header>
 
-      <!-- 公式左サイドバー -->
       <aside class="rbx-sidebar">
         <div id="sidebar-home" class="sidebar-item active">🏠 ホーム (Home)</div>
         <div id="sidebar-discover" class="sidebar-item">🎮 探す (Discover)</div>
@@ -75,17 +71,9 @@
         <div id="sidebar-friends" class="sidebar-item">👥 フレンド (Friends)</div>
       </aside>
 
-      <!-- メインコンテンツエリア -->
       <main class="portal-main-content">
-        <div class="section-title">
-          🔥 人気の体験 (Popular Experiences)
-        </div>
+        <div class="section-title">🔥 人気の体験 (Popular Experiences)</div>
         <div id="discover-games-grid" class="discover-grid"></div>
-
-        <div class="section-title" style="margin-top: 2rem;">
-          🛠️ あなたのオリジナル作品
-        </div>
-        <div id="my-custom-games-grid" class="discover-grid"></div>
       </main>
     </div>
   </section>
@@ -115,7 +103,6 @@
        ------------------------------------------------------------------------ -->
   <section id="screen-studio" class="screen-view">
     <div class="studio-layout">
-      <!-- リボンツールバー -->
       <div class="studio-ribbon">
         <div class="ribbon-tabs">
           <div class="ribbon-tab active">Home</div>
@@ -126,15 +113,17 @@
 
         <div class="ribbon-actions">
           <div class="ribbon-btn-group">
+            <button class="ribbon-btn studio-tool-btn" data-tool="select">🔍 Select</button>
+            <button class="ribbon-btn studio-tool-btn" data-tool="move" style="color:var(--rbx-primary);">✋ Move</button>
+            <button class="ribbon-btn studio-tool-btn" data-tool="delete" style="color:var(--rbx-red);">🗑️ Delete</button>
+          </div>
+
+          <div class="ribbon-btn-group">
             <button class="ribbon-btn studio-add-part" data-part="block">📦 Part</button>
             <button class="ribbon-btn studio-add-part" data-part="sphere">🔮 Sphere</button>
             <button class="ribbon-btn studio-add-part" data-part="cylinder">🛢️ Cylinder</button>
             <button class="ribbon-btn studio-add-part" data-part="spawn" style="color:var(--rbx-green);">🏁 Spawn</button>
             <button class="ribbon-btn studio-add-part" data-part="killblock" style="color:var(--rbx-red);">🔥 KillBlock</button>
-          </div>
-
-          <div class="ribbon-btn-group">
-            <button class="ribbon-btn studio-tool-btn" data-tool="delete" style="color:var(--rbx-red);">🗑️ 削除</button>
           </div>
 
           <button id="btn-publish-studio-game" class="btn-rbx-primary" style="margin-left: auto; width: auto; padding: 0.5rem 1.2rem; background: var(--rbx-green); color: #000;">
@@ -143,13 +132,11 @@
         </div>
       </div>
 
-      <!-- Studio 作業領域 -->
       <div class="studio-workspace-area">
         <div style="flex: 1; position: relative;">
           <canvas id="studio-canvas"></canvas>
         </div>
 
-        <!-- 右サイド Explorer ＆ Properties パネル -->
         <div class="studio-explorer-panel">
           <div class="panel-title-bar">Explorer</div>
           <div id="studio-explorer-tree" class="explorer-tree"></div>
@@ -162,25 +149,40 @@
   </section>
 
   <!-- ------------------------------------------------------------------------
-       画面5: 🎮 3Dゲームプレイ画面 (WASD移動 ＆ アクション)
+       画面5: 🎮 3Dゲームプレイ画面 (Pointer Lock / HP / スコア)
        ------------------------------------------------------------------------ -->
   <section id="screen-gameplay" class="screen-view">
     <canvas id="weblox-canvas"></canvas>
     
     <div class="gameplay-hud">
-      <div class="hud-interactive" style="display: flex; justify-content: space-between; width: 100%;">
+      <div class="hud-interactive" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
         <button id="btn-gameplay-exit" class="btn-rbx-primary" style="width: auto; padding: 0.5rem 1.2rem; background: rgba(25, 27, 34, 0.9);">
           🏠 Robloxメニューに戻る
         </button>
 
-        <div style="background: rgba(25, 27, 34, 0.9); padding: 0.5rem 1.2rem; border-radius: 20px; font-weight: bold; color: var(--rbx-gold);">
-          <span id="gameplay-title-display">WEBLOX Experience</span>
+        <!-- Roblox仕様 リアルタイムHPバー -->
+        <div style="background: rgba(25, 27, 34, 0.9); padding: 0.5rem 1rem; border-radius: 12px; display: flex; align-items: center; gap: 0.8rem; border: 1px solid var(--rbx-border);">
+          <span style="font-size: 0.8rem; font-weight: bold;">❤️ HP</span>
+          <div style="width: 150px; height: 12px; background: rgba(255,255,255,0.1); border-radius: 6px; overflow: hidden;">
+            <div id="hud-hp-bar-inner" style="width: 100%; height: 100%; background: var(--rbx-green); transition: width 0.2s;"></div>
+          </div>
         </div>
+
+        <div style="background: rgba(25, 27, 34, 0.9); padding: 0.5rem 1.2rem; border-radius: 20px; font-weight: bold; color: var(--rbx-gold);">
+          <span id="hud-score-text">🪙 スコア: 0</span>
+        </div>
+      </div>
+
+      <!-- マウスロック(Pointer Lock) 誘導案内 -->
+      <div id="pointer-lock-hint" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.85); border: 2px solid var(--rbx-primary); padding: 1.5rem 2.5rem; border-radius: 20px; text-align: center; pointer-events: none;">
+        <div style="font-size: 2rem; margin-bottom: 0.5rem;">🎯</div>
+        <div style="font-size: 1.2rem; font-weight: bold;">画面をクリックして視点操作を開始</div>
+        <div style="font-size: 0.85rem; color: var(--rbx-text-sub); margin-top: 0.3rem;">[ESC] キーで操作解除</div>
       </div>
 
       <div class="hud-interactive" style="display: flex; justify-content: space-between; align-items: flex-end; width: 100%;">
         <div style="background: rgba(0,0,0,0.6); padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.8rem; color: var(--rbx-text-sub);">
-          🎮 操作: [WASD] 移動 ｜ [Space] ジャンプ ｜ [マウスドラッグ] 視点回転 ｜ [B] ブロック配置 (建築)
+          🎮 操作: [WASD] 移動 ｜ [Space] ジャンプ ｜ [マウス移動] 360度カメラ回転 ｜ [B] ブロック配置 (建築)
         </div>
         <div id="gameplay-emote-bar" style="display: flex; gap: 0.5rem;"></div>
       </div>
