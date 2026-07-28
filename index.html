@@ -597,7 +597,6 @@ body {
       <span id="header-username">プレイヤー</span>
       <span id="header-title" class="title-tag">称号: 初めの一歩</span>
       <button id="btn-titles-modal" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">🏆 称号図鑑</button>
-      <button id="btn-supabase-modal" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">⚡ Supabase設定</button>
     </div>
   </header>
 
@@ -2416,11 +2415,14 @@ class AppController {
       }
     });
 
-    document.getElementById('btn-supabase-modal').addEventListener('click', () => {
-      document.getElementById('supabase-input-url').value = supabaseManager.url;
-      document.getElementById('supabase-input-key').value = supabaseManager.key;
-      this.openModal('supabase');
-    });
+    const sbBtn = document.getElementById('btn-supabase-modal');
+    if (sbBtn) {
+      sbBtn.addEventListener('click', () => {
+        document.getElementById('supabase-input-url').value = supabaseManager.url;
+        document.getElementById('supabase-input-key').value = supabaseManager.key;
+        this.openModal('supabase');
+      });
+    }
 
     document.getElementById('btn-titles-modal').addEventListener('click', () => {
       this.renderTitlesModal();
