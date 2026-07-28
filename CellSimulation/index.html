@@ -3,70 +3,114 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cell Simulation | 宇宙・地球・細胞発生・文明検証 放置シミュレーション</title>
-  <meta name="description" content="無のゆらぎから宇宙、地球、アミノ酸の合成、奇跡の単細胞生物(細胞)の誕生、そして文明の開花を観察・検証する放置シミュレーションゲーム。">
+  <title>Cell Simulation | 3D地球物理演算＆科学生命進化シミュレーター</title>
+  <meta name="description" content="本物の天文学・地球科学パラメーターに基づく超リアル3D地球シミュレーター。46億年の熱力学推移、大気組成変化、奇跡の生命発生、文明の灯りを検証・観察！">
   <link rel="icon" type="image/png" href="../favicon.png">
   <link rel="stylesheet" href="style.css">
+  <!-- Three.js 3Dグラフィックライブラリ -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
-  <!-- シミュレーションパーティクルキャンバス -->
+  <!-- Three.js 超リアル3D地球キャンバス -->
   <canvas id="sim-canvas"></canvas>
 
-  <!-- UIレイヤー -->
-  <div class="ui-layer">
+  <!-- 学術HUD UIオーバーレイ -->
+  <div class="ui-hud-layer">
     
-    <!-- トップ時代フェーズ ＆ リソース情報 -->
-    <div class="top-era-panel interactive">
-      <div id="era-title-display" class="era-title">🌌 宇宙創世期 (Cosmic Era)</div>
-      <div id="era-desc-display" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.3rem;">
-        無のゆらぎから素粒子が誕生。重力により原子が凝集し星雲が形成される。
+    <!-- トップバー: 地球齢 ＆ 生態フェーズ -->
+    <div class="top-science-bar">
+      <div class="science-title-card interactive">
+        <div id="display-earth-age" class="earth-age-title">地球齢: 46.00億年 前</div>
+        <div id="display-bio-status" class="bio-status-badge" style="color: var(--accent-red);">
+          🌋 灼熱のマグマオーシャン (無生命)
+        </div>
       </div>
 
-      <div class="era-stats-row">
-        <span id="energy-counter-display" style="color: var(--accent-cyan);">⚡ エネルギー: 0</span>
-        <span id="cell-counter-display" style="color: var(--accent-green);">🦠 生存細胞数: 0</span>
+      <!-- 右サイド リアルタイム地球物理数値パネル -->
+      <div class="physics-metrics-panel interactive">
+        <div style="font-weight:bold; color:var(--accent-cyan); border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:0.3rem;">
+          📊 リアルタイム地球データ
+        </div>
+
+        <div class="metric-row">
+          <span>表面平均温度:</span>
+          <span id="display-temp-c" class="metric-val" style="color:var(--accent-gold);">1726 ℃</span>
+        </div>
+        <div class="metric-row">
+          <span>海洋被覆率:</span>
+          <span id="display-ocean-cover" class="metric-val">0.0 %</span>
+        </div>
+        <div class="metric-row">
+          <span>大気圧:</span>
+          <span id="display-pressure" class="metric-val">100.0 bar</span>
+        </div>
+        <div class="metric-row">
+          <span>海洋pH:</span>
+          <span id="display-ph" class="metric-val">pH 4.5</span>
+        </div>
+
+        <div style="margin-top:0.4rem; font-size:0.75rem; color:var(--text-sub);">大気比率 (Atmosphere):</div>
+        <div>
+          <div id="text-co2" style="font-size:0.7rem;">CO₂: 90%</div>
+          <div class="atmos-bar-container"><div id="bar-co2" class="atmos-bar-fill" style="width:90%; background:var(--accent-red);"></div></div>
+        </div>
+        <div>
+          <div id="text-n2" style="font-size:0.7rem;">N₂: 1.8%</div>
+          <div class="atmos-bar-container"><div id="bar-n2" class="atmos-bar-fill" style="width:1.8%; background:var(--accent-cyan);"></div></div>
+        </div>
+        <div>
+          <div id="text-o2" style="font-size:0.7rem;">O₂: 0.00%</div>
+          <div class="atmos-bar-container"><div id="bar-o2" class="atmos-bar-fill" style="width:0%; background:var(--accent-green);"></div></div>
+        </div>
       </div>
     </div>
 
-    <!-- 発見通知ポップアップ -->
-    <div id="discovery-notification" class="notification-popup"></div>
+    <!-- 3D操作ヒント案内 -->
+    <div style="position: absolute; top: 120px; left: 1.5rem; background: rgba(0,0,0,0.6); padding: 0.5rem 1rem; border-radius: 10px; font-size: 0.8rem; color: var(--text-sub); border: 1px solid var(--nasa-border);" class="interactive">
+      🌍 3D操作: [マウスドラッグ] 地球を360度回転 ｜ [ホイール] ズームイン/アウト
+    </div>
 
-    <!-- ボトム操作パネル -->
-    <div class="bottom-control-panel">
-      <!-- タイムコントロール (一時停止 / 1x / 5x / 50x / 1000x) -->
-      <div class="time-control-group interactive">
-        <span style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted); margin-right: 0.3rem;">⏳ 速度:</span>
-        <button class="time-btn" data-speed="0">⏸️ 停止</button>
-        <button class="time-btn active" data-speed="1">1x</button>
-        <button class="time-btn" data-speed="5">5x</button>
-        <button class="time-btn" data-speed="50">50x</button>
-        <button class="time-btn" data-speed="1000" style="color: var(--accent-gold);">1000x 🚀</button>
+    <!-- ボトム操作バー -->
+    <div class="bottom-control-bar">
+      <!-- 超高速タイムスライダー (1s = 10万年 / 100万年 / 1000万年 / 1億年) -->
+      <div class="time-slider-card interactive">
+        <span style="font-size: 0.8rem; font-weight: bold; color: var(--text-sub); margin-right: 0.4rem;">⏳ 進化速度:</span>
+        <button class="time-btn" data-years="0">⏸️ 停止</button>
+        <button class="time-btn" data-years="100000">10万年/s</button>
+        <button class="time-btn active" data-years="1000000">100万年/s</button>
+        <button class="time-btn" data-years="10000000">1000万年/s</button>
+        <button class="time-btn" data-years="100000000" style="color:var(--accent-gold);">1億年/s 🚀</button>
       </div>
 
-      <!-- アクションボタン群 -->
+      <!-- 実験操作 ＆ メニューボタン群 -->
       <div style="display: flex; gap: 0.8rem;" class="interactive">
-        <button id="btn-inject-catalyst" class="btn btn-primary">🧪 触媒・エネルギー注入</button>
-        <button id="btn-open-compendium" class="btn btn-secondary">📖 発見図鑑</button>
-        <button id="btn-reset-sim" class="btn btn-secondary" style="color: #ff3366;">🔄 最初から</button>
+        <button id="btn-exp-asteroid" class="btn-exp" style="background:var(--accent-red); color:#fff;">💥 小惑星衝突実験</button>
+        <button id="btn-exp-volcano" class="btn-exp" style="background:var(--accent-gold); color:#000;">🌋 大噴火スパイク</button>
+        <button id="btn-open-academic-modal" class="btn-exp" style="background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.2);">📖 学術図鑑</button>
+        <button id="btn-reset-earth" class="btn-exp" style="background:rgba(255,255,255,0.1); color:#fff;">🔄 最初から</button>
       </div>
     </div>
 
   </div>
 
-  <!-- モーダル: 発見図鑑 (Compendium) -->
-  <div id="modal-compendium" class="modal-overlay">
+  <!-- モーダル: 学術図鑑 -->
+  <div id="modal-academic" class="modal-overlay">
     <div class="modal-content">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-        <h3 style="font-size: 1.4rem;">📖 宇宙・生命・文明 発見図鑑</h3>
+        <h3 style="font-size: 1.4rem;">📖 46億年 地球・気候・生命進化データベース</h3>
         <button class="modal-close-btn" style="background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer;">&times;</button>
       </div>
-      <div id="compendium-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem;"></div>
+      <div style="font-size: 0.9rem; color: var(--text-sub); line-height: 1.6;">
+        <p style="margin-bottom: 1rem;"><strong style="color:var(--accent-cyan);">・冥王代 (46億年前 - 40億年前)</strong>: 灼熱のマグマオーシャン。冷えるにつれて激しい雷雨と原始海洋、熱水噴出孔が発生。</p>
+        <p style="margin-bottom: 1rem;"><strong style="color:var(--accent-cyan);">・太古代〜原生代 (40億年前 - 5.4億年前)</strong>: 海底で有機化合物から全生物の共通祖先(LUCA)誕生。シアノバクテリアの光合成により大酸化イベント(GOE)が発生。</p>
+        <p style="margin-bottom: 1rem;"><strong style="color:var(--accent-cyan);">・顕生代〜現代 (5.4億年前 - 現代)</strong>: オゾン層の完成により生命が陸上へ進出。人類の知恵が夜の地球に都市の光(City Lights)を灯す。</p>
+      </div>
     </div>
   </div>
 
   <!-- スクリプト統合 -->
-  <script src="js/tech_tree.js"></script>
+  <script src="js/earth_physics.js"></script>
   <script src="js/audio.js"></script>
   <script src="js/simulation_engine.js"></script>
   <script src="js/app.js"></script>
