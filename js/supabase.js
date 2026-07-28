@@ -1,5 +1,5 @@
 /**
- * supabase.js - Supabase 連携 & マッチングシミュレーション
+ * supabase.js - 100% リアル Supabase オンライン対戦＆マッチング管理 (デモプレイヤー完全削除済)
  */
 
 class SupabaseManager {
@@ -23,8 +23,6 @@ class SupabaseManager {
       } catch (e) {
         console.warn('Supabase initialization failed:', e);
       }
-    } else {
-      console.log('Supabase CDN not loaded or credentials default fallback.');
     }
   }
 
@@ -43,7 +41,6 @@ class SupabaseManager {
       const user = (await this.client.auth.getUser())?.data?.user;
       if (!user) return;
 
-      // Stats Sync
       for (const gameId in userData.stats) {
         const stat = userData.stats[gameId];
         await this.client.from('user_stats').upsert({
@@ -61,51 +58,91 @@ class SupabaseManager {
     }
   }
 
-  // オンラインマッチング検索 (通常 / ランクマッチ)
+  // 100% 実際の Supabase オンライン対戦マッチング
   async startMatching(gameId, mode, userRankNum, onMatchFound) {
-    if (this.isConfigured && this.client) {
-      // Supabase本番Realtimeキュー
-      try {
-        console.log(`Supabase matching searching for ${gameId} (${mode})...`);
-        // 実際のSupabase処理のバックアップとして5秒以内にマッチしなければ模擬プレイヤーを割り当て
-        setTimeout(() => {
-          this.triggerSimulatedMatch(gameId, mode, userRankNum, onMatchFound);
-        }, 3000);
-      } catch (e) {
-        this.triggerSimulatedMatch(gameId, mode, userRankNum, onMatchFound);
+    if (!this.isConfigured || !this.client) {
+      alert('Supabaseへの接続が有効ではありません。AIと対戦モードをご利用ください。');
+      return;
+    }
+
+    try {
+      const currentUserId = (await this.client.auth.getUser())?.data?.user?.id || 'anon_' + Math.random().toString(36).substring(2, 9);
+
+      let query = this.client
+        .from('game_rooms')
+        .select('*')
+        .eq('game_id', gameId)
+        .eq('mode', mode)
+        .eq('status', 'waiting')
+        .neq('host_id', currentUserId)
+        .limit(1);
+
+      if (mode === 'ranked') {
+        query = query.gte('target_rank', userRankNum - 10).lte('target_rank', userRankNum + 10);
       }
-    } else {
-      // Supabase未設定時の模擬オンラインマッチング
-      setTimeout(() => {
-        this.triggerSimulatedMatch(gameId, mode, userRankNum, onMatchFound);
-      }, 2000 + Math.random() * 1500);
+
+      const { data: rooms } = await query;
+
+      if (rooms && rooms.length > 0) {
+        const targetRoom = rooms[0];
+        const { error: updateError } = await this.client
+          .from('game_rooms')
+          .update({
+            guest_id: currentUserId,
+            status: 'playing'
+          })
+          .eq('id', targetRoom.id);
+
+        if (!updateError) {
+          this.currentRoom = targetRoom;
+          onMatchFound({
+            opponentName: 'オンラインプレイヤー',
+            opponentRank: ALL_RANKS[Math.min(199, Math.max(0, (targetRoom.target_rank || 1) - 1))],
+            roomId: targetRoom.id,
+            isHost: false
+          });
+          return;
+        }
+      }
+
+      const { data: newRoom } = await this.client
+        .from('game_rooms')
+        .insert({
+          game_id: gameId,
+          mode: mode,
+          host_id: currentUserId,
+          target_rank: userRankNum,
+          status: 'waiting'
+        })
+        .select()
+        .single();
+
+      if (newRoom) {
+        this.currentRoom = newRoom;
+        const channel = this.client
+          .channel(`room_${newRoom.id}`)
+          .on('postgres_changes', {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'game_rooms',
+            filter: `id=eq.${newRoom.id}`
+          }, (payload) => {
+            if (payload.new.status === 'playing' && payload.new.guest_id) {
+              this.client.removeChannel(channel);
+              onMatchFound({
+                opponentName: 'オンラインプレイヤー',
+                opponentRank: ALL_RANKS[Math.min(199, Math.max(0, userRankNum - 1))],
+                roomId: newRoom.id,
+                isHost: true
+              });
+            }
+          })
+          .subscribe();
+      }
+    } catch (e) {
+      console.error('Supabase matching error:', e);
+      alert('オンラインマッチング接続エラーが発生しました。');
     }
-  }
-
-  triggerSimulatedMatch(gameId, mode, userRankNum, onMatchFound) {
-    // 仮想のオンライン対戦相手の生成
-    const mockNames = ['Sakura_88', 'Gamer_Zero', 'ShadowMaster', 'DragonKing', 'Zen_Player', 'CyberKnight', 'MatchHero'];
-    const oppName = mockNames[Math.floor(Math.random() * mockNames.length)];
-
-    let oppRankNum = userRankNum;
-    if (mode === 'casual') {
-      // 通常マッチ：±30ランクのランダム
-      const offset = Math.floor(Math.random() * 60) - 30;
-      oppRankNum = Math.min(200, Math.max(1, userRankNum + offset));
-    } else if (mode === 'ranked') {
-      // ランクマッチ：±3の同格ランク帯
-      const offset = Math.floor(Math.random() * 7) - 3;
-      oppRankNum = Math.min(200, Math.max(1, userRankNum + offset));
-    }
-
-    const oppRankObj = ALL_RANKS[oppRankNum - 1];
-
-    onMatchFound({
-      opponentName: oppName,
-      opponentRank: oppRankObj,
-      roomId: 'sim_' + Date.now(),
-      isHost: Math.random() > 0.5
-    });
   }
 }
 
