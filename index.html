@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>オンライン対戦ゲームプラットフォーム | Versa Play Online</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta name="description" content="囲碁(9/13/19路盤・置石)、将棋、チェス、オセロ、五目並べ、トランプ全5種、〇✕ゲームがSupabase連携で遊べるオンライン対戦ゲームプラットフォーム。200段階ランク＆300称号搭載！">
+  <link rel="stylesheet" href="style.css">
+  <!-- Supabase JS CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- ヘッダーナビゲーション -->
+  <header class="app-header">
+    <div class="logo">
+      <span>🎮</span> VersaPlay Online
+    </div>
+    <div class="user-badge">
+      <span id="header-username">プレイヤー</span>
+      <span id="header-title" class="title-tag">称号: 初めの一歩</span>
+      <button id="btn-titles-modal" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">🏆 称号図鑑</button>
+      <button id="btn-supabase-modal" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">⚡ Supabase設定</button>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ領域 -->
+  <main class="main-container">
+
+    <!-- 画面1: ホーム画面 -->
+    <section id="screen-home" class="screen-view active">
+      <div class="home-hero">
+        <h1>究極のボード＆カード対戦</h1>
+        <p>囲碁・将棋・オセロ・トランプ・チェスで世界中のプレイヤーやAIに挑もう</p>
+      </div>
+      <div class="home-menu-btns">
+        <button id="btn-home-play" class="btn btn-primary">⚔️ プレイ</button>
+        <button id="btn-home-settings" class="btn btn-secondary">⚙️ 設定</button>
+      </div>
+    </section>
+
+    <!-- 画面2: プレイモード選択画面 -->
+    <section id="screen-mode" class="screen-view">
+      <h2 style="font-size: 2rem; margin-bottom: 0.5rem;">対戦モードの選択</h2>
+      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">遊ぶ対戦形式を選んでください</p>
+      <div class="mode-selection-grid">
+        <div id="mode-card-ai" class="mode-card">
+          <div class="mode-icon">🤖</div>
+          <div class="mode-title">AIと対戦</div>
+          <div class="mode-desc">Level 1〜20の段階的AIと勝負。勝利してレベルをアンロックしよう！</div>
+        </div>
+        <div id="mode-card-casual" class="mode-card">
+          <div class="mode-icon">🌐</div>
+          <div class="mode-title">通常マッチング</div>
+          <div class="mode-desc">誰とでも気軽に遊べるランダムマッチング対戦</div>
+        </div>
+        <div id="mode-card-ranked" class="mode-card">
+          <div class="mode-icon">🔥</div>
+          <div class="mode-title">ランクマッチング</div>
+          <div class="mode-desc">全200段階のランクから、実力の近いプレイヤーと真剣勝負！</div>
+        </div>
+      </div>
+      <button class="btn btn-secondary btn-back-home" style="margin-top: 2rem;">◀ ホームへ戻る</button>
+    </section>
+
+    <!-- 画面3: AIレベル選択画面 (1〜20) -->
+    <section id="screen-ai-level" class="screen-view">
+      <h2 style="font-size: 2rem; margin-bottom: 0.5rem;">AI 強さレベルの選択</h2>
+      <p style="color: var(--text-muted);">勝利すると次のレベルが解放されます (1〜20)</p>
+      <div id="ai-level-container" class="ai-level-grid"></div>
+      <button class="btn btn-secondary btn-back-mode" style="margin-top: 1rem;">◀ モード選択へ戻る</button>
+    </section>
+
+    <!-- 画面4: マッチング待機画面 -->
+    <section id="screen-matching" class="screen-view">
+      <div style="text-align: center; margin: 3rem 0;">
+        <div class="mode-icon" style="font-size: 4rem; animation: pulse 1.5s infinite;">🔍</div>
+        <h2 id="matching-status-text" style="font-size: 1.8rem; margin: 1rem 0;">対戦相手を探しています...</h2>
+        <p id="matching-sub-text" style="color: var(--text-muted);">同ランクのプレイヤーを検索中</p>
+        <button id="btn-cancel-matching" class="btn btn-secondary" style="margin-top: 2rem;">キャンセル</button>
+      </div>
+    </section>
+
+    <!-- 画面5: ゲーム選択画面 -->
+    <section id="screen-game-select" class="screen-view">
+      <h2 style="font-size: 2rem; margin-bottom: 0.5rem;">ゲームの選択</h2>
+      <p style="color: var(--text-muted);">対戦するゲームを選んでください</p>
+      <div id="game-selection-container" class="game-selection-grid"></div>
+      <button class="btn btn-secondary btn-back-mode" style="margin-top: 2rem;">◀ モード選択へ戻る</button>
+    </section>
+
+    <!-- 画面6: 対戦ゲームプレイ画面 -->
+    <section id="screen-gameplay" class="screen-view">
+      <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <button id="btn-quit-game" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">✕ 降参・退室</button>
+        <div id="gameplay-header-info" style="font-weight: bold; color: var(--accent-cyan);"></div>
+      </div>
+      <div id="game-board-mount"></div>
+    </section>
+
+  </main>
+
+  <!-- モーダル1: 設定 (BGM / SE 音量調節) -->
+  <div id="modal-settings" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 style="font-size: 1.4rem;">⚙️ サウンド・環境設定</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <div>
+          <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">🎵 BGM 音量</label>
+          <input type="range" id="slider-bgm" min="0" max="1" step="0.05" value="0.5" style="width: 100%;">
+        </div>
+        <div>
+          <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">🔊 SE (効果音) 音量</label>
+          <input type="range" id="slider-se" min="0" max="1" step="0.05" value="0.7" style="width: 100%;">
+        </div>
+        <button id="btn-test-se" class="btn btn-secondary">▶ 効果音テスト再生</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- モーダル2: Supabase 設定モーダル -->
+  <div id="modal-supabase" class="modal-overlay">
+    <div class="modal-content" style="max-width: 650px;">
+      <div class="modal-header">
+        <h3 style="font-size: 1.4rem;">⚡ Supabase クラウド接続設定</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+        SupabaseのURLとAPI Keyを設定すると、全デバイス間でのランク・称号保存やリアルタイムオンライン対戦が利用可能になります。
+      </p>
+      <div style="display: flex; flex-direction: column; gap: 1rem;">
+        <div>
+          <label style="display: block; font-size: 0.85rem; margin-bottom: 0.3rem;">Project URL</label>
+          <input type="text" id="supabase-input-url" placeholder="https://your-project.supabase.co" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.4); color: #fff;">
+        </div>
+        <div>
+          <label style="display: block; font-size: 0.85rem; margin-bottom: 0.3rem;">Anon Public Key</label>
+          <input type="password" id="supabase-input-key" placeholder="eyJhbGciOi..." style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.4); color: #fff;">
+        </div>
+        <button id="btn-save-supabase" class="btn btn-primary">接続を保存して適用</button>
+        <div id="supabase-status-msg" style="font-size: 0.9rem; text-align: center; color: var(--accent-neon-green);"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- モーダル3: 称号図鑑モーダル (全300種) -->
+  <div id="modal-titles" class="modal-overlay">
+    <div class="modal-content" style="max-width: 750px;">
+      <div class="modal-header">
+        <h3 style="font-size: 1.4rem;">🏆 称号図鑑 (全300種)</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div id="titles-progress-bar" style="font-weight: bold; color: var(--accent-gold); margin-bottom: 1rem;">
+        獲得率: 0 / 300
+      </div>
+      <div id="titles-list-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.8rem; max-height: 450px; overflow-y: auto;">
+      </div>
+    </div>
+  </div>
+
+  <!-- サポートJSスクリプトのロード -->
+  <script src="js/config.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/rank_titles.js"></script>
+  <script src="js/ai_engine.js"></script>
+  <script src="js/games/tictactoe.js"></script>
+  <script src="js/games/reversi.js"></script>
+  <script src="js/games/gomoku.js"></script>
+  <script src="js/games/go.js"></script>
+  <script src="js/games/chess.js"></script>
+  <script src="js/games/shogi.js"></script>
+  <script src="js/games/playing_cards.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
