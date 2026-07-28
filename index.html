@@ -616,7 +616,9 @@ body {
       </div>
       <div class="home-menu-btns">
         <button id="btn-home-play" class="btn btn-primary">⚔️ プレイ</button>
-        <button id="btn-home-settings" class="btn btn-secondary">⚙️ 設定</button>
+        <button id="btn-home-friends" class="btn btn-gold">👥 フレンド ＆ 🔍 プレイヤー検索</button>
+        <button id="btn-home-account" class="btn btn-secondary">👤 アカウント設定 (表示名 / ID)</button>
+        <button id="btn-home-settings" class="btn btn-secondary">⚙️ サウンド設定</button>
       </div>
     </section>
 
@@ -2642,6 +2644,21 @@ class AppController {
     document.getElementById('btn-home-play').addEventListener('click', () => {
       audioManager.startBGM();
       this.showScreen('mode');
+    });
+    document.getElementById('btn-home-friends').addEventListener('click', () => {
+      this.renderFriendsModal();
+      this.openModal('friends');
+    });
+    document.getElementById('btn-home-account').addEventListener('click', () => {
+      const user = rankTitleManager.userData;
+      if (user.profile && user.profile.userId) {
+        document.getElementById('setup-username-input').value = user.profile.username || '';
+        document.getElementById('setup-userid-input').value = user.profile.userId || '';
+        document.getElementById('setup-userid-input').disabled = true; // 既設定IDは変更不可
+      } else {
+        document.getElementById('setup-userid-input').disabled = false;
+      }
+      this.openModal('accountSetup');
     });
     document.getElementById('btn-home-settings').addEventListener('click', () => {
       this.openModal('settings');
