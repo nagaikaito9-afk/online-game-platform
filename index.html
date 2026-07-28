@@ -597,7 +597,9 @@ body {
     </div>
     <div class="user-badge">
       <span id="header-username">プレイヤー</span>
+      <span id="header-userid" style="font-size:0.8rem; color:var(--text-muted);">@id_12345</span>
       <span id="header-title" class="title-tag">称号: 初めの一歩</span>
+      <button id="btn-edit-profile" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">✏️ 表示名変更</button>
       <button id="btn-friends-modal" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">👥 フレンド (<span id="header-friends-count">0</span>)</button>
       <button id="btn-titles-modal" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">🏆 称号図鑑</button>
     </div>
@@ -698,12 +700,22 @@ body {
 
   </main>
 
-  <!-- モーダル4: フレンド管理・即時対戦モーダル -->
+  <!-- モーダル4: フレンド管理・プレイヤー検索・即時対戦モーダル -->
   <div id="modal-friends" class="modal-overlay">
     <div class="modal-content" style="max-width: 650px;">
       <div class="modal-header">
-        <h3 style="font-size: 1.4rem;">👥 フレンド管理＆即時対戦</h3>
+        <h3 style="font-size: 1.4rem;">👥 フレンド管理＆プレイヤー検索</h3>
         <button class="modal-close-btn">&times;</button>
+      </div>
+
+      <!-- 🔍 プレイヤーを探すセクション -->
+      <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-glow); padding: 1rem; border-radius: 14px; margin-bottom: 1.5rem;">
+        <h4 style="font-size: 1rem; color: var(--accent-cyan); margin-bottom: 0.5rem;">🔍 プレイヤーを探す (ID または 表示名)</h4>
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.8rem;">
+          <input type="text" id="search-player-input" placeholder="ID (例: player123) または 表示名を入力..." style="flex: 1; padding: 0.6rem 0.8rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.6); color: #fff; font-size: 0.9rem;">
+          <button id="btn-search-player" class="btn btn-primary" style="padding: 0.6rem 1.2rem; font-size: 0.9rem;">検索</button>
+        </div>
+        <div id="search-player-results" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
       </div>
 
       <!-- 受信したフレンド申請 -->
@@ -717,9 +729,34 @@ body {
       <!-- フレンド一覧 -->
       <div>
         <h4 style="font-size: 1rem; color: var(--accent-cyan); margin-bottom: 0.5rem;">🤝 フレンド一覧</h4>
-        <div id="friends-list-container" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 250px; overflow-y: auto;">
-          <div style="color: var(--text-muted); font-size: 0.85rem;">フレンドがまだいません。対戦画面からフレンド申請してみましょう！</div>
+        <div id="friends-list-container" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 220px; overflow-y: auto;">
+          <div style="color: var(--text-muted); font-size: 0.85rem;">フレンドがまだいません。「プレイヤーを探す」から検索して申請してみましょう！</div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- モーダル5: アカウント作成・ログイン初期設定モーダル (ID変更不可) -->
+  <div id="modal-account-setup" class="modal-overlay">
+    <div class="modal-content" style="max-width: 500px; text-align: center;">
+      <div class="modal-header" style="justify-content: center;">
+        <h3 style="font-size: 1.5rem; color: var(--accent-cyan);">👤 アカウント初期設定</h3>
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+        ゲーム内で使用する表示名と固有IDを設定してください。<br>
+        <span style="color: #ff4b2b; font-weight: bold;">※IDは後から変更できません。他のプレイヤーと重複はできません。</span>
+      </p>
+      <div style="display: flex; flex-direction: column; gap: 1.2rem; text-align: left;">
+        <div>
+          <label style="display: block; font-weight: bold; margin-bottom: 0.4rem; font-size: 0.9rem;">表示名 (後から変更可能)</label>
+          <input type="text" id="setup-username-input" placeholder="例: 影の対戦王" style="width: 100%; padding: 0.8rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.5); color: #fff; font-size: 1rem;">
+        </div>
+        <div>
+          <label style="display: block; font-weight: bold; margin-bottom: 0.4rem; font-size: 0.9rem;">プレイヤー固有ID (変更不可・英数字)</label>
+          <input type="text" id="setup-userid-input" placeholder="例: shadow_king88" style="width: 100%; padding: 0.8rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.5); color: #fff; font-size: 1rem;">
+        </div>
+        <button id="btn-submit-account-setup" class="btn btn-primary" style="margin-top: 0.5rem;">アカウントを作成してゲームを始める</button>
+        <div id="account-setup-error" style="color: #ff4b2b; font-size: 0.85rem; text-align: center; font-weight: bold;"></div>
       </div>
     </div>
   </div>
@@ -1227,6 +1264,11 @@ class RankTitleManager {
       gameStats[g.id] = { rankNum: 1, wins: 0, losses: 0, draws: 0, unlockedAiLevel: 1 };
     });
     return {
+      profile: {
+        username: '',
+        userId: '',
+        isInitialized: false
+      },
       username: 'プレイヤー',
       unlockedTitles: [1],
       equippedTitleId: 1,
@@ -2469,6 +2511,7 @@ class AppController {
     this.updateHeaderUI();
     this.showScreen('home');
     this.setupDisconnectHandler();
+    this.checkAccountSetup();
   }
 
   initElements() {
@@ -2485,64 +2528,44 @@ class AppController {
       settings: document.getElementById('modal-settings'),
       supabase: document.getElementById('modal-supabase'),
       titles: document.getElementById('modal-titles'),
-      friends: document.getElementById('modal-friends')
+      friends: document.getElementById('modal-friends'),
+      accountSetup: document.getElementById('modal-account-setup')
     };
   }
 
-  // タブ閉じ・切断時の不戦勝判定
-  setupDisconnectHandler() {
-    window.addEventListener('beforeunload', (e) => {
-      if (this.currentMatchInfo && this.currentMatchInfo.roomId && !this.isGameFinished) {
-        if (supabaseManager.client) {
-          supabaseManager.client
-            .from('game_rooms')
-            .update({ status: 'abandoned', winner: this.currentMatchInfo.isHost ? 'guest' : 'host' })
-            .eq('id', this.currentMatchInfo.roomId);
-        }
-      }
-    });
-  }
-
-  showScreen(screenKey) {
-    audioManager.playSE('click');
-    Object.keys(this.screens).forEach(key => {
-      if (this.screens[key]) this.screens[key].classList.remove('active');
-    });
-
-    // ゲーム画面を離れる際は一時チャットとルーム購読を完全クリア
-    if (screenKey !== 'gameplay') {
-      this.clearInGameChat();
-      if (this.roomSubscription && supabaseManager.client) {
-        supabaseManager.client.removeChannel(this.roomSubscription);
-        this.roomSubscription = null;
-      }
-    }
-
-    if (this.screens[screenKey]) {
-      this.screens[screenKey].classList.add('active');
+  // 初回アクセス時のアカウント登録モーダル判定
+  checkAccountSetup() {
+    const user = rankTitleManager.userData;
+    if (!user.profile || !user.profile.isInitialized || !user.profile.userId) {
+      setTimeout(() => this.openModal('accountSetup'), 300);
     }
   }
 
-  clearInGameChat() {
-    this.chatMessages = [];
-    const container = document.getElementById('chat-messages-container');
-    if (container) {
-      container.innerHTML = '<div style="color: var(--text-muted); font-size: 0.75rem; text-align: center;">チャットを開始できます</div>';
+  // ユーザーID重複チェック
+  isUserIdTaken(inputUserId) {
+    const defaultTaken = ['admin', 'master', 'system', 'player1', 'test_user'];
+    if (defaultTaken.includes(inputUserId.toLowerCase())) return true;
+
+    // ローカル登録状況チェック
+    const registeredIds = JSON.parse(localStorage.getItem('all_registered_user_ids') || '[]');
+    return registeredIds.includes(inputUserId.toLowerCase());
+  }
+
+  registerUserId(inputUserId) {
+    const registeredIds = JSON.parse(localStorage.getItem('all_registered_user_ids') || '[]');
+    if (!registeredIds.includes(inputUserId.toLowerCase())) {
+      registeredIds.push(inputUserId.toLowerCase());
+      localStorage.setItem('all_registered_user_ids', JSON.stringify(registeredIds));
     }
-  }
-
-  openModal(modalKey) {
-    audioManager.playSE('click');
-    if (this.modals[modalKey]) this.modals[modalKey].classList.add('active');
-  }
-
-  closeModal(modalKey) {
-    if (this.modals[modalKey]) this.modals[modalKey].classList.remove('active');
   }
 
   updateHeaderUI() {
     const user = rankTitleManager.userData;
-    document.getElementById('header-username').textContent = user.username;
+    const profile = user.profile || { username: 'プレイヤー', userId: 'guest_001' };
+
+    document.getElementById('header-username').textContent = profile.username || user.username || 'プレイヤー';
+    document.getElementById('header-userid').textContent = profile.userId ? `@${profile.userId}` : '';
+
     const titleObj = rankTitleManager.getEquippedTitle();
     document.getElementById('header-title').textContent = `称号: ${titleObj.name}`;
 
@@ -2551,6 +2574,69 @@ class AppController {
       friendCountEl.textContent = (user.friends || []).length;
     }
   }
+
+  bindEvents() {
+    // アカウント設定提出ボタン
+    document.getElementById('btn-submit-account-setup').addEventListener('click', () => {
+      const usernameInput = document.getElementById('setup-username-input').value.trim();
+      const userIdInput = document.getElementById('setup-userid-input').value.trim();
+      const errorEl = document.getElementById('account-setup-error');
+
+      if (!usernameInput) {
+        errorEl.textContent = '⚠️ 表示名を入力してください。';
+        return;
+      }
+      if (!userIdInput) {
+        errorEl.textContent = '⚠️ ユーザーIDを入力してください。';
+        return;
+      }
+      if (!/^[a-zA-Z0-9_]{3,16}$/.test(userIdInput)) {
+        errorEl.textContent = '⚠️ IDは3〜16文字の半角英数字・アンダースコア(_)で入力してください。';
+        return;
+      }
+      if (this.isUserIdTaken(userIdInput)) {
+        errorEl.textContent = '❌ そのユーザーIDは既に使用されています。別のIDを指定してください。';
+        return;
+      }
+
+      // アカウント保存
+      this.registerUserId(userIdInput);
+      const user = rankTitleManager.userData;
+      user.profile = {
+        username: usernameInput,
+        userId: userIdInput,
+        isInitialized: true
+      };
+      user.username = usernameInput;
+      rankTitleManager.saveUserData();
+      this.updateHeaderUI();
+      audioManager.playSE('unlock');
+      this.closeModal('accountSetup');
+      alert(`🎉 アカウント登録が完了しました！\n表示名: ${usernameInput}\nID: @${userIdInput}`);
+    });
+
+    // 表示名変更ボタン
+    document.getElementById('btn-edit-profile').addEventListener('click', () => {
+      const user = rankTitleManager.userData;
+      const currentName = user.profile ? user.profile.username : user.username;
+      const newName = prompt('新しい表示名を入力してください (※IDは変更できません):', currentName);
+
+      if (newName && newName.trim() !== '') {
+        if (!user.profile) user.profile = {};
+        user.profile.username = newName.trim();
+        user.username = newName.trim();
+        rankTitleManager.saveUserData();
+        this.updateHeaderUI();
+        audioManager.playSE('click');
+        alert(`✨ 表示名を「${newName.trim()}」に変更しました！`);
+      }
+    });
+
+    // プレイヤー検索ボタン
+    document.getElementById('btn-search-player').addEventListener('click', () => this.searchPlayers());
+    document.getElementById('search-player-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') this.searchPlayers();
+    });
 
   bindEvents() {
     document.getElementById('btn-home-play').addEventListener('click', () => {
@@ -2850,6 +2936,92 @@ class AppController {
     }
   }
 
+  searchPlayers() {
+    const input = document.getElementById('search-player-input').value.trim();
+    const resultsContainer = document.getElementById('search-player-results');
+    if (!input) return;
+
+    resultsContainer.innerHTML = '';
+    audioManager.playSE('click');
+
+    const user = rankTitleManager.userData;
+    const myId = user.profile ? user.profile.userId : '';
+
+    if (input.toLowerCase() === myId.toLowerCase()) {
+      resultsContainer.innerHTML = '<div style="color: var(--accent-gold); font-size: 0.85rem;">自分自身のIDです</div>';
+      return;
+    }
+
+    // 模擬データベースまたは検索結果
+    const foundUser = {
+      id: 'usr_' + Math.random().toString(36).substr(2, 6),
+      username: input.includes('_') ? '検索プレイヤー' : input,
+      userId: input.startsWith('@') ? input.substring(1) : input,
+      rankName: 'シルバー Ⅴ'
+    };
+
+    const isFriend = (user.friends || []).some(f => f.userId === foundUser.userId || f.name === foundUser.username);
+
+    const card = document.createElement('div');
+    card.style.cssText = 'display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.08); padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--border-glow);';
+    card.innerHTML = `
+      <div>
+        <div style="font-weight: bold; font-size: 0.95rem;">${foundUser.username} <span style="font-size: 0.8rem; color: var(--text-muted);">(@${foundUser.userId})</span></div>
+        <div style="font-size: 0.8rem; color: var(--accent-gold);">${foundUser.rankName}</div>
+      </div>
+      <div>
+        ${isFriend ? `
+          <button class="btn btn-danger btn-remove-friend-action" data-id="${foundUser.userId}" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;">🗑️ フレンド削除</button>
+        ` : `
+          <button class="btn btn-primary btn-add-friend-action" data-name="${foundUser.username}" data-userid="${foundUser.userId}" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;">🤝 フレンド申請</button>
+        `}
+      </div>
+    `;
+
+    resultsContainer.appendChild(card);
+
+    // イベントバインド
+    const addBtn = card.querySelector('.btn-add-friend-action');
+    if (addBtn) {
+      addBtn.addEventListener('click', (e) => {
+        const name = e.target.dataset.name;
+        const uid = e.target.dataset.userid;
+        if (!user.friends) user.friends = [];
+        user.friends.push({ id: 'f_' + Date.now(), name: name, userId: uid, rankName: 'シルバー Ⅴ' });
+        rankTitleManager.saveUserData();
+        this.updateHeaderUI();
+        this.renderFriendsModal();
+        audioManager.playSE('unlock');
+        alert(`🤝 ${name} (@${uid}) さんにフレンド申請を送信し、フレンドになりました！`);
+        this.searchPlayers();
+      });
+    }
+
+    const removeBtn = card.querySelector('.btn-remove-friend-action');
+    if (removeBtn) {
+      removeBtn.addEventListener('click', (e) => {
+        const uid = e.target.dataset.id;
+        this.removeFriend(uid);
+      });
+    }
+  }
+
+  removeFriend(userId) {
+    if (confirm('このフレンドを削除しますか？')) {
+      const user = rankTitleManager.userData;
+      if (user.friends) {
+        user.friends = user.friends.filter(f => f.userId !== userId && f.id !== userId);
+        rankTitleManager.saveUserData();
+        this.updateHeaderUI();
+        this.renderFriendsModal();
+        audioManager.playSE('click');
+        alert('🗑️ フレンドを削除しました。');
+        const searchInput = document.getElementById('search-player-input');
+        if (searchInput && searchInput.value) this.searchPlayers();
+      }
+    }
+  }
+
   // フレンドモーダルの表示
   renderFriendsModal() {
     const user = rankTitleManager.userData;
@@ -2903,7 +3075,7 @@ class AppController {
     const friends = user.friends || [];
     friendsListEl.innerHTML = '';
     if (friends.length === 0) {
-      friendsListEl.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem;">フレンドがまだいません。対戦画面からフレンド申請してみましょう！</div>';
+      friendsListEl.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem;">フレンドがまだいません。「プレイヤーを探す」から検索して申請してみましょう！</div>';
     } else {
       friends.forEach((friend, idx) => {
         const item = document.createElement('div');
@@ -2911,14 +3083,23 @@ class AppController {
         item.innerHTML = `
           <div>
             <span style="font-weight: bold;">🟢 ${friend.name}</span>
+            <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.3rem;">(${friend.userId ? '@' + friend.userId : ''})</span>
             <span style="font-size: 0.8rem; color: var(--accent-cyan); margin-left: 0.5rem;">${friend.rankName}</span>
           </div>
           <div style="display: flex; gap: 0.5rem;">
             <button class="btn btn-secondary btn-chat-friend" data-name="${friend.name}" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;">💬 チャット</button>
             <button class="btn btn-primary btn-invite-friend" data-name="${friend.name}" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;">⚔️ 即時対戦</button>
+            <button class="btn btn-danger btn-delete-friend" data-id="${friend.userId || friend.id}" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">🗑️</button>
           </div>
         `;
         friendsListEl.appendChild(item);
+      });
+
+      friendsListEl.querySelectorAll('.btn-delete-friend').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const uid = e.target.dataset.id;
+          this.removeFriend(uid);
+        });
       });
 
       friendsListEl.querySelectorAll('.btn-chat-friend').forEach(btn => {
