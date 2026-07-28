@@ -2640,7 +2640,6 @@ class AppController {
       if (e.key === 'Enter') this.searchPlayers();
     });
 
-  bindEvents() {
     document.getElementById('btn-home-play').addEventListener('click', () => {
       audioManager.startBGM();
       this.showScreen('mode');
