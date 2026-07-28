@@ -1,40 +1,119 @@
 /**
  * WEBLOX - app.js
- * メインアプリケーション制御・マルチプレイ同期・UIバインド
+ * メイン統合制御・Roblox公式風ログイン・ダッシュボード・Studioモード連動
  */
 
 class WebloxApp {
   constructor() {
-    this.canvas = document.getElementById('weblox-canvas');
-    this.world = new World3D(this.canvas);
-    this.playerAvatar = new Avatar3D(this.world.scene, true);
+    this.currentScreen = 'login'; // login, dashboard, gameplay, studio
+    this.world = null;
+    this.playerAvatar = null;
+    this.studio = null;
 
-    this.otherAvatars = {};
     this.keys = { forward: false, backward: false, left: false, right: false, jump: false };
     this.isMouseDown = false;
     this.previousMouseX = 0;
     this.previousMouseY = 0;
 
-    this.initPlayer();
-    this.bindControls();
-    this.bindUI();
-    this.spawnOtherPlayers();
-    this.animate();
+    this.initAuth();
+    this.bindEvents();
+    this.renderDiscoverGames();
   }
 
-  initPlayer() {
-    const savedColor = localStorage.getItem('weblox_color') || '#ffd166';
-    const savedHat = localStorage.getItem('weblox_hat') || 'cap';
-    this.playerAvatar.setCustomization(savedColor, savedHat);
-
-    // ポータルワープ連動
-    this.world.onPortalTouch = (targetWorldId) => {
-      this.switchWorld(targetWorldId);
-    };
+  initAuth() {
+    const username = localStorage.getItem('weblox_username');
+    if (username) {
+      this.loginSuccess(username);
+    } else {
+      this.showScreen('login');
+    }
   }
 
-  bindControls() {
-    // WASD / 矢印キー移動
+  loginSuccess(username) {
+    localStorage.setItem('weblox_username', username);
+    const webux = localStorage.getItem('weblox_webux') || '500';
+    localStorage.setItem('weblox_webux', webux);
+
+    document.getElementById('display-username').textContent = username;
+    document.getElementById('display-webux').textContent = `🪙 ${webux}`;
+    this.showScreen('dashboard');
+    audioEngine.playSE('unlock');
+  }
+
+  showScreen(screenKey) {
+    this.currentScreen = screenKey;
+    document.querySelectorAll('.screen-view').forEach(s => s.classList.remove('active'));
+
+    const target = document.getElementById(`screen-${screenKey}`);
+    if (target) target.classList.add('active');
+
+    // 画面固有の処理
+    if (screenKey === 'studio') {
+      if (!this.studio) {
+        const studioCanvas = document.getElementById('studio-canvas');
+        this.studio = new WebloxStudio(studioCanvas);
+        this.startStudioLoop();
+      }
+    }
+  }
+
+  bindEvents() {
+    // ログイン・サインアップフォーム
+    document.getElementById('btn-login-submit').addEventListener('click', () => {
+      const u = document.getElementById('input-username').value.trim();
+      const p = document.getElementById('input-password').value.trim();
+      if (!u || !p) {
+        alert('ユーザーネームとパスワードを入力してください。');
+        return;
+      }
+      this.loginSuccess(u);
+    });
+
+    // ダッシュボードナビゲーション
+    document.getElementById('nav-discover').addEventListener('click', () => this.showScreen('dashboard'));
+    document.getElementById('nav-avatar').addEventListener('click', () => {
+      this.renderAvatarPreview();
+      this.showScreen('avatar');
+    });
+    document.getElementById('nav-studio').addEventListener('click', () => this.showScreen('studio'));
+
+    // ログアウト
+    document.getElementById('btn-logout').addEventListener('click', () => {
+      localStorage.removeItem('weblox_username');
+      location.reload();
+    });
+
+    // 3Dゲームプレイ開始
+    document.getElementById('btn-back-to-dash').addEventListener('click', () => {
+      this.showScreen('dashboard');
+    });
+
+    // WEBLOX Studio ツールバーボタン
+    document.querySelectorAll('.studio-tool-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const tool = e.target.dataset.tool;
+        if (this.studio) this.studio.setTool(tool);
+      });
+    });
+
+    document.querySelectorAll('.studio-add-part-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const partType = e.target.dataset.part;
+        if (this.studio) this.studio.addPart(partType);
+      });
+    });
+
+    // Studio ゲーム公開ボタン
+    document.getElementById('btn-publish-studio-game').addEventListener('click', () => {
+      const title = prompt('公開するゲームの名前を入力してください:', 'マイアドベンチャーObby');
+      const desc = prompt('ゲームの説明を入力してください:', '自作の激ムズアスレチック！');
+      if (title && this.studio) {
+        this.studio.publishGame(title, desc);
+        this.renderDiscoverGames();
+      }
+    });
+
+    // 操作入力バインド
     window.addEventListener('keydown', (e) => {
       if (document.activeElement.tagName === 'INPUT') return;
       if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') this.keys.forward = true;
@@ -45,10 +124,6 @@ class WebloxApp {
         this.keys.jump = true;
         e.preventDefault();
       }
-      // サンドボックスでBキーでブロック設置
-      if ((e.key === 'b' || e.key === 'B') && this.world.currentWorldId === 'sandbox') {
-        this.world.addSandboxBlock(this.playerAvatar.position.x, this.playerAvatar.position.y - 1, this.playerAvatar.position.z);
-      }
     });
 
     window.addEventListener('keyup', (e) => {
@@ -58,180 +133,93 @@ class WebloxApp {
       if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') this.keys.right = false;
       if (e.key === ' ' || e.code === 'Space') this.keys.jump = false;
     });
-
-    // マウスドラッグでカメラ回転
-    window.addEventListener('mousedown', (e) => {
-      if (e.target === this.canvas) {
-        this.isMouseDown = true;
-        this.previousMouseX = e.clientX;
-        this.previousMouseY = e.clientY;
-      }
-    });
-
-    window.addEventListener('mousemove', (e) => {
-      if (this.isMouseDown) {
-        const deltaX = e.clientX - this.previousMouseX;
-        const deltaY = e.clientY - this.previousMouseY;
-        this.world.cameraYaw -= deltaX * 0.005;
-        this.world.cameraPitch = Math.max(0.1, Math.min(1.2, this.world.cameraPitch + deltaY * 0.005));
-        this.previousMouseX = e.clientX;
-        this.previousMouseY = e.clientY;
-      }
-    });
-
-    window.addEventListener('mouseup', () => { this.isMouseDown = false; });
   }
 
-  bindUI() {
-    // アバターショップモーダルオープン
-    document.getElementById('btn-open-shop').addEventListener('click', () => {
-      audioEngine.playSE('click');
-      document.getElementById('modal-shop').classList.add('active');
-    });
+  // Discover (ゲーム一覧) の描画
+  renderDiscoverGames() {
+    const grid = document.getElementById('discover-games-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
 
-    document.querySelectorAll('.modal-close-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const m = e.target.closest('.modal-overlay');
-        if (m) m.classList.remove('active');
-      });
-    });
-
-    // カラー＆帽子変更ボタン
-    this.renderShopUI();
-
-    // ワールド一覧モーダル
-    document.getElementById('btn-open-worlds').addEventListener('click', () => {
-      audioEngine.playSE('click');
-      this.renderWorldsUI();
-      document.getElementById('modal-worlds').classList.add('active');
-    });
-
-    // チャット送信
-    document.getElementById('btn-send-weblox-chat').addEventListener('click', () => this.sendChat());
-    document.getElementById('weblox-chat-input').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') this.sendChat();
-    });
-
-    // エモートボタン群
-    EMOTES.forEach(em => {
-      const btn = document.createElement('button');
-      btn.className = 'btn btn-secondary';
-      btn.style.cssText = 'padding: 0.4rem 0.8rem; font-size: 0.85rem;';
-      btn.textContent = em.name;
-      btn.addEventListener('click', () => {
-        audioEngine.playSE('click');
-        this.playerAvatar.playEmote(em.id);
-      });
-      document.getElementById('emote-bar').appendChild(btn);
-    });
-  }
-
-  renderShopUI() {
-    const colorContainer = document.getElementById('shop-colors-grid');
-    colorContainer.innerHTML = '';
-    AVATAR_COLORS.forEach(c => {
-      const el = document.createElement('div');
-      el.style.cssText = `width: 40px; height: 40px; border-radius: 50%; background: ${c.hex}; cursor: pointer; border: 2px solid #fff;`;
-      el.addEventListener('click', () => {
-        audioEngine.playSE('click');
-        localStorage.setItem('weblox_color', c.hex);
-        this.playerAvatar.setCustomization(c.hex, localStorage.getItem('weblox_hat') || 'cap');
-      });
-      colorContainer.appendChild(el);
-    });
-
-    const hatContainer = document.getElementById('shop-hats-grid');
-    hatContainer.innerHTML = '';
-    AVATAR_HATS.forEach(h => {
-      const el = document.createElement('div');
-      el.style.cssText = 'padding: 0.6rem; background: rgba(255,255,255,0.1); border-radius: 10px; cursor: pointer; font-size: 1.2rem; text-align: center;';
-      el.innerHTML = `${h.icon}<br><span style="font-size:0.75rem;">${h.name}</span>`;
-      el.addEventListener('click', () => {
-        audioEngine.playSE('click');
-        localStorage.setItem('weblox_hat', h.id);
-        this.playerAvatar.setCustomization(localStorage.getItem('weblox_color') || '#ffd166', h.id);
-      });
-      hatContainer.appendChild(el);
-    });
-  }
-
-  renderWorldsUI() {
-    const container = document.getElementById('worlds-list-container');
-    container.innerHTML = '';
     WEBLOX_WORLDS.forEach(w => {
       const card = document.createElement('div');
-      card.style.cssText = 'background: rgba(255,255,255,0.08); border-radius: 14px; padding: 1rem; cursor: pointer; border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; gap: 1rem;';
+      card.className = 'game-card-roblox';
       card.innerHTML = `
-        <div style="font-size: 2.5rem;">${w.icon}</div>
-        <div style="flex: 1;">
-          <div style="font-weight: bold; font-size: 1.1rem;">${w.name}</div>
-          <div style="font-size: 0.8rem; color: var(--text-muted);">${w.desc}</div>
+        <div class="game-card-banner" style="background:${w.bg};">${w.icon}</div>
+        <div class="game-card-body">
+          <div class="game-card-title">${w.name}</div>
+          <div class="game-card-meta">By ${w.author}</div>
+          <div class="game-card-stats">
+            <span>👍 ${w.likes}</span>
+            <span>👤 ${w.playing}</span>
+          </div>
         </div>
-        <button class="btn btn-primary" style="padding: 0.5rem 1rem;">移動</button>
       `;
       card.addEventListener('click', () => {
         audioEngine.playSE('click');
-        document.getElementById('modal-worlds').classList.remove('active');
-        this.switchWorld(w.id);
+        this.launch3DGameWorld(w.id);
       });
-      container.appendChild(card);
+      grid.appendChild(card);
     });
   }
 
-  switchWorld(worldId) {
+  // 3Dゲームワールドの起動
+  launch3DGameWorld(worldId) {
+    this.showScreen('gameplay');
+    const canvas = document.getElementById('weblox-canvas');
+
+    if (!this.world) {
+      this.world = new World3D(canvas);
+      this.playerAvatar = new Avatar3D(this.world.scene, true);
+      this.startGameplayLoop();
+    }
+
+    const savedColor = localStorage.getItem('weblox_color') || '#ffd166';
+    const savedHat = localStorage.getItem('weblox_hat') || 'cap';
+    this.playerAvatar.setCustomization(savedColor, savedHat);
+
     this.world.buildWorld(worldId);
     this.playerAvatar.position.set(0, 3, 0);
-    this.playerAvatar.velocity.set(0, 0, 0);
-    audioEngine.playSE('respawn');
 
     const worldObj = WEBLOX_WORLDS.find(w => w.id === worldId);
-    document.getElementById('current-world-title').textContent = worldObj ? worldObj.name : 'WEBLOX';
+    document.getElementById('current-gameplay-title').textContent = worldObj ? worldObj.name : 'WEBLOX';
   }
 
-  // ロブロックス風オンライン他プレイヤーのスポーン
-  spawnOtherPlayers() {
-    const colors = ['#00f2fe', '#ff758f', '#00ff87', '#7209b7'];
-    const hats = ['crown', 'cat', 'visor', 'tophat'];
-    const names = ['NoobMaster_99', 'CyberGirl', 'RobloxPro', 'Alex_Gamer'];
-
-    for (let i = 0; i < 4; i++) {
-      const other = new Avatar3D(this.world.scene, false);
-      other.setCustomization(colors[i], hats[i]);
-      other.position.set((i - 1.5) * 6, 1, -8);
-      other.group.position.copy(other.position);
-      this.otherAvatars[names[i]] = other;
-    }
-  }
-
-  sendChat() {
-    const input = document.getElementById('weblox-chat-input');
-    const text = input.value.trim();
-    if (!text) return;
-
-    input.value = '';
-    audioEngine.playSE('click');
-
-    const container = document.getElementById('weblox-chat-messages');
-    const msg = document.createElement('div');
-    msg.style.cssText = 'background: rgba(0,0,0,0.6); padding: 0.3rem 0.6rem; border-radius: 6px; margin-bottom: 0.3rem;';
-    msg.innerHTML = `<span style="color:var(--accent-gold); font-weight:bold;">あなた:</span> ${text}`;
-    container.appendChild(msg);
-    container.scrollTop = container.scrollHeight;
-  }
-
-  animate() {
-    requestAnimationFrame(() => this.animate());
-
-    const inputState = {
-      ...this.keys,
-      cameraYaw: this.world.cameraYaw
+  startGameplayLoop() {
+    const loop = () => {
+      if (this.currentScreen === 'gameplay') {
+        const inputState = { ...this.keys, cameraYaw: this.world.cameraYaw };
+        this.playerAvatar.update(inputState);
+        this.world.update(this.playerAvatar.position);
+      }
+      requestAnimationFrame(loop);
     };
+    loop();
+  }
 
-    this.playerAvatar.update(inputState);
-    this.world.update(this.playerAvatar.position);
+  startStudioLoop() {
+    const loop = () => {
+      if (this.currentScreen === 'studio' && this.studio) {
+        this.studio.render();
+      }
+      requestAnimationFrame(loop);
+    };
+    loop();
+  }
 
-    // コインスコアUI更新
-    document.getElementById('weblox-coin-score').textContent = `🪙 ${this.world.score}`;
+  renderAvatarPreview() {
+    // 試着UI
+    const colorContainer = document.getElementById('avatar-colors-selector');
+    colorContainer.innerHTML = '';
+    AVATAR_COLORS.forEach(c => {
+      const el = document.createElement('div');
+      el.style.cssText = `width: 45px; height: 45px; border-radius: 50%; background: ${c.hex}; cursor: pointer; border: 3px solid #fff;`;
+      el.addEventListener('click', () => {
+        audioEngine.playSE('click');
+        localStorage.setItem('weblox_color', c.hex);
+      });
+      colorContainer.appendChild(el);
+    });
   }
 }
 

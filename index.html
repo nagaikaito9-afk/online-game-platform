@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Versa Game Portal | オンラインゲーム ＆ WEBLOX メタバース</title>
+  <link rel="icon" type="image/png" href="online-game-platform/favicon.png">
+  <style>
+    body {
+      margin: 0; padding: 0;
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #0b0e14;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: radial-gradient(circle at center, #1a1e29 0%, #05080f 100%);
+    }
+    h1 {
+      font-size: 2.5rem;
+      background: linear-gradient(135deg, #00f2fe, #7209b7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 2rem;
+    }
+    .portal-grid {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(0, 242, 254, 0.3);
+      border-radius: 20px;
+      padding: 2rem;
+      width: 320px;
+      text-align: center;
+      text-decoration: none;
+      color: #fff;
+      transition: transform 0.3s, border-color 0.3s;
+    }
+    .card:hover {
+      transform: translateY(-8px);
+      border-color: #00f2fe;
+      box-shadow: 0 10px 30px rgba(0, 242, 254, 0.3);
+    }
+    .card-icon { font-size: 4rem; margin-bottom: 1rem; }
+    .card-title { font-size: 1.4rem; font-weight: bold; margin-bottom: 0.5rem; }
+    .card-desc { font-size: 0.85rem; color: #a0aec0; }
+  </style>
+</head>
+<body>
+  <h1>🎮 ゲーム ＆ メタバース ポータル</h1>
+  <div class="portal-grid">
+    <a href="WEBLOX/index.html" class="card">
+      <div class="card-icon">🧊</div>
+      <div class="card-title">WEBLOX (Roblox 3D)</div>
+      <div class="card-desc">3Dアバター作成、Obby、バトル、そして WEBLOX Studio で3Dゲームを制作＆公開！</div>
+    </a>
+    <a href="online-game-platform/index.html" class="card">
+      <div class="card-icon">🎯</div>
+      <div class="card-title">対戦ゲームプラットフォーム</div>
+      <div class="card-desc">囲碁・将棋・オセロ・チェス・五目並べ・トランプ・〇✕オンライン対戦＆ランク！</div>
+    </a>
+  </div>
+</body>
+</html>
