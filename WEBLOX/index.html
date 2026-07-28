@@ -3,122 +3,191 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WEBLOX | 公式メタバース＆ゲーム制作プラットフォーム</title>
-  <meta name="description" content="本物のRoblox（ロブロックス）を完全再現！3Dアバター作成、Obbyアスレチック、WEBLOX Studioでオリジナルの3Dゲームを作って公開しよう！">
-  <link rel="icon" type="image/png" href="../favicon.png">
-  <link rel="shortcut icon" href="../favicon.png">
+  <title>Roblox | WEBLOX メタバース＆ゲーム制作プラットフォーム</title>
+  <meta name="description" content="本物のRoblox（ロブロックス）を完全再現！3Dアバターカスタマイズ、Obbyアスレチック、WEBLOX Studioでオリジナルの3Dゲームを制作＆公式公開しよう！">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="shortcut icon" href="favicon.png">
   <link rel="stylesheet" href="style.css">
   <!-- Three.js 3Dグラフィックライブラリ -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
-  <!-- 画面1: 🔐 Roblox公式ログイン＆サインアップポータル -->
+  <!-- ------------------------------------------------------------------------
+       画面1: 🔐 Roblox公式完全再現 ログイン＆サインアップポータル
+       ------------------------------------------------------------------------ -->
   <section id="screen-login" class="screen-view active">
-    <div class="login-container">
-      <div class="login-card">
-        <div class="login-logo">🧊 WEBLOX</div>
-        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">
-          メタバースで創造し、共有し、世界中のプレイヤーと遊ぼう！
-        </p>
-        <div style="text-align: left;">
-          <label style="font-size: 0.85rem; font-weight: bold; margin-bottom: 0.3rem; display: block;">ユーザーネーム / メールアドレス</label>
-          <input type="text" id="input-username" class="login-input" placeholder="RobloxGamer_99">
-          
-          <label style="font-size: 0.85rem; font-weight: bold; margin-bottom: 0.3rem; display: block;">パスワード</label>
-          <input type="password" id="input-password" class="login-input" placeholder="••••••••">
-
-          <button id="btn-login-submit" class="btn-roblox-primary" style="margin-top: 0.5rem;">ログイン / 新規登録</button>
+    <div class="login-screen-bg">
+      <div class="login-modal">
+        <div class="login-logo-header">
+          <span class="login-logo-box"></span> WEBLOX
         </div>
+        <div class="login-subtitle">世界中のプレイヤーと創造し、体験を共有しよう</div>
+
+        <div class="form-group">
+          <label class="form-label">ユーザーネーム / メールアドレス</label>
+          <input type="text" id="input-username" class="form-input" placeholder="RobloxMaster_2026">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">パスワード</label>
+          <input type="password" id="input-password" class="form-input" placeholder="••••••••">
+        </div>
+
+        <button id="btn-login-submit" class="btn-rbx-primary">ログイン / サインアップ</button>
       </div>
     </div>
   </section>
 
-  <!-- Roblox 公式風ナビゲーションバー (ログイン後常時表示) -->
-  <header id="main-roblox-nav" class="roblox-nav">
-    <div class="nav-brand" id="nav-brand-logo">🧊 WEBLOX</div>
-    <div class="nav-links">
-      <div id="nav-discover" class="nav-item active">🎮 探す (Discover)</div>
-      <div id="nav-avatar" class="nav-item">🛍️ アバターショップ</div>
-      <div id="nav-studio" class="nav-item" style="color: var(--roblox-green);">🛠️ WEBLOX Studio (ゲーム制作)</div>
-    </div>
-    <div class="nav-user">
-      <span id="display-webux" style="font-weight: bold; color: var(--roblox-gold);">🪙 500</span>
-      <span id="display-username" style="font-weight: bold;">Gamer</span>
-      <button id="btn-logout" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 0.85rem;">ログアウト</button>
-    </div>
-  </header>
-
-  <!-- 画面2: 🏠 Discover (ゲームダッシュボード) -->
-  <section id="screen-dashboard" class="screen-view">
-    <div class="dashboard-content">
-      <h2 style="font-size: 1.8rem; margin-bottom: 0.5rem;">🔥 おすすめのゲームワールド</h2>
-      <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">世界中のクリエイターが作成した3Dメタバースで遊ぼう！</p>
+  <!-- ------------------------------------------------------------------------
+       画面2: 🏠 Roblox メインポータル (トップヘッダー ＋ サイドバー ＋ Discover)
+       ------------------------------------------------------------------------ -->
+  <section id="screen-portal" class="screen-view">
+    <div class="main-portal-layout">
       
-      <div id="discover-games-grid" class="games-grid"></div>
+      <!-- 公式トップヘッダーバー -->
+      <header class="rbx-top-header">
+        <div class="header-left">
+          <div id="nav-brand-logo" class="header-logo">
+            <span class="login-logo-box" style="width:24px; height:24px;"></span> WEBLOX
+          </div>
+          <div class="search-bar-container">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" placeholder="体験やアバターアイテムを検索...">
+          </div>
+        </div>
+
+        <div class="header-right">
+          <div class="robux-badge">
+            🪙 <span id="display-webux">500</span> Robux
+          </div>
+          <div style="font-weight: bold; font-size: 0.9rem;" id="display-username">Gamer</div>
+          <button id="btn-logout" class="btn-rbx-primary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; width: auto; background: rgba(255,255,255,0.1);">ログアウト</button>
+        </div>
+      </header>
+
+      <!-- 公式左サイドバー -->
+      <aside class="rbx-sidebar">
+        <div id="sidebar-home" class="sidebar-item active">🏠 ホーム (Home)</div>
+        <div id="sidebar-discover" class="sidebar-item">🎮 探す (Discover)</div>
+        <div id="sidebar-avatar" class="sidebar-item">🛍️ アバター (Avatar)</div>
+        <div id="sidebar-studio" class="sidebar-item studio-link">🛠️ WEBLOX Studio (制作)</div>
+        <div id="sidebar-friends" class="sidebar-item">👥 フレンド (Friends)</div>
+      </aside>
+
+      <!-- メインコンテンツエリア -->
+      <main class="portal-main-content">
+        <div class="section-title">
+          🔥 人気の体験 (Popular Experiences)
+        </div>
+        <div id="discover-games-grid" class="discover-grid"></div>
+
+        <div class="section-title" style="margin-top: 2rem;">
+          🛠️ あなたのオリジナル作品
+        </div>
+        <div id="my-custom-games-grid" class="discover-grid"></div>
+      </main>
     </div>
   </section>
 
-  <!-- 画面3: 🛍️ 3Dアバターカスタマイズ -->
+  <!-- ------------------------------------------------------------------------
+       画面3: 🛍️ Roblox 公式アバターエディタ
+       ------------------------------------------------------------------------ -->
   <section id="screen-avatar" class="screen-view">
-    <div class="dashboard-content">
-      <h2 style="font-size: 1.8rem; margin-bottom: 1rem;">🛍️ 3Dアバターエディタ</h2>
-      <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
-        <div style="flex: 1; min-width: 300px; background: var(--roblox-card-bg); padding: 1.5rem; border-radius: 16px;">
-          <h3 style="margin-bottom: 1rem;">🎨 アバターカラー選択</h3>
-          <div id="avatar-colors-selector" style="display: flex; gap: 1rem; flex-wrap: wrap;"></div>
+    <div class="main-portal-layout">
+      <aside class="rbx-sidebar">
+        <div id="avatar-nav-back" class="sidebar-item active">⬅️ ポータルに戻る</div>
+      </aside>
+      <main class="portal-main-content">
+        <div class="section-title">🛍️ 3Dアバター カスタマイズ</div>
+        <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 300px; background: var(--rbx-card-bg); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--rbx-border);">
+            <h3 style="margin-bottom: 1rem;">🎨 肌のカラーを選択</h3>
+            <div id="avatar-colors-selector" style="display: flex; gap: 1rem; flex-wrap: wrap;"></div>
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   </section>
 
-  <!-- 画面4: 🛠️ WEBLOX Studio (3Dゲーム制作エンジン) -->
+  <!-- ------------------------------------------------------------------------
+       画面4: 🛠️ WEBLOX Studio (Roblox Studio 公式クローン)
+       ------------------------------------------------------------------------ -->
   <section id="screen-studio" class="screen-view">
-    <div class="studio-container">
-      <div class="studio-sidebar">
-        <h3 style="font-size: 1.1rem; color: var(--roblox-green);">🛠️ Studio ツールボックス</h3>
-        <div style="font-size: 0.85rem; color: var(--text-secondary);">パーツを追加して3D世界を構築！</div>
-
-        <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem;">
-          <button class="studio-add-part-btn btn-roblox-primary" data-part="block">📦 ブロック追加</button>
-          <button class="studio-add-part-btn btn-roblox-primary" data-part="sphere" style="background:#ffb703; color:#000;">🔮 球体追加</button>
-          <button class="studio-add-part-btn btn-roblox-primary" data-part="cylinder" style="background:#00ff87; color:#000;">🛢️ シリンダー追加</button>
-          <button class="studio-add-part-btn btn-roblox-primary" data-part="spawn" style="background:#38b000;">🏁 スポーン地点追加</button>
-          <button class="studio-add-part-btn btn-roblox-primary" data-part="killblock" style="background:#d90429;">🔥 マグマキルブロック</button>
+    <div class="studio-layout">
+      <!-- リボンツールバー -->
+      <div class="studio-ribbon">
+        <div class="ribbon-tabs">
+          <div class="ribbon-tab active">Home</div>
+          <div class="ribbon-tab">Model</div>
+          <div class="ribbon-tab">Test</div>
+          <div id="studio-btn-exit" class="ribbon-tab" style="margin-left: auto; color: var(--rbx-red);">❌ Studioを閉じる</div>
         </div>
 
-        <hr style="border-color: rgba(255,255,255,0.1); margin: 1rem 0;">
+        <div class="ribbon-actions">
+          <div class="ribbon-btn-group">
+            <button class="ribbon-btn studio-add-part" data-part="block">📦 Part</button>
+            <button class="ribbon-btn studio-add-part" data-part="sphere">🔮 Sphere</button>
+            <button class="ribbon-btn studio-add-part" data-part="cylinder">🛢️ Cylinder</button>
+            <button class="ribbon-btn studio-add-part" data-part="spawn" style="color:var(--rbx-green);">🏁 Spawn</button>
+            <button class="ribbon-btn studio-add-part" data-part="killblock" style="color:var(--rbx-red);">🔥 KillBlock</button>
+          </div>
 
-        <div id="studio-selected-info" style="font-size: 0.85rem; color: var(--text-secondary);">パーツを選択していません</div>
+          <div class="ribbon-btn-group">
+            <button class="ribbon-btn studio-tool-btn" data-tool="delete" style="color:var(--rbx-red);">🗑️ 削除</button>
+          </div>
 
-        <button id="btn-publish-studio-game" class="btn-roblox-primary" style="margin-top: auto; background: linear-gradient(135deg, var(--roblox-green), #00b4d8);">🚀 ゲームを公開 (Publish)</button>
+          <button id="btn-publish-studio-game" class="btn-rbx-primary" style="margin-left: auto; width: auto; padding: 0.5rem 1.2rem; background: var(--rbx-green); color: #000;">
+            🚀 ゲームを公開 (Publish to WEBLOX)
+          </button>
+        </div>
       </div>
 
-      <div class="studio-viewport">
-        <canvas id="studio-canvas"></canvas>
-        
-        <div class="studio-toolbar">
-          <button class="studio-tool-btn" data-tool="select">🔍 選択 (Select)</button>
-          <button class="studio-tool-btn" data-tool="delete" style="background:#d90429;">🗑️ 削除 (Delete)</button>
+      <!-- Studio 作業領域 -->
+      <div class="studio-workspace-area">
+        <div style="flex: 1; position: relative;">
+          <canvas id="studio-canvas"></canvas>
+        </div>
+
+        <!-- 右サイド Explorer ＆ Properties パネル -->
+        <div class="studio-explorer-panel">
+          <div class="panel-title-bar">Explorer</div>
+          <div id="studio-explorer-tree" class="explorer-tree"></div>
+
+          <div class="panel-title-bar">Properties</div>
+          <div id="studio-properties-content" class="properties-panel"></div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- 画面5: 🎮 3Dゲームプレイ画面 -->
+  <!-- ------------------------------------------------------------------------
+       画面5: 🎮 3Dゲームプレイ画面 (WASD移動 ＆ アクション)
+       ------------------------------------------------------------------------ -->
   <section id="screen-gameplay" class="screen-view">
     <canvas id="weblox-canvas"></canvas>
     
-    <div style="position: absolute; top: 1rem; left: 1rem; z-index: 20;">
-      <button id="btn-back-to-dash" class="btn-roblox-primary" style="padding: 0.5rem 1rem; width: auto;">🏠 Robloxメニューに戻る</button>
-    </div>
-    
-    <div style="position: absolute; top: 1rem; right: 1rem; z-index: 20; background: rgba(0,0,0,0.6); padding: 0.5rem 1rem; border-radius: 20px;">
-      <span id="current-gameplay-title" style="font-weight: bold; color: var(--roblox-gold);">WEBLOX Game</span>
+    <div class="gameplay-hud">
+      <div class="hud-interactive" style="display: flex; justify-content: space-between; width: 100%;">
+        <button id="btn-gameplay-exit" class="btn-rbx-primary" style="width: auto; padding: 0.5rem 1.2rem; background: rgba(25, 27, 34, 0.9);">
+          🏠 Robloxメニューに戻る
+        </button>
+
+        <div style="background: rgba(25, 27, 34, 0.9); padding: 0.5rem 1.2rem; border-radius: 20px; font-weight: bold; color: var(--rbx-gold);">
+          <span id="gameplay-title-display">WEBLOX Experience</span>
+        </div>
+      </div>
+
+      <div class="hud-interactive" style="display: flex; justify-content: space-between; align-items: flex-end; width: 100%;">
+        <div style="background: rgba(0,0,0,0.6); padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.8rem; color: var(--rbx-text-sub);">
+          🎮 操作: [WASD] 移動 ｜ [Space] ジャンプ ｜ [マウスドラッグ] 視点回転 ｜ [B] ブロック配置 (建築)
+        </div>
+        <div id="gameplay-emote-bar" style="display: flex; gap: 0.5rem;"></div>
+      </div>
     </div>
   </section>
 
-  <!-- WEBLOX スクリプト群 -->
+  <!-- スクリプト統合 -->
   <script src="js/config.js"></script>
   <script src="js/audio.js"></script>
   <script src="js/avatar.js"></script>

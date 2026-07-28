@@ -1,174 +1,245 @@
 /**
  * WEBLOX - studio.js
- * ブラウザ完結型 3Dゲーム制作エンジン (WEBLOX Studio)
+ * ブラウザ完全再現型 3Dゲーム制作エンジン (Roblox Studio Clone)
  */
 
 class WebloxStudio {
   constructor(canvas) {
     this.canvas = canvas;
-    this.objects = [];
+    this.workspaceObjects = [];
     this.selectedObject = null;
-    this.currentTool = 'select'; // select, move, scale, delete
-    this.myPublishedGames = JSON.parse(localStorage.getItem('weblox_my_games') || '[]');
+    this.currentTool = 'select'; // select, move, rotate, scale, delete
+    this.scriptEditorTarget = null;
 
     this.initThree();
-    this.setupGrid();
+    this.setupWorkspace();
     this.bindEvents();
+    this.updateExplorer();
   }
 
   initThree() {
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x1e1e2e);
+    this.scene.background = new THREE.Color(0x181920);
 
     this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    this.camera.position.set(15, 15, 20);
+    this.camera.position.set(18, 18, 24);
     this.camera.lookAt(0, 0, 0);
 
     this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.shadowMap.enabled = true;
 
-    // ライト
-    const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+    // Roblox Studio ライティング
+    const ambient = new THREE.AmbientLight(0xffffff, 0.65);
     this.scene.add(ambient);
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    dirLight.position.set(20, 40, 20);
-    dirLight.castShadow = true;
-    this.scene.add(dirLight);
 
-    // レイキャスター
+    const sun = new THREE.DirectionalLight(0xffffff, 0.85);
+    sun.position.set(30, 60, 30);
+    sun.castShadow = true;
+    this.scene.add(sun);
+
     this.raycaster = new THREE.Raycaster();
     this.mouse = new THREE.Vector2();
   }
 
-  setupGrid() {
-    const grid = new THREE.GridHelper(60, 30, 0x00f2fe, 0x444466);
-    grid.position.y = 0;
+  setupWorkspace() {
+    // Roblox 公式 Baseplate (ベースプレート)
+    const grid = new THREE.GridHelper(100, 50, 0x00a2ff, 0x333344);
+    grid.position.y = 0.01;
     this.scene.add(grid);
 
-    // 床
-    const floorGeo = new THREE.PlaneGeometry(60, 60);
-    const floorMat = new THREE.MeshStandardMaterial({ color: 0x282a36, roughness: 0.8 });
-    const floor = new THREE.Mesh(floorGeo, floorMat);
-    floor.rotation.x = -Math.PI / 2;
-    floor.receiveShadow = true;
-    this.scene.add(floor);
+    const baseplateGeo = new THREE.BoxGeometry(100, 1, 100);
+    const baseplateMat = new THREE.MeshStandardMaterial({ color: 0x222431, roughness: 0.8 });
+    const baseplate = new THREE.Mesh(baseplateGeo, baseplateMat);
+    baseplate.position.y = -0.5;
+    baseplate.receiveShadow = true;
+    baseplate.name = 'Baseplate';
+    baseplate.userData = { id: 'baseplate', type: 'Baseplate', anchored: true };
+    this.scene.add(baseplate);
+
+    // デフォルト SpawnLocation
+    this.addPart('spawn', 0, 0.1, 0, 'SpawnLocation');
   }
 
-  addPart(type) {
+  addPart(type, x = 0, y = 2, z = 0, customName = null) {
     let geo;
-    let color = 0x00f2fe;
-    let isKill = false;
+    let color = 0x00a2ff;
+    let name = customName || `Part_${this.workspaceObjects.length + 1}`;
+    let scriptType = 'none';
 
     if (type === 'block') {
-      geo = new THREE.BoxGeometry(2, 2, 2);
+      geo = new THREE.BoxGeometry(3, 3, 3);
     } else if (type === 'sphere') {
-      geo = new THREE.SphereGeometry(1.2, 16, 16);
+      geo = new THREE.SphereGeometry(2, 24, 24);
       color = 0xffb703;
     } else if (type === 'cylinder') {
-      geo = new THREE.CylinderGeometry(1, 1, 3, 16);
-      color = 0x00ff87;
+      geo = new THREE.CylinderGeometry(1.5, 1.5, 4, 24);
+      color = 0x00e676;
     } else if (type === 'spawn') {
-      geo = new THREE.CylinderGeometry(2, 2, 0.2, 16);
-      color = 0x38b000;
+      geo = new THREE.CylinderGeometry(3, 3, 0.3, 24);
+      color = 0x00e676;
+      name = 'SpawnLocation';
     } else if (type === 'killblock') {
-      geo = new THREE.BoxGeometry(3, 1, 3);
-      color = 0xd90429;
-      isKill = true;
+      geo = new THREE.BoxGeometry(4, 1.5, 4);
+      color = 0xff3366;
+      name = 'KillBlock';
+      scriptType = 'kill';
     }
 
     const mat = new THREE.MeshStandardMaterial({
       color: color,
-      emissive: isKill ? 0xd90429 : 0x000000,
-      emissiveIntensity: isKill ? 0.6 : 0,
+      emissive: scriptType === 'kill' ? 0xff3366 : 0x000000,
+      emissiveIntensity: scriptType === 'kill' ? 0.5 : 0,
       roughness: 0.3
     });
 
     const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.set(0, 2, 0);
+    mesh.position.set(x, y, z);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
-    mesh.userData = { type, isKill };
+    mesh.name = name;
+    mesh.userData = {
+      id: 'part_' + Date.now() + Math.random().toString(36).substr(2, 4),
+      type: type,
+      scriptType: scriptType,
+      anchored: true
+    };
 
     this.scene.add(mesh);
-    this.objects.push(mesh);
+    this.workspaceObjects.push(mesh);
     this.selectObject(mesh);
-    audioEngine.playSE('click');
+    this.updateExplorer();
+    if (window.audioEngine) window.audioEngine.playSE('click');
   }
 
   selectObject(mesh) {
     this.selectedObject = mesh;
-    this.updateExplorerUI();
+    this.updateExplorer();
+    this.updatePropertiesPanel();
   }
 
   bindEvents() {
     this.canvas.addEventListener('click', (e) => {
-      this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-      this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      const rect = this.canvas.getBoundingClientRect();
+      this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
       this.raycaster.setFromCamera(this.mouse, this.camera);
-      const intersects = this.raycaster.intersectObjects(this.objects);
+      const intersects = this.raycaster.intersectObjects(this.workspaceObjects);
 
       if (intersects.length > 0) {
+        const obj = intersects[0].object;
         if (this.currentTool === 'delete') {
-          const target = intersects[0].object;
-          this.scene.remove(target);
-          this.objects = this.objects.filter(o => o !== target);
+          this.scene.remove(obj);
+          this.workspaceObjects = this.workspaceObjects.filter(o => o !== obj);
           this.selectedObject = null;
-          audioEngine.playSE('hit');
+          this.updateExplorer();
+          this.updatePropertiesPanel();
+          if (window.audioEngine) window.audioEngine.playSE('hit');
         } else {
-          this.selectObject(intersects[0].object);
-          audioEngine.playSE('click');
+          this.selectObject(obj);
         }
       }
     });
   }
 
-  setTool(tool) {
-    this.currentTool = tool;
+  updateExplorer() {
+    const treeEl = document.getElementById('studio-explorer-tree');
+    if (!treeEl) return;
+
+    treeEl.innerHTML = `
+      <div class="tree-node" style="font-weight:bold; color:var(--rbx-primary);">📁 Workspace</div>
+    `;
+
+    this.workspaceObjects.forEach(obj => {
+      const isSel = this.selectedObject === obj;
+      const node = document.createElement('div');
+      node.className = `tree-node ${isSel ? 'selected' : ''}`;
+      node.style.paddingLeft = '1.5rem';
+      node.innerHTML = `🧊 ${obj.name}`;
+      node.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.selectObject(obj);
+      });
+      treeEl.appendChild(node);
+    });
   }
 
-  changeSelectedColor(hexColor) {
-    if (this.selectedObject) {
-      this.selectedObject.material.color.set(hexColor);
-      audioEngine.playSE('click');
+  updatePropertiesPanel() {
+    const propEl = document.getElementById('studio-properties-content');
+    if (!propEl) return;
+
+    if (!this.selectedObject) {
+      propEl.innerHTML = '<div style="color:var(--rbx-text-sub);">オブジェクトが選択されていません</div>';
+      return;
     }
+
+    const obj = this.selectedObject;
+    propEl.innerHTML = `
+      <div style="font-weight:bold; color:#fff; margin-bottom:0.5rem;">${obj.name} のプロパティ</div>
+      <table style="width:100%; font-size:0.8rem; color:var(--rbx-text-sub);">
+        <tr><td style="padding:0.2rem;">Name</td><td><input type="text" id="prop-name-input" value="${obj.name}" style="background:#111216; color:#fff; border:1px solid #333; width:100%;"></td></tr>
+        <tr><td style="padding:0.2rem;">PosX</td><td><input type="number" id="prop-pos-x" value="${obj.position.x.toFixed(1)}" step="0.5" style="background:#111216; color:#fff; border:1px solid #333; width:100%;"></td></tr>
+        <tr><td style="padding:0.2rem;">PosY</td><td><input type="number" id="prop-pos-y" value="${obj.position.y.toFixed(1)}" step="0.5" style="background:#111216; color:#fff; border:1px solid #333; width:100%;"></td></tr>
+        <tr><td style="padding:0.2rem;">PosZ</td><td><input type="number" id="prop-pos-z" value="${obj.position.z.toFixed(1)}" step="0.5" style="background:#111216; color:#fff; border:1px solid #333; width:100%;"></td></tr>
+        <tr><td style="padding:0.2rem;">Script</td><td>
+          <select id="prop-script-select" style="background:#111216; color:#fff; border:1px solid #333; width:100%;">
+            <option value="none" ${obj.userData.scriptType === 'none' ? 'selected' : ''}>なし (Normal)</option>
+            <option value="kill" ${obj.userData.scriptType === 'kill' ? 'selected' : ''}>🔥 マグマキル (KillBlock)</option>
+            <option value="coin" ${obj.userData.scriptType === 'coin' ? 'selected' : ''}>🪙 コイン獲得 (Coin)</option>
+            <option value="boost" ${obj.userData.scriptType === 'boost' ? 'selected' : ''}>⚡ ハイパージャンプ (Boost)</option>
+          </select>
+        </td></tr>
+      </table>
+    `;
+
+    document.getElementById('prop-name-input').addEventListener('change', (e) => {
+      obj.name = e.target.value.trim() || obj.name;
+      this.updateExplorer();
+    });
+    document.getElementById('prop-pos-x').addEventListener('change', (e) => { obj.position.x = parseFloat(e.target.value) || 0; });
+    document.getElementById('prop-pos-y').addEventListener('change', (e) => { obj.position.y = parseFloat(e.target.value) || 0; });
+    document.getElementById('prop-pos-z').addEventListener('change', (e) => { obj.position.z = parseFloat(e.target.value) || 0; });
+    document.getElementById('prop-script-select').addEventListener('change', (e) => {
+      obj.userData.scriptType = e.target.value;
+      if (e.target.value === 'kill') {
+        obj.material.color.setHex(0xff3366);
+        obj.material.emissive.setHex(0xff3366);
+        obj.material.emissiveIntensity = 0.5;
+      }
+    });
   }
 
-  updateExplorerUI() {
-    const infoEl = document.getElementById('studio-selected-info');
-    if (!infoEl) return;
-
-    if (this.selectedObject) {
-      infoEl.innerHTML = `
-        <div style="font-weight:bold; color:var(--accent-cyan);">選択中パーツ: ${this.selectedObject.userData.type}</div>
-        <div style="font-size:0.8rem; margin-top:0.3rem;">位置: (${this.selectedObject.position.x.toFixed(1)}, ${this.selectedObject.position.y.toFixed(1)}, ${this.selectedObject.position.z.toFixed(1)})</div>
-      `;
-    } else {
-      infoEl.textContent = 'パーツを選択していません';
-    }
-  }
-
-  // 作成したゲームを保存・Webloxポータルへ公開 (Publish)
-  publishGame(gameName, description) {
-    const gameData = {
-      id: 'custom_' + Date.now(),
-      name: gameName || 'マイオリジナルゲーム',
-      category: '自作',
-      author: localStorage.getItem('weblox_username') || 'クリエイター',
+  // 作成したオリジナルゲームを保存して WEBLOX ポータルへ一発公開！
+  publishCurrentGame(title, desc) {
+    const myGames = JSON.parse(localStorage.getItem('weblox_my_games') || '[]');
+    const newGame = {
+      id: 'studio_game_' + Date.now(),
+      name: title || '自作Robloxワールド',
+      category: 'WEBLOX Studio作品',
+      author: localStorage.getItem('weblox_username') || 'RobloxStudioPro',
       likes: '100%',
       playing: '1',
-      desc: description || 'WEBLOX Studioで作成されたゲームワールド！',
+      desc: desc || 'WEBLOX Studioでフルカスタマイズ制作された完全オリジナルゲーム！',
       icon: '🎮',
-      bg: '#7209b7',
-      isCustom: true
+      bg: '#00a2ff',
+      objects: this.workspaceObjects.map(o => ({
+        type: o.userData.type,
+        name: o.name,
+        x: o.position.x,
+        y: o.position.y,
+        z: o.position.z,
+        color: o.material.color.getHex(),
+        scriptType: o.userData.scriptType
+      }))
     };
 
-    this.myPublishedGames.push(gameData);
-    localStorage.setItem('weblox_my_games', JSON.stringify(this.myPublishedGames));
-    WEBLOX_WORLDS.unshift(gameData);
-    audioEngine.playSE('coin');
-    alert(`🎉 ゲーム「${gameData.name}」を公開(Publish)しました！\nゲーム一覧からプレイできます！`);
+    myGames.unshift(newGame);
+    localStorage.setItem('weblox_my_games', JSON.stringify(myGames));
+    if (window.WEBLOX_WORLDS) window.WEBLOX_WORLDS.unshift(newGame);
+
+    if (window.audioEngine) window.audioEngine.playSE('coin');
+    alert(`🎉 ゲーム「${newGame.name}」の公開 (Publish) に成功しました！\nRoblox Discover 画面に追加されました！`);
   }
 
   render() {
