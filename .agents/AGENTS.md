@@ -14,12 +14,17 @@ AntiGravity はセッションが新しくなった時でも、必ずこのル�
 
 ## 🔑 主要設定・公開情報
 
-### 🎮 1. WEBLOX (3Dロブロックス風メタバース)
+### 🔬 1. CellSimulation (The Powder Toy型 ピクセル物理シミュレーター)
+- **GitHub**: `https://github.com/nagaikaito9-afk/online-game-platform.git` (または独立リポジトリ)
+- **Vercel ディレクトリ**: `CellSimulation/`
+- **フォルダー**: `CellSimulation/`
+
+### 🎮 2. WEBLOX (3Dロブロックス風メタバース)
 - **GitHub**: `https://github.com/nagaikaito9-afk/WEBLOX.git`
 - **Vercel プロジェクト名**: `new-weblox`
 - **フォルダー**: `WEBLOX/`
 
-### 🎯 2. online-game-platform (2D対戦ゲームプラットフォーム)
+### 🎯 3. online-game-platform (2D対戦ゲームプラットフォーム)
 - **GitHub**: `https://github.com/nagaikaito9-afk/online-game-platform.git`
 - **Vercel 公開URL**: `https://online-game-platform-three.vercel.app/`
 - **フォルダー**: `online-game-platform/`

@@ -6,12 +6,17 @@ AntiGravity（AIアシスタント）のセッションが終了・リセット�
 
 ## 🌐 プロジェクト ＆ リポジトリ別公開情報
 
-### 🎮 1. WEBLOX (3Dロブロックス風メタバース)
+### 🔬 1. CellSimulation (The Powder Toy型 ピクセル物理シミュレーター)
+- **GitHubリポジトリ**: `online-game-platform` / 単独リポジトリ
+- **Vercel 公開**: `CellSimulation/` ルートまたは独立プロジェクトデプロイ
+- **格納ディレクトリ**: `CellSimulation/`
+
+### 🎮 2. WEBLOX (3Dロブロックス風メタバース)
 - **GitHubリポジトリ**: `WEBLOX` (`https://github.com/nagaikaito9-afk/WEBLOX.git`)
 - **Vercel プロジェクト名**: `new-weblox`
 - **格納ディレクトリ**: `WEBLOX/`
 
-### 🎯 2. VersaPlay Online (2D対戦ゲームプラットフォーム)
+### 🎯 3. VersaPlay Online (2D対戦ゲームプラットフォーム)
 - **GitHubリポジトリ**: `online-game-platform` (`https://github.com/nagaikaito9-afk/online-game-platform.git`)
 - **Vercel 公開URL**: [https://online-game-platform-three.vercel.app/](https://online-game-platform-three.vercel.app/)
 - **格納ディレクトリ**: `online-game-platform/`
