@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cell Simulation | 宇宙・地球・細胞発生・文明検証 放置シミュレーション</title>
+  <meta name="description" content="無のゆらぎから宇宙、地球、アミノ酸の合成、奇跡の単細胞生物(細胞)の誕生、そして文明の開花を観察・検証する放置シミュレーションゲーム。">
+  <link rel="icon" type="image/png" href="../favicon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- シミュレーションパーティクルキャンバス -->
+  <canvas id="sim-canvas"></canvas>
+
+  <!-- UIレイヤー -->
+  <div class="ui-layer">
+    
+    <!-- トップ時代フェーズ ＆ リソース情報 -->
+    <div class="top-era-panel interactive">
+      <div id="era-title-display" class="era-title">🌌 宇宙創世期 (Cosmic Era)</div>
+      <div id="era-desc-display" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.3rem;">
+        無のゆらぎから素粒子が誕生。重力により原子が凝集し星雲が形成される。
+      </div>
+
+      <div class="era-stats-row">
+        <span id="energy-counter-display" style="color: var(--accent-cyan);">⚡ エネルギー: 0</span>
+        <span id="cell-counter-display" style="color: var(--accent-green);">🦠 生存細胞数: 0</span>
+      </div>
+    </div>
+
+    <!-- 発見通知ポップアップ -->
+    <div id="discovery-notification" class="notification-popup"></div>
+
+    <!-- ボトム操作パネル -->
+    <div class="bottom-control-panel">
+      <!-- タイムコントロール (一時停止 / 1x / 5x / 50x / 1000x) -->
+      <div class="time-control-group interactive">
+        <span style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted); margin-right: 0.3rem;">⏳ 速度:</span>
+        <button class="time-btn" data-speed="0">⏸️ 停止</button>
+        <button class="time-btn active" data-speed="1">1x</button>
+        <button class="time-btn" data-speed="5">5x</button>
+        <button class="time-btn" data-speed="50">50x</button>
+        <button class="time-btn" data-speed="1000" style="color: var(--accent-gold);">1000x 🚀</button>
+      </div>
+
+      <!-- アクションボタン群 -->
+      <div style="display: flex; gap: 0.8rem;" class="interactive">
+        <button id="btn-inject-catalyst" class="btn btn-primary">🧪 触媒・エネルギー注入</button>
+        <button id="btn-open-compendium" class="btn btn-secondary">📖 発見図鑑</button>
+        <button id="btn-reset-sim" class="btn btn-secondary" style="color: #ff3366;">🔄 最初から</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- モーダル: 発見図鑑 (Compendium) -->
+  <div id="modal-compendium" class="modal-overlay">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h3 style="font-size: 1.4rem;">📖 宇宙・生命・文明 発見図鑑</h3>
+        <button class="modal-close-btn" style="background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer;">&times;</button>
+      </div>
+      <div id="compendium-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem;"></div>
+    </div>
+  </div>
+
+  <!-- スクリプト統合 -->
+  <script src="js/tech_tree.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/simulation_engine.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
