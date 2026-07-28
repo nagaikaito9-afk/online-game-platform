@@ -598,6 +598,7 @@ body {
     <div class="user-badge">
       <span id="header-username">プレイヤー</span>
       <span id="header-title" class="title-tag">称号: 初めの一歩</span>
+      <button id="btn-friends-modal" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">👥 フレンド (<span id="header-friends-count">0</span>)</button>
       <button id="btn-titles-modal" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">🏆 称号図鑑</button>
     </div>
   </header>
@@ -669,14 +670,59 @@ body {
 
     <!-- 画面6: 対戦ゲームプレイ画面 -->
     <section id="screen-gameplay" class="screen-view">
-      <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <button id="btn-quit-game" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">✕ 降参・退室</button>
+      <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+        <div style="display: flex; gap: 0.5rem;">
+          <button id="btn-quit-game" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">✕ 降参・退室</button>
+          <button id="btn-add-friend-game" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">🤝 対戦相手にフレンド申請</button>
+        </div>
         <div id="gameplay-header-info" style="font-weight: bold; color: var(--accent-cyan);"></div>
       </div>
-      <div id="game-board-mount"></div>
+      <div style="display: flex; gap: 1.5rem; width: 100%; max-width: 1100px; justify-content: center; align-items: flex-start; flex-wrap: wrap;">
+        <div id="game-board-mount" style="flex: 1; min-width: 320px; display: flex; justify-content: center;"></div>
+
+        <!-- 試合中一時チャットボックス (試合終了時に全削除) -->
+        <div id="in-game-chat-panel" style="width: 280px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-glow); border-radius: 16px; padding: 1rem; display: flex; flex-direction: column; height: 420px;">
+          <div style="font-weight: bold; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--accent-gold); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.3rem;">
+            💬 対戦中チャット (終了後消去)
+          </div>
+          <div id="chat-messages-container" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.5rem; font-size: 0.85rem;">
+            <div style="color: var(--text-muted); font-size: 0.75rem; text-align: center;">チャットを開始できます</div>
+          </div>
+          <div style="display: flex; gap: 0.3rem;">
+            <input type="text" id="chat-input-text" placeholder="メッセージ..." style="flex: 1; padding: 0.5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.6); color: #fff; font-size: 0.85rem;">
+            <button id="btn-send-chat" class="btn btn-primary" style="padding: 0.5rem 0.8rem; font-size: 0.85rem;">送信</button>
+          </div>
+        </div>
+      </div>
     </section>
 
   </main>
+
+  <!-- モーダル4: フレンド管理・即時対戦モーダル -->
+  <div id="modal-friends" class="modal-overlay">
+    <div class="modal-content" style="max-width: 650px;">
+      <div class="modal-header">
+        <h3 style="font-size: 1.4rem;">👥 フレンド管理＆即時対戦</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+
+      <!-- 受信したフレンド申請 -->
+      <div style="margin-bottom: 1.5rem;">
+        <h4 style="font-size: 1rem; color: var(--accent-gold); margin-bottom: 0.5rem;">📥 届いているフレンド申請</h4>
+        <div id="friend-requests-list" style="display: flex; flex-direction: column; gap: 0.5rem;">
+          <div style="color: var(--text-muted); font-size: 0.85rem;">現在、届いている申請はありません</div>
+        </div>
+      </div>
+
+      <!-- フレンド一覧 -->
+      <div>
+        <h4 style="font-size: 1rem; color: var(--accent-cyan); margin-bottom: 0.5rem;">🤝 フレンド一覧</h4>
+        <div id="friends-list-container" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 250px; overflow-y: auto;">
+          <div style="color: var(--text-muted); font-size: 0.85rem;">フレンドがまだいません。対戦画面からフレンド申請してみましょう！</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- モーダル1: 設定 (BGM / SE 音量調節) -->
   <div id="modal-settings" class="modal-overlay">
@@ -1187,7 +1233,9 @@ class RankTitleManager {
       stats: gameStats,
       totalPlays: 0,
       totalWins: 0,
-      currentWinStreak: 0
+      currentWinStreak: 0,
+      friends: [],
+      friendRequests: []
     };
   }
 
@@ -2412,11 +2460,15 @@ class AppController {
     this.selectedGameId = null;
     this.selectedAiLevel = 1;
     this.currentGameInstance = null;
+    this.currentMatchInfo = null;
+    this.chatMessages = [];
+    this.roomSubscription = null;
 
     this.initElements();
     this.bindEvents();
     this.updateHeaderUI();
     this.showScreen('home');
+    this.setupDisconnectHandler();
   }
 
   initElements() {
@@ -2432,8 +2484,23 @@ class AppController {
     this.modals = {
       settings: document.getElementById('modal-settings'),
       supabase: document.getElementById('modal-supabase'),
-      titles: document.getElementById('modal-titles')
+      titles: document.getElementById('modal-titles'),
+      friends: document.getElementById('modal-friends')
     };
+  }
+
+  // タブ閉じ・切断時の不戦勝判定
+  setupDisconnectHandler() {
+    window.addEventListener('beforeunload', (e) => {
+      if (this.currentMatchInfo && this.currentMatchInfo.roomId && !this.isGameFinished) {
+        if (supabaseManager.client) {
+          supabaseManager.client
+            .from('game_rooms')
+            .update({ status: 'abandoned', winner: this.currentMatchInfo.isHost ? 'guest' : 'host' })
+            .eq('id', this.currentMatchInfo.roomId);
+        }
+      }
+    });
   }
 
   showScreen(screenKey) {
@@ -2441,8 +2508,26 @@ class AppController {
     Object.keys(this.screens).forEach(key => {
       if (this.screens[key]) this.screens[key].classList.remove('active');
     });
+
+    // ゲーム画面を離れる際は一時チャットとルーム購読を完全クリア
+    if (screenKey !== 'gameplay') {
+      this.clearInGameChat();
+      if (this.roomSubscription && supabaseManager.client) {
+        supabaseManager.client.removeChannel(this.roomSubscription);
+        this.roomSubscription = null;
+      }
+    }
+
     if (this.screens[screenKey]) {
       this.screens[screenKey].classList.add('active');
+    }
+  }
+
+  clearInGameChat() {
+    this.chatMessages = [];
+    const container = document.getElementById('chat-messages-container');
+    if (container) {
+      container.innerHTML = '<div style="color: var(--text-muted); font-size: 0.75rem; text-align: center;">チャットを開始できます</div>';
     }
   }
 
@@ -2460,6 +2545,11 @@ class AppController {
     document.getElementById('header-username').textContent = user.username;
     const titleObj = rankTitleManager.getEquippedTitle();
     document.getElementById('header-title').textContent = `称号: ${titleObj.name}`;
+
+    const friendCountEl = document.getElementById('header-friends-count');
+    if (friendCountEl) {
+      friendCountEl.textContent = (user.friends || []).length;
+    }
   }
 
   bindEvents() {
@@ -2498,20 +2588,58 @@ class AppController {
       this.showScreen('gameSelect');
     });
 
+    // 降参・退室時の不戦敗処理
     document.getElementById('btn-quit-game').addEventListener('click', () => {
-      if (confirm('ゲームを終了してゲーム選択画面へ戻りますか？')) {
+      if (confirm('ゲームを途中退室しますか？（※相手の不戦勝となります）')) {
+        if (this.currentMatchInfo && this.currentMatchInfo.roomId && supabaseManager.client) {
+          supabaseManager.client
+            .from('game_rooms')
+            .update({ status: 'abandoned', winner: this.currentMatchInfo.isHost ? 'guest' : 'host' })
+            .eq('id', this.currentMatchInfo.roomId);
+        }
+        audioManager.playSE('lose');
         this.showScreen('gameSelect');
       }
     });
 
-    const sbBtn = document.getElementById('btn-supabase-modal');
-    if (sbBtn) {
-      sbBtn.addEventListener('click', () => {
-        document.getElementById('supabase-input-url').value = supabaseManager.url;
-        document.getElementById('supabase-input-key').value = supabaseManager.key;
-        this.openModal('supabase');
+    // 対戦画面でのフレンド申請ボタン
+    document.getElementById('btn-add-friend-game').addEventListener('click', () => {
+      if (!this.currentMatchInfo) {
+        alert('対戦相手がいません。');
+        return;
+      }
+      const opp = this.currentMatchInfo;
+      const user = rankTitleManager.userData;
+      if (!user.friends) user.friends = [];
+
+      const exists = user.friends.some(f => f.name === opp.opponentName);
+      if (exists) {
+        alert(`${opp.opponentName} さんはすでにフレンドです！`);
+        return;
+      }
+
+      user.friends.push({
+        id: 'f_' + Date.now(),
+        name: opp.opponentName,
+        rankName: opp.opponentRank ? opp.opponentRank.name : 'ブロンズ Ⅰ'
       });
-    }
+      rankTitleManager.saveUserData();
+      this.updateHeaderUI();
+      audioManager.playSE('unlock');
+      alert(`🤝 ${opp.opponentName} さんにフレンド申請を送信し、フレンドになりました！`);
+    });
+
+    // チャット送信ボタン＆Enterキー
+    document.getElementById('btn-send-chat').addEventListener('click', () => this.sendChatMessage());
+    document.getElementById('chat-input-text').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') this.sendChatMessage();
+    });
+
+    // フレンド管理モーダル表示
+    document.getElementById('btn-friends-modal').addEventListener('click', () => {
+      this.renderFriendsModal();
+      this.openModal('friends');
+    });
 
     document.getElementById('btn-titles-modal').addEventListener('click', () => {
       this.renderTitlesModal();
@@ -2534,14 +2662,46 @@ class AppController {
     document.getElementById('btn-test-se').addEventListener('click', () => {
       audioManager.playSE('unlock');
     });
+  }
 
-    document.getElementById('btn-save-supabase').addEventListener('click', () => {
-      const url = document.getElementById('supabase-input-url').value;
-      const key = document.getElementById('supabase-input-key').value;
-      supabaseManager.saveCredentials(url, key);
-      document.getElementById('supabase-status-msg').textContent = '✅ 設定を保存し、Supabaseクライアントを更新しました！';
-      setTimeout(() => this.closeModal('supabase'), 1500);
-    });
+  sendChatMessage() {
+    const input = document.getElementById('chat-input-text');
+    const text = input.value.trim();
+    if (!text) return;
+
+    input.value = '';
+    audioManager.playSE('click');
+
+    this.addChatMessageToUI('あなた', text, true);
+
+    // AI戦の場合はAIがランダム応答
+    if (this.currentMatchInfo && this.currentMatchInfo.isAi) {
+      setTimeout(() => {
+        const aiReplies = ['よろしく！', 'いい手ですね！', '負けませんよ！', 'なかなかやりますね！', '対戦ありがとうございます！'];
+        const reply = aiReplies[Math.floor(Math.random() * aiReplies.length)];
+        this.addChatMessageToUI(`AI (Level ${this.selectedAiLevel})`, reply, false);
+      }, 1000);
+    }
+  }
+
+  addChatMessageToUI(sender, text, isMe) {
+    const container = document.getElementById('chat-messages-container');
+    if (!container) return;
+
+    const msgEl = document.createElement('div');
+    msgEl.style.cssText = `
+      display: flex;
+      flex-direction: column;
+      align-items: ${isMe ? 'flex-end' : 'flex-start'};
+    `;
+    msgEl.innerHTML = `
+      <span style="font-size: 0.7rem; color: var(--text-muted);">${sender}</span>
+      <div style="background: ${isMe ? 'linear-gradient(135deg, var(--accent-cyan), var(--accent-purple))' : 'rgba(255,255,255,0.1)'}; color: ${isMe ? '#050b14' : '#fff'}; padding: 0.4rem 0.7rem; border-radius: 10px; font-weight: 600; max-width: 90%; word-break: break-word;">
+        ${text}
+      </div>
+    `;
+    container.appendChild(msgEl);
+    container.scrollTop = container.scrollHeight;
   }
 
   renderAiLevelScreen() {
@@ -2554,13 +2714,11 @@ class AppController {
         <div class="ai-level-num">Level ${lvl}</div>
         <div style="font-size: 0.8rem; margin-top: 0.3rem;">${lvl === 1 ? '入門' : lvl <= 10 ? '中級' : '上級'}</div>
       `;
-
       card.addEventListener('click', () => {
         this.selectedAiLevel = lvl;
         this.renderGameSelectScreen();
         this.showScreen('gameSelect');
       });
-
       container.appendChild(card);
     }
   }
@@ -2608,7 +2766,7 @@ class AppController {
     const userRank = rankTitleManager.getRankInfo(this.selectedGameId);
 
     if (this.currentMode === 'ai') {
-      this.startGameplay(true);
+      this.startGameplay({ opponentName: `AI (Level ${this.selectedAiLevel})`, isAi: true, opponentRank: ALL_RANKS[0] });
     } else {
       this.showScreen('matching');
       document.getElementById('matching-status-text').textContent = `${this.currentMode === 'ranked' ? 'ランクマッチ' : '通常マッチ'} 探索中...`;
@@ -2617,25 +2775,50 @@ class AppController {
       supabaseManager.startMatching(this.selectedGameId, this.currentMode, userRank.id, (matchResult) => {
         audioManager.playSE('unlock');
         alert(`対戦相手が見つかりました！\n対戦相手: ${matchResult.opponentName} (${matchResult.opponentRank.name})`);
-        this.startGameplay(false);
+        this.startGameplay(matchResult);
       });
     }
   }
 
-  startGameplay(isAi) {
+  startGameplay(matchInfo) {
+    this.currentMatchInfo = matchInfo;
+    this.isGameFinished = false;
     this.showScreen('gameplay');
     const mount = document.getElementById('game-board-mount');
     mount.innerHTML = '';
 
     const gameObj = GAMES_LIST.find(g => g.id === this.selectedGameId);
     document.getElementById('gameplay-header-info').textContent = 
-      `${gameObj ? gameObj.name : ''} ｜ ${isAi ? `VS AI Level ${this.selectedAiLevel}` : 'VS オンラインプレイヤー'}`;
+      `${gameObj ? gameObj.name : ''} ｜ VS ${matchInfo.opponentName}`;
+
+    // 途中で相手が切断・退室した場合の不戦勝Realtime監視
+    if (matchInfo.roomId && supabaseManager.client) {
+      this.roomSubscription = supabaseManager.client
+        .channel(`room_status_${matchInfo.roomId}`)
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'game_rooms',
+          filter: `id=eq.${matchInfo.roomId}`
+        }, (payload) => {
+          if (payload.new.status === 'abandoned' && !this.isGameFinished) {
+            this.isGameFinished = true;
+            audioManager.playSE('win');
+            alert('⚠️ 対戦相手が途中退室（タブ閉じ・切断）しました！\nあなたの「不戦勝 🏆」となります！');
+            onFinishCallback('win');
+          }
+        })
+        .subscribe();
+    }
 
     const onFinishCallback = (result) => {
+      if (this.isGameFinished) return;
+      this.isGameFinished = true;
+
       const isWin = (result === 'win');
       const isDraw = (result === 'draw');
 
-      rankTitleManager.addMatchResult(this.selectedGameId, isWin, isDraw, isAi, this.selectedAiLevel);
+      rankTitleManager.addMatchResult(this.selectedGameId, isWin, isDraw, matchInfo.isAi, this.selectedAiLevel);
       this.updateHeaderUI();
 
       const newRank = rankTitleManager.getRankInfo(this.selectedGameId);
@@ -2645,25 +2828,116 @@ class AppController {
 
     if (this.selectedGameId === 'tictactoe') {
       this.currentGameInstance = new TicTacToeGame(mount, onFinishCallback);
-      this.currentGameInstance.init(isAi, this.selectedAiLevel);
+      this.currentGameInstance.init(matchInfo.isAi, this.selectedAiLevel);
     } else if (this.selectedGameId === 'reversi') {
       this.currentGameInstance = new ReversiGame(mount, onFinishCallback);
-      this.currentGameInstance.init(isAi, this.selectedAiLevel);
+      this.currentGameInstance.init(matchInfo.isAi, this.selectedAiLevel);
     } else if (this.selectedGameId === 'gomoku') {
       this.currentGameInstance = new GomokuGame(mount, onFinishCallback);
-      this.currentGameInstance.init(isAi, this.selectedAiLevel);
+      this.currentGameInstance.init(matchInfo.isAi, this.selectedAiLevel);
     } else if (this.selectedGameId === 'go') {
       this.currentGameInstance = new GoGame(mount, onFinishCallback);
-      this.currentGameInstance.init(isAi, this.selectedAiLevel, this.selectedGoOptions || {});
+      this.currentGameInstance.init(matchInfo.isAi, this.selectedAiLevel, this.selectedGoOptions || {});
     } else if (this.selectedGameId === 'chess') {
       this.currentGameInstance = new ChessGame(mount, onFinishCallback);
-      this.currentGameInstance.init(isAi, this.selectedAiLevel);
+      this.currentGameInstance.init(matchInfo.isAi, this.selectedAiLevel);
     } else if (this.selectedGameId === 'shogi') {
       this.currentGameInstance = new ShogiGame(mount, onFinishCallback);
-      this.currentGameInstance.init(isAi, this.selectedAiLevel);
+      this.currentGameInstance.init(matchInfo.isAi, this.selectedAiLevel);
     } else if (this.selectedGameId.startsWith('cards_')) {
       this.currentGameInstance = new PlayingCardsGame(mount, onFinishCallback);
-      this.currentGameInstance.init(this.selectedGameId, isAi, this.selectedAiLevel);
+      this.currentGameInstance.init(this.selectedGameId, matchInfo.isAi, this.selectedAiLevel);
+    }
+  }
+
+  // フレンドモーダルの表示
+  renderFriendsModal() {
+    const user = rankTitleManager.userData;
+    const reqListEl = document.getElementById('friend-requests-list');
+    const friendsListEl = document.getElementById('friends-list-container');
+
+    const requests = user.friendRequests || [];
+    reqListEl.innerHTML = '';
+    if (requests.length === 0) {
+      reqListEl.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem;">現在、届いている申請はありません</div>';
+    } else {
+      requests.forEach((req, idx) => {
+        const item = document.createElement('div');
+        item.style.cssText = 'display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 0.6rem 1rem; border-radius: 10px;';
+        item.innerHTML = `
+          <div>
+            <span style="font-weight: bold;">${req.name}</span>
+            <span style="font-size: 0.8rem; color: var(--accent-gold); margin-left: 0.5rem;">${req.rankName}</span>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="btn btn-primary btn-accept-friend" data-idx="${idx}" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;">承認</button>
+            <button class="btn btn-danger btn-reject-friend" data-idx="${idx}" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;">拒否</button>
+          </div>
+        `;
+        reqListEl.appendChild(item);
+      });
+
+      reqListEl.querySelectorAll('.btn-accept-friend').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const idx = parseInt(e.target.dataset.idx);
+          const accepted = requests.splice(idx, 1)[0];
+          if (!user.friends) user.friends = [];
+          user.friends.push(accepted);
+          rankTitleManager.saveUserData();
+          this.updateHeaderUI();
+          this.renderFriendsModal();
+          alert(`🤝 ${accepted.name} さんのフレンド申請を承認しました！`);
+        });
+      });
+
+      reqListEl.querySelectorAll('.btn-reject-friend').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const idx = parseInt(e.target.dataset.idx);
+          const rejected = requests.splice(idx, 1)[0];
+          rankTitleManager.saveUserData();
+          this.renderFriendsModal();
+        });
+      });
+    }
+
+    const friends = user.friends || [];
+    friendsListEl.innerHTML = '';
+    if (friends.length === 0) {
+      friendsListEl.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem;">フレンドがまだいません。対戦画面からフレンド申請してみましょう！</div>';
+    } else {
+      friends.forEach((friend, idx) => {
+        const item = document.createElement('div');
+        item.style.cssText = 'display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 0.6rem 1rem; border-radius: 10px;';
+        item.innerHTML = `
+          <div>
+            <span style="font-weight: bold;">🟢 ${friend.name}</span>
+            <span style="font-size: 0.8rem; color: var(--accent-cyan); margin-left: 0.5rem;">${friend.rankName}</span>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="btn btn-secondary btn-chat-friend" data-name="${friend.name}" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;">💬 チャット</button>
+            <button class="btn btn-primary btn-invite-friend" data-name="${friend.name}" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;">⚔️ 即時対戦</button>
+          </div>
+        `;
+        friendsListEl.appendChild(item);
+      });
+
+      friendsListEl.querySelectorAll('.btn-chat-friend').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const name = e.target.dataset.name;
+          const msg = prompt(`${name} さんへの個別一時メッセージを入力してください:`);
+          if (msg) alert(`📩 ${name} さんへ一時メッセージを送信しました！`);
+        });
+      });
+
+      friendsListEl.querySelectorAll('.btn-invite-friend').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const name = e.target.dataset.name;
+          this.closeModal('friends');
+          this.currentMode = 'casual';
+          this.selectedGameId = 'tictactoe';
+          this.startGameplay({ opponentName: name, isAi: false, opponentRank: ALL_RANKS[10] });
+        });
+      });
     }
   }
 
