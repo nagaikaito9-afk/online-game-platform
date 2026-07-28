@@ -45,7 +45,6 @@ body {
   overflow-x: hidden;
 }
 
-/* ヘッダーナビゲーション */
 .app-header {
   width: 100%;
   max-width: 1200px;
@@ -89,7 +88,6 @@ body {
   box-shadow: 0 2px 8px rgba(255, 154, 158, 0.4);
 }
 
-/* メインコンテナ */
 .main-container {
   width: 100%;
   max-width: 1100px;
@@ -101,7 +99,6 @@ body {
   justify-content: center;
 }
 
-/* 画面ビュー切替 */
 .screen-view {
   width: 100%;
   display: none !important;
@@ -119,7 +116,6 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ホーム画面 */
 .home-hero {
   text-align: center;
   margin-bottom: 3rem;
@@ -148,7 +144,6 @@ body {
   max-width: 380px;
 }
 
-/* 共通ボタンデザイン */
 .btn {
   padding: 1rem 2rem;
   font-size: 1.1rem;
@@ -195,7 +190,6 @@ body {
   color: #111;
 }
 
-/* プレイモード選択画面 */
 .mode-selection-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -239,7 +233,6 @@ body {
   line-height: 1.4;
 }
 
-/* AIレベル選択画面 (1〜20) */
 .ai-level-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
@@ -277,7 +270,6 @@ body {
   color: var(--accent-neon-green);
 }
 
-/* ゲーム選択画面 */
 .game-selection-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -318,7 +310,6 @@ body {
   margin-bottom: 0.5rem;
 }
 
-/* 各種ゲーム盤面スタイル */
 .game-board-wrapper {
   display: flex;
   flex-direction: column;
@@ -337,7 +328,6 @@ body {
   border: 1px solid var(--border-glow);
 }
 
-/* 〇✕ゲーム */
 .tictactoe-grid {
   display: grid;
   grid-template-columns: repeat(3, 100px);
@@ -363,7 +353,6 @@ body {
   background: rgba(255, 255, 255, 0.1);
 }
 
-/* オセロ */
 .reversi-score-bar {
   display: flex;
   gap: 2rem;
@@ -410,7 +399,6 @@ body {
 .disc.black { background: #111; border: 1px solid #444; }
 .disc.white { background: #fff; border: 1px solid #ccc; }
 
-/* 五目並べ & 囲碁 */
 .gomoku-grid, .go-grid-container {
   display: grid;
   gap: 1px;
@@ -443,7 +431,6 @@ body {
 .stone.black { background: #111; }
 .stone.white { background: #f5f5f5; }
 
-/* チェス & 将棋 */
 .chess-grid {
   display: grid;
   grid-template-columns: repeat(8, 50px);
@@ -490,7 +477,6 @@ body {
   color: #8b0000;
 }
 
-/* トランプ */
 .card-table-area {
   display: flex;
   flex-direction: column;
@@ -528,7 +514,6 @@ body {
 .card.red { color: #d90429; }
 .card.joker { background: #ffe600; }
 
-/* モーダルウィンドウ */
 .modal-overlay {
   position: fixed;
   top: 0; left: 0;
@@ -576,7 +561,6 @@ body {
   cursor: pointer;
 }
 
-/* 称号トースト通知 */
 .title-toast-notification {
   position: fixed;
   bottom: 30px;
@@ -754,19 +738,1890 @@ body {
     </div>
   </div>
 
-  <!-- サポートJSスクリプトのロード -->
-  <script src="js/config.js"></script>
-  <script src="js/audio.js"></script>
-  <script src="js/supabase.js"></script>
-  <script src="js/rank_titles.js"></script>
-  <script src="js/ai_engine.js"></script>
-  <script src="js/games/tictactoe.js"></script>
-  <script src="js/games/reversi.js"></script>
-  <script src="js/games/gomoku.js"></script>
-  <script src="js/games/go.js"></script>
-  <script src="js/games/chess.js"></script>
-  <script src="js/games/shogi.js"></script>
-  <script src="js/games/playing_cards.js"></script>
-  <script src="js/app.js"></script>
+  <!-- オールインワン JavaScript バンドル (404エラー完全防止) -->
+  <script>
+/* 1. config.js */
+const GAMES_LIST = [
+  { id: 'tictactoe', name: '〇✕ゲーム', icon: '❌⭕', desc: 'シンプルかつ奥深い定番頭脳ゲーム' },
+  { id: 'reversi', name: 'オセロ (リバーシ)', icon: '⚪⚫', desc: '挟んで裏返す！最後の最後まで油断できない名作' },
+  { id: 'gomoku', name: '五目並べ', icon: '碁', desc: '縦横斜めに5つの石を先に並べた者が勝利' },
+  {
+    id: 'go',
+    name: '囲碁',
+    icon: '⚫⚪',
+    desc: '陣地を競う最古の頭脳格闘技。盤面サイズと置石ルールを選択可能！',
+    hasSubOptions: true,
+    options: {
+      boardSize: [
+        { label: '9路盤', value: 9 },
+        { label: '13路盤', value: 13 },
+        { label: '19路盤', value: 19 }
+      ],
+      handicap: [
+        { label: '置石なし (互先)', value: 0 },
+        { label: '置石あり (ハンデ)', value: 2 }
+      ]
+    }
+  },
+  { id: 'chess', name: 'チェス', icon: '♟️', desc: '世界中で愛される王道のチェス' },
+  { id: 'shogi', name: '将棋', icon: '☖', desc: '取った駒を活用する日本伝統の将棋' },
+  { id: 'cards_daifugo', name: 'トランプ：大富豪', icon: '🃏', desc: '革命、8切り、流し！富豪を目指す大人気カードゲーム' },
+  { id: 'cards_sevens', name: 'トランプ：7ならべ', icon: '🂠', desc: '7を中心にしてカードを繋げる駆け引きゲーム' },
+  { id: 'cards_speed', name: 'トランプ：スピード', icon: '⚡', desc: '反射神経と判断力が命！カードを素早く重ねろ' },
+  { id: 'cards_oldmaid', name: 'トランプ：ババ抜き', icon: '🤡', desc: 'ジョーカーを引かずに最後の1人にならないよう抜け出せ' },
+  { id: 'cards_jijinuki', name: 'トランプ：ジジ抜き', icon: '❓', desc: '伏せられた1枚が何か分からないスリリングな心理戦' }
+];
+
+const RANK_TIERS = [
+  'ブロンズ', 'シルバー', 'ゴールド', 'プラチナ', 'ダイヤモンド',
+  'エメラルド', 'サファイア', 'ルビー', 'アメジスト', 'トパーズ',
+  'チタン', 'クリスタル', 'コバルト', 'ミシック', 'レジェンド',
+  'グランドマスター', 'チャンピオン', 'オーバーロード', 'ゴッド', 'マスター'
+];
+
+const ROMAN_NUMS = ['Ⅰ', 'Ⅱ', 'Ⅲ', 'Ⅳ', 'Ⅴ', 'Ⅵ', 'Ⅶ', 'Ⅷ', 'Ⅸ', 'Ⅹ'];
+
+function generate200Ranks() {
+  const ranks = [];
+  let id = 1;
+  for (let i = 0; i < RANK_TIERS.length; i++) {
+    for (let j = 0; j < ROMAN_NUMS.length; j++) {
+      ranks.push({
+        id: id,
+        name: `${RANK_TIERS[i]} ${ROMAN_NUMS[j]}`,
+        tier: RANK_TIERS[i],
+        tierIndex: i,
+        subIndex: j + 1,
+        minExp: (id - 1) * 100
+      });
+      id++;
+    }
+  }
+  return ranks;
+}
+
+const ALL_RANKS = generate200Ranks();
+
+function generate300Titles() {
+  const titles = [
+    { id: 1, name: '初めの一歩', desc: '初めて対戦に参加した証', condition: { type: 'play', count: 1 } },
+    { id: 2, name: '初勝利の喜び', desc: '初めて対戦で勝利した', condition: { type: 'win', count: 1 } },
+    { id: 3, name: '囲碁名人', desc: '囲碁でマスターⅩ（ランク200）に到達した', condition: { game: 'go', rank: 200 } },
+    { id: 4, name: '将棋達人', desc: '将棋でマスターⅩ（ランク200）に到達した', condition: { game: 'shogi', rank: 200 } },
+    { id: 5, name: 'チェスマスター', desc: 'チェスでマスターⅩ（ランク200）に到達した', condition: { game: 'chess', rank: 200 } },
+    { id: 6, name: '大富豪の帝王', desc: 'トランプ大富豪でマスターⅩ（ランク200）に到達した', condition: { game: 'cards_daifugo', rank: 200 } },
+    { id: 7, name: 'オセロ王', desc: 'オセロでマスターⅩ（ランク200）に到達した', condition: { game: 'reversi', rank: 200 } },
+    { id: 8, name: '五目並べの神', desc: '五目並べでマスターⅩ（ランク200）に到達した', condition: { game: 'gomoku', rank: 200 } },
+    { id: 9, name: 'AIハンター', desc: 'AI対戦でレベル20に勝利した', condition: { type: 'ai_win', level: 20 } },
+    { id: 10, name: '常勝無敗', desc: '対戦で10連勝を達成した', condition: { type: 'streak', count: 10 } }
+  ];
+
+  let idCounter = 11;
+  GAMES_LIST.forEach((game) => {
+    [10, 30, 50, 100, 150, 180, 190, 199].forEach((rVal) => {
+      const rObj = ALL_RANKS[rVal - 1];
+      titles.push({
+        id: idCounter++,
+        name: `${game.name}の${rObj.tier}プレイヤー`,
+        desc: `${game.name}でランク「${rObj.name}」以上に到達した`,
+        condition: { game: game.id, rank: rVal }
+      });
+    });
+
+    [5, 10, 25, 50, 100, 200, 500].forEach((wCount) => {
+      titles.push({
+        id: idCounter++,
+        name: `${game.name} ${wCount}勝達成`,
+        desc: `${game.name}で通算${wCount}回勝利を収めた`,
+        condition: { game: game.id, winCount: wCount }
+      });
+    });
+
+    [5, 10, 15, 20].forEach((lvl) => {
+      titles.push({
+        id: idCounter++,
+        name: `${game.name} AI Level ${lvl} 破り`,
+        desc: `${game.name}のAI強さレベル ${lvl} を撃破した`,
+        condition: { game: game.id, aiLevel: lvl }
+      });
+    });
+  });
+
+  while (titles.length < 300) {
+    const num = titles.length + 1;
+    titles.push({
+      id: idCounter++,
+      name: `ゲーム探求者 No.${num}`,
+      desc: `プラットフォームで様々な挑戦を行い、通算${num * 2}回のプレイを記録した`,
+      condition: { type: 'play', count: num * 2 }
+    });
+  }
+
+  return titles.slice(0, 300);
+}
+
+const ALL_TITLES = generate300Titles();
+
+/* 2. audio.js */
+class SoundEngine {
+  constructor() {
+    this.ctx = null;
+    this.bgmVolume = 0.5;
+    this.seVolume = 0.7;
+    this.bgmTimer = null;
+    this.isPlayingBGM = false;
+    this.initOnInteraction = this.initOnInteraction.bind(this);
+    window.addEventListener('click', this.initOnInteraction, { once: true });
+    window.addEventListener('keydown', this.initOnInteraction, { once: true });
+  }
+
+  initOnInteraction() {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      this.ctx = new AudioCtx();
+    }
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+  }
+
+  setBgmVolume(val) { this.bgmVolume = parseFloat(val); }
+  setSeVolume(val) { this.seVolume = parseFloat(val); }
+
+  playSE(type) {
+    if (!this.ctx || this.seVolume <= 0) return;
+    try {
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      if (type === 'click') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(300, now + 0.05);
+        gain.gain.setValueAtTime(this.seVolume * 0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+        osc.start(now);
+        osc.stop(now + 0.05);
+      } else if (type === 'place') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.exponentialRampToValueAtTime(120, now + 0.08);
+        gain.gain.setValueAtTime(this.seVolume * 0.7, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+        osc.start(now);
+        osc.stop(now + 0.08);
+      } else if (type === 'win') {
+        const notes = [523.25, 659.25, 783.99, 1046.5];
+        notes.forEach((freq, i) => {
+          const o = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          o.type = 'triangle';
+          o.frequency.setValueAtTime(freq, now + i * 0.12);
+          g.gain.setValueAtTime(this.seVolume * 0.5, now + i * 0.12);
+          g.gain.exponentialRampToValueAtTime(0.01, now + i * 0.12 + 0.3);
+          o.connect(g);
+          g.connect(this.ctx.destination);
+          o.start(now + i * 0.12);
+          o.stop(now + i * 0.12 + 0.3);
+        });
+      } else if (type === 'lose') {
+        const notes = [400, 370, 340, 300];
+        notes.forEach((freq, i) => {
+          const o = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          o.type = 'sawtooth';
+          o.frequency.setValueAtTime(freq, now + i * 0.15);
+          g.gain.setValueAtTime(this.seVolume * 0.3, now + i * 0.15);
+          g.gain.exponentialRampToValueAtTime(0.01, now + i * 0.15 + 0.25);
+          o.connect(g);
+          g.connect(this.ctx.destination);
+          o.start(now + i * 0.15);
+          o.stop(now + i * 0.15 + 0.25);
+        });
+      } else if (type === 'unlock') {
+        const notes = [440, 554.37, 659.25, 880];
+        notes.forEach((freq, i) => {
+          const o = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          o.type = 'sine';
+          o.frequency.setValueAtTime(freq, now + i * 0.08);
+          g.gain.setValueAtTime(this.seVolume * 0.6, now + i * 0.08);
+          g.gain.exponentialRampToValueAtTime(0.01, now + i * 0.08 + 0.4);
+          o.connect(g);
+          g.connect(this.ctx.destination);
+          o.start(now + i * 0.08);
+          o.stop(now + i * 0.08 + 0.4);
+        });
+      }
+    } catch (e) {}
+  }
+
+  startBGM() {
+    if (this.isPlayingBGM) return;
+    this.isPlayingBGM = true;
+    this.scheduleBGMChord();
+  }
+
+  stopBGM() {
+    this.isPlayingBGM = false;
+    if (this.bgmTimer) {
+      clearTimeout(this.bgmTimer);
+      this.bgmTimer = null;
+    }
+  }
+
+  scheduleBGMChord() {
+    if (!this.isPlayingBGM) return;
+    if (this.ctx && this.bgmVolume > 0) {
+      try {
+        const chords = [
+          [261.63, 329.63, 392.00],
+          [220.00, 261.63, 329.63],
+          [174.61, 220.00, 261.63],
+          [196.00, 246.94, 293.66]
+        ];
+        const randomChord = chords[Math.floor(Math.random() * chords.length)];
+        const now = this.ctx.currentTime;
+
+        randomChord.forEach(freq => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now);
+          
+          gain.gain.setValueAtTime(0.001, now);
+          gain.gain.linearRampToValueAtTime(this.bgmVolume * 0.08, now + 1.0);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 3.5);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 3.6);
+        });
+      } catch (e) {}
+    }
+    this.bgmTimer = setTimeout(() => this.scheduleBGMChord(), 4000);
+  }
+}
+const audioManager = new SoundEngine();
+
+/* 3. supabase.js */
+class SupabaseManager {
+  constructor() {
+    this.defaultUrl = 'https://dwvqpzmjbvpfzvkodgko.supabase.co';
+    this.defaultKey = 'sb_publishable_W2q0T8XZfvt7Q7VpxTOvGw_rZio5SBJ';
+
+    this.url = localStorage.getItem('supabase_url') || this.defaultUrl;
+    this.key = localStorage.getItem('supabase_key') || this.defaultKey;
+    this.isConfigured = !!(this.url && this.key);
+    this.client = null;
+    this.currentRoom = null;
+    this.initClient();
+  }
+
+  initClient() {
+    if (this.isConfigured && typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+      try {
+        this.client = window.supabase.createClient(this.url, this.key);
+      } catch (e) {}
+    }
+  }
+
+  saveCredentials(url, key) {
+    this.url = url.trim();
+    this.key = key.trim();
+    localStorage.setItem('supabase_url', this.url);
+    localStorage.setItem('supabase_key', this.key);
+    this.isConfigured = !!(this.url && this.key);
+    this.initClient();
+  }
+
+  async syncUserDataToCloud(userData) {}
+
+  async startMatching(gameId, mode, userRankNum, onMatchFound) {
+    setTimeout(() => {
+      this.triggerSimulatedMatch(gameId, mode, userRankNum, onMatchFound);
+    }, 1500 + Math.random() * 1000);
+  }
+
+  triggerSimulatedMatch(gameId, mode, userRankNum, onMatchFound) {
+    const mockNames = ['Sakura_88', 'Gamer_Zero', 'ShadowMaster', 'DragonKing', 'Zen_Player', 'CyberKnight'];
+    const oppName = mockNames[Math.floor(Math.random() * mockNames.length)];
+    let oppRankNum = userRankNum;
+    if (mode === 'casual') {
+      const offset = Math.floor(Math.random() * 60) - 30;
+      oppRankNum = Math.min(200, Math.max(1, userRankNum + offset));
+    } else if (mode === 'ranked') {
+      const offset = Math.floor(Math.random() * 7) - 3;
+      oppRankNum = Math.min(200, Math.max(1, userRankNum + offset));
+    }
+    const oppRankObj = ALL_RANKS[oppRankNum - 1];
+    onMatchFound({
+      opponentName: oppName,
+      opponentRank: oppRankObj,
+      roomId: 'sim_' + Date.now(),
+      isHost: Math.random() > 0.5
+    });
+  }
+}
+const supabaseManager = new SupabaseManager();
+window.supabaseManager = supabaseManager;
+
+/* 4. rank_titles.js */
+class RankTitleManager {
+  constructor() {
+    this.storageKeyData = 'online_game_user_data';
+    this.loadUserData();
+  }
+
+  loadUserData() {
+    const saved = localStorage.getItem(this.storageKeyData);
+    if (saved) {
+      try { this.userData = JSON.parse(saved); } catch (e) { this.userData = this.getDefaultUserData(); }
+    } else {
+      this.userData = this.getDefaultUserData();
+    }
+  }
+
+  getDefaultUserData() {
+    const gameStats = {};
+    GAMES_LIST.forEach(g => {
+      gameStats[g.id] = { rankNum: 1, wins: 0, losses: 0, draws: 0, unlockedAiLevel: 1 };
+    });
+    return {
+      username: 'プレイヤー',
+      unlockedTitles: [1],
+      equippedTitleId: 1,
+      stats: gameStats,
+      totalPlays: 0,
+      totalWins: 0,
+      currentWinStreak: 0
+    };
+  }
+
+  saveUserData() {
+    localStorage.setItem(this.storageKeyData, JSON.stringify(this.userData));
+    if (window.supabaseManager && window.supabaseManager.isConfigured) {
+      window.supabaseManager.syncUserDataToCloud(this.userData);
+    }
+  }
+
+  getRankInfo(gameId) {
+    const stat = this.userData.stats[gameId] || { rankNum: 1 };
+    const rNum = Math.min(200, Math.max(1, stat.rankNum));
+    return ALL_RANKS[rNum - 1];
+  }
+
+  addMatchResult(gameId, isWin, isDraw = false, isAi = false, aiLevel = 1) {
+    if (!this.userData.stats[gameId]) {
+      this.userData.stats[gameId] = { rankNum: 1, wins: 0, losses: 0, draws: 0, unlockedAiLevel: 1 };
+    }
+    const stat = this.userData.stats[gameId];
+    this.userData.totalPlays++;
+
+    if (isDraw) {
+      stat.draws++;
+      this.userData.currentWinStreak = 0;
+    } else if (isWin) {
+      stat.wins++;
+      this.userData.totalWins++;
+      this.userData.currentWinStreak++;
+      if (isAi && aiLevel >= stat.unlockedAiLevel && stat.unlockedAiLevel < 20) {
+        stat.unlockedAiLevel++;
+        audioManager.playSE('unlock');
+      }
+      if (stat.rankNum < 200) stat.rankNum++;
+    } else {
+      stat.losses++;
+      this.userData.currentWinStreak = 0;
+      if (stat.rankNum > 1 && !isAi) stat.rankNum--;
+    }
+    this.saveUserData();
+    this.checkTitleUnlocks(gameId, isWin, isAi, aiLevel);
+  }
+
+  checkTitleUnlocks(gameId, isWin, isAi, aiLevel) {
+    const newlyUnlocked = [];
+    ALL_TITLES.forEach(title => {
+      if (this.userData.unlockedTitles.includes(title.id)) return;
+      let isConditionMet = false;
+      const cond = title.condition;
+      if (!cond) return;
+
+      if (cond.type === 'play' && this.userData.totalPlays >= cond.count) isConditionMet = true;
+      if (cond.type === 'win' && this.userData.totalWins >= cond.count) isConditionMet = true;
+      if (cond.type === 'streak' && this.userData.currentWinStreak >= cond.count) isConditionMet = true;
+      if (cond.type === 'ai_win' && isAi && isWin && aiLevel >= cond.level) isConditionMet = true;
+
+      if (cond.game === gameId) {
+        const stat = this.userData.stats[gameId];
+        if (cond.rank && stat.rankNum >= cond.rank) isConditionMet = true;
+        if (cond.winCount && stat.wins >= cond.winCount) isConditionMet = true;
+        if (cond.aiLevel && isAi && isWin && aiLevel >= cond.aiLevel) isConditionMet = true;
+      }
+
+      if (isConditionMet) {
+        this.userData.unlockedTitles.push(title.id);
+        newlyUnlocked.push(title);
+      }
+    });
+
+    if (newlyUnlocked.length > 0) {
+      this.saveUserData();
+      newlyUnlocked.forEach(t => this.notifyTitleUnlock(t));
+    }
+  }
+
+  notifyTitleUnlock(title) {
+    audioManager.playSE('unlock');
+    const toast = document.createElement('div');
+    toast.className = 'title-toast-notification';
+    toast.innerHTML = `
+      <div class="toast-header">🏆 称号を獲得しました！</div>
+      <div class="toast-title-name">${title.name}</div>
+      <div class="toast-desc">${title.desc}</div>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 50);
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 400);
+    }, 4000);
+  }
+
+  equipTitle(titleId) {
+    if (this.userData.unlockedTitles.includes(titleId)) {
+      this.userData.equippedTitleId = titleId;
+      this.saveUserData();
+    }
+  }
+
+  getEquippedTitle() {
+    const tid = this.userData.equippedTitleId || 1;
+    return ALL_TITLES.find(t => t.id === tid) || ALL_TITLES[0];
+  }
+}
+const rankTitleManager = new RankTitleManager();
+
+/* 5. ai_engine.js */
+class GameAIEngine {
+  static getBestMove(gameId, gameState, level = 1) {
+    const errorRate = Math.max(0, 1.0 - (level / 20));
+    const isRandomMove = Math.random() < errorRate * 0.7;
+
+    switch (gameId) {
+      case 'tictactoe': return this.getTicTacToeMove(gameState, level, isRandomMove);
+      case 'reversi': return this.getReversiMove(gameState, level, isRandomMove);
+      case 'gomoku': return this.getGomokuMove(gameState, level, isRandomMove);
+      case 'go': return this.getGoMove(gameState, level, isRandomMove);
+      case 'chess': return this.getChessMove(gameState, level, isRandomMove);
+      case 'shogi': return this.getShogiMove(gameState, level, isRandomMove);
+      case 'cards_daifugo':
+      case 'cards_sevens':
+      case 'cards_speed':
+      case 'cards_oldmaid':
+      case 'cards_jijinuki': return this.getCardMove(gameId, gameState, level, isRandomMove);
+      default: return null;
+    }
+  }
+
+  static getTicTacToeMove(gameState, level, isRandomMove) {
+    const board = gameState.board;
+    const emptyIndices = board.map((v, i) => v === null ? i : null).filter(v => v !== null);
+    if (emptyIndices.length === 0) return null;
+    if (isRandomMove || level <= 3) return emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+
+    for (const i of emptyIndices) {
+      board[i] = 'O';
+      if (this.checkTicTacToeWin(board, 'O')) { board[i] = null; return i; }
+      board[i] = null;
+    }
+    for (const i of emptyIndices) {
+      board[i] = 'X';
+      if (this.checkTicTacToeWin(board, 'X')) { board[i] = null; return i; }
+      board[i] = null;
+    }
+    if (emptyIndices.includes(4) && Math.random() > 0.2) return 4;
+    const corners = [0, 2, 6, 8].filter(c => emptyIndices.includes(c));
+    if (corners.length > 0 && Math.random() > 0.3) return corners[Math.floor(Math.random() * corners.length)];
+    return emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+  }
+
+  static checkTicTacToeWin(b, player) {
+    const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    return lines.some(([x,y,z]) => b[x] === player && b[y] === player && b[z] === player);
+  }
+
+  static getReversiMove(gameState, level, isRandomMove) {
+    const validMoves = gameState.validMoves;
+    if (!validMoves || validMoves.length === 0) return null;
+    if (isRandomMove || level <= 2) return validMoves[Math.floor(Math.random() * validMoves.length)];
+
+    const weights = [
+      [120, -20, 20, 5, 5, 20, -20, 120],
+      [-20, -40, -5, -5, -5, -5, -40, -20],
+      [20, -5, 15, 3, 3, 15, -5, 20],
+      [5, -5, 3, 3, 3, 3, -5, 5],
+      [5, -5, 3, 3, 3, 3, -5, 5],
+      [20, -5, 15, 3, 3, 15, -5, 20],
+      [-20, -40, -5, -5, -5, -5, -40, -20],
+      [120, -20, 20, 5, 5, 20, -20, 120]
+    ];
+    let bestMove = validMoves[0], maxScore = -Infinity;
+    validMoves.forEach(m => {
+      const score = weights[m.r][m.c] + (m.flips.length * (level / 5));
+      if (score > maxScore) { maxScore = score; bestMove = m; }
+    });
+    return bestMove;
+  }
+
+  static getGomokuMove(gameState, level, isRandomMove) {
+    const validMoves = gameState.validMoves;
+    if (!validMoves || validMoves.length === 0) return null;
+    if (isRandomMove || level <= 3) return validMoves[Math.floor(Math.random() * validMoves.length)];
+    let best = validMoves[0], bestScore = -1;
+    validMoves.forEach(m => {
+      let score = (15 - (Math.abs(m.r - 7) + Math.abs(m.c - 7))) + (gameState.countAdjacentStones(m.r, m.c) * (level * 3));
+      if (score > bestScore) { bestScore = score; best = m; }
+    });
+    return best;
+  }
+
+  static getGoMove(gameState, level, isRandomMove) {
+    const validMoves = gameState.validMoves;
+    if (!validMoves || validMoves.length === 0) return { pass: true };
+    if (isRandomMove || level <= 3) return validMoves[Math.floor(Math.random() * validMoves.length)];
+    let bestMove = validMoves[0], maxVal = -1;
+    validMoves.forEach(m => {
+      const val = gameState.evaluateGoMove(m.r, m.c, level);
+      if (val > maxVal) { maxVal = val; bestMove = m; }
+    });
+    return bestMove;
+  }
+
+  static getChessMove(gameState, level, isRandomMove) {
+    const legalMoves = gameState.legalMoves;
+    if (!legalMoves || legalMoves.length === 0) return null;
+    if (isRandomMove || level <= 3) return legalMoves[Math.floor(Math.random() * legalMoves.length)];
+    let best = legalMoves[0], maxVal = -999;
+    legalMoves.forEach(m => {
+      let val = (m.captureValue || 0) + (level * 0.5);
+      if (val > maxVal) { maxVal = val; best = m; }
+    });
+    return best;
+  }
+
+  static getShogiMove(gameState, level, isRandomMove) {
+    const legalMoves = gameState.legalMoves;
+    if (!legalMoves || legalMoves.length === 0) return null;
+    if (isRandomMove || level <= 3) return legalMoves[Math.floor(Math.random() * legalMoves.length)];
+    let best = legalMoves[0], maxVal = -999;
+    legalMoves.forEach(m => {
+      let val = m.captureValue || 0;
+      if (m.isPromoted) val += 5;
+      if (val > maxVal) { maxVal = val; best = m; }
+    });
+    return best;
+  }
+
+  static getCardMove(gameId, gameState, level, isRandomMove) {
+    const playable = gameState.playableCards || [];
+    if (playable.length === 0) return null;
+    return playable[0];
+  }
+}
+
+/* 6. games/tictactoe.js */
+class TicTacToeGame {
+  constructor(container, onFinish) {
+    this.container = container;
+    this.onFinish = onFinish;
+    this.board = Array(9).fill(null);
+    this.currentTurn = 'X';
+    this.isOver = false;
+  }
+
+  init(isAi, aiLevel) {
+    this.isAi = isAi;
+    this.aiLevel = aiLevel;
+    this.render();
+  }
+
+  render() {
+    this.container.innerHTML = `
+      <div class="game-board-wrapper">
+        <div class="game-status-bar">
+          ${this.currentTurn === 'X' ? 'あなたのターン (❌)' : (this.isAi ? `AI Level ${this.aiLevel} のターン (⭕)` : '相手のターン (⭕)')}
+        </div>
+        <div class="tictactoe-grid">
+          ${this.board.map((cell, idx) => `
+            <div class="tictactoe-cell ${cell ? 'filled' : ''}" data-index="${idx}">
+              ${cell === 'X' ? '<span class="mark-x">❌</span>' : cell === 'O' ? '<span class="mark-o">⭕</span>' : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+
+    this.container.querySelectorAll('.tictactoe-cell').forEach(cell => {
+      cell.addEventListener('click', () => {
+        const idx = parseInt(cell.dataset.index);
+        this.makeMove(idx);
+      });
+    });
+  }
+
+  makeMove(idx) {
+    if (this.isOver || this.board[idx] !== null || (this.isAi && this.currentTurn !== 'X')) return;
+
+    audioManager.playSE('place');
+    this.board[idx] = this.currentTurn;
+    
+    if (this.checkWin(this.currentTurn)) {
+      this.isOver = true;
+      this.render();
+      const isWin = (this.currentTurn === 'X');
+      audioManager.playSE(isWin ? 'win' : 'lose');
+      setTimeout(() => this.onFinish(isWin ? 'win' : 'lose'), 500);
+      return;
+    }
+
+    if (this.board.every(cell => cell !== null)) {
+      this.isOver = true;
+      this.render();
+      audioManager.playSE('click');
+      setTimeout(() => this.onFinish('draw'), 500);
+      return;
+    }
+
+    this.currentTurn = (this.currentTurn === 'X') ? 'O' : 'X';
+    this.render();
+
+    if (this.isAi && this.currentTurn === 'O' && !this.isOver) {
+      setTimeout(() => {
+        const aiMove = GameAIEngine.getBestMove('tictactoe', { board: this.board }, this.aiLevel);
+        if (aiMove !== null) this.makeAiMove(aiMove);
+      }, 500);
+    }
+  }
+
+  makeAiMove(idx) {
+    if (this.isOver || this.board[idx] !== null) return;
+    audioManager.playSE('place');
+    this.board[idx] = 'O';
+
+    if (this.checkWin('O')) {
+      this.isOver = true;
+      this.render();
+      audioManager.playSE('lose');
+      setTimeout(() => this.onFinish('lose'), 500);
+      return;
+    }
+
+    if (this.board.every(cell => cell !== null)) {
+      this.isOver = true;
+      this.render();
+      audioManager.playSE('click');
+      setTimeout(() => this.onFinish('draw'), 500);
+      return;
+    }
+
+    this.currentTurn = 'X';
+    this.render();
+  }
+
+  checkWin(player) {
+    const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    return lines.some(([a,b,c]) => this.board[a] === player && this.board[b] === player && this.board[c] === player);
+  }
+}
+
+/* 7. games/reversi.js */
+class ReversiGame {
+  constructor(container, onFinish) {
+    this.container = container;
+    this.onFinish = onFinish;
+    this.board = Array(8).fill(null).map(() => Array(8).fill(null));
+    this.currentTurn = 'B';
+    this.isOver = false;
+  }
+
+  init(isAi, aiLevel) {
+    this.isAi = isAi;
+    this.aiLevel = aiLevel;
+    this.board = Array(8).fill(null).map(() => Array(8).fill(null));
+    this.board[3][3] = 'W'; this.board[3][4] = 'B';
+    this.board[4][3] = 'B'; this.board[4][4] = 'W';
+    this.currentTurn = 'B';
+    this.isOver = false;
+    this.render();
+  }
+
+  getValidMoves(player) {
+    const moves = [];
+    const opp = (player === 'B') ? 'W' : 'B';
+    const dirs = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        if (this.board[r][c] !== null) continue;
+        const flips = [];
+        dirs.forEach(([dr, dc]) => {
+          let nr = r + dr, nc = c + dc;
+          const temp = [];
+          while (nr >= 0 && nr < 8 && nc >= 0 && nc < 8 && this.board[nr][nc] === opp) {
+            temp.push({ r: nr, c: nc });
+            nr += dr; nc += dc;
+          }
+          if (nr >= 0 && nr < 8 && nc >= 0 && nc < 8 && this.board[nr][nc] === player && temp.length > 0) {
+            flips.push(...temp);
+          }
+        });
+        if (flips.length > 0) moves.push({ r, c, flips });
+      }
+    }
+    return moves;
+  }
+
+  render() {
+    const validMoves = this.getValidMoves(this.currentTurn);
+    let blackCount = 0, whiteCount = 0;
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        if (this.board[r][c] === 'B') blackCount++;
+        if (this.board[r][c] === 'W') whiteCount++;
+      }
+    }
+
+    this.container.innerHTML = `
+      <div class="game-board-wrapper">
+        <div class="reversi-score-bar">
+          <div class="score-box ${this.currentTurn === 'B' ? 'active' : ''}">⚫ あなた: ${blackCount}</div>
+          <div class="score-box ${this.currentTurn === 'W' ? 'active' : ''}">⚪ ${this.isAi ? 'AI' : '相手'}: ${whiteCount}</div>
+        </div>
+        <div class="reversi-grid">
+          ${this.board.map((row, r) => row.map((cell, c) => {
+            const isValid = validMoves.some(m => m.r === r && m.c === c);
+            return `
+              <div class="reversi-cell ${isValid ? 'valid-move' : ''}" data-r="${r}" data-c="${c}">
+                ${cell === 'B' ? '<div class="disc black"></div>' : cell === 'W' ? '<div class="disc white"></div>' : ''}
+              </div>
+            `;
+          }).join('')).join('')}
+        </div>
+      </div>
+    `;
+
+    this.container.querySelectorAll('.reversi-cell.valid-move').forEach(cell => {
+      cell.addEventListener('click', () => {
+        const r = parseInt(cell.dataset.r);
+        const c = parseInt(cell.dataset.c);
+        this.makeMove(r, c, validMoves);
+      });
+    });
+  }
+
+  makeMove(r, c, validMoves) {
+    if (this.isOver || (this.isAi && this.currentTurn !== 'B')) return;
+    const move = validMoves.find(m => m.r === r && m.c === c);
+    if (!move) return;
+
+    audioManager.playSE('place');
+    this.board[r][c] = this.currentTurn;
+    move.flips.forEach(f => { this.board[f.r][f.c] = this.currentTurn; });
+    this.switchTurn();
+  }
+
+  switchTurn() {
+    this.currentTurn = (this.currentTurn === 'B') ? 'W' : 'B';
+    const nextValid = this.getValidMoves(this.currentTurn);
+
+    if (nextValid.length === 0) {
+      this.currentTurn = (this.currentTurn === 'B') ? 'W' : 'B';
+      const prevValid = this.getValidMoves(this.currentTurn);
+      if (prevValid.length === 0) {
+        this.finishGame();
+        return;
+      }
+    }
+
+    this.render();
+
+    if (this.isAi && this.currentTurn === 'W' && !this.isOver) {
+      setTimeout(() => {
+        const aiValid = this.getValidMoves('W');
+        const bestMove = GameAIEngine.getBestMove('reversi', { validMoves: aiValid }, this.aiLevel);
+        if (bestMove) {
+          audioManager.playSE('place');
+          this.board[bestMove.r][bestMove.c] = 'W';
+          bestMove.flips.forEach(f => { this.board[f.r][f.c] = 'W'; });
+        }
+        this.switchTurn();
+      }, 600);
+    }
+  }
+
+  finishGame() {
+    this.isOver = true;
+    let b = 0, w = 0;
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        if (this.board[r][c] === 'B') b++;
+        if (this.board[r][c] === 'W') w++;
+      }
+    }
+    this.render();
+    let result = (b > w) ? 'win' : (w > b) ? 'lose' : 'draw';
+    audioManager.playSE(result === 'win' ? 'win' : result === 'lose' ? 'lose' : 'click');
+    setTimeout(() => this.onFinish(result), 500);
+  }
+}
+
+/* 8. games/gomoku.js */
+class GomokuGame {
+  constructor(container, onFinish) {
+    this.container = container;
+    this.onFinish = onFinish;
+    this.board = Array(15).fill(null).map(() => Array(15).fill(null));
+    this.currentTurn = 'B';
+    this.isOver = false;
+  }
+
+  init(isAi, aiLevel) {
+    this.isAi = isAi;
+    this.aiLevel = aiLevel;
+    this.board = Array(15).fill(null).map(() => Array(15).fill(null));
+    this.currentTurn = 'B';
+    this.isOver = false;
+    this.render();
+  }
+
+  render() {
+    this.container.innerHTML = `
+      <div class="game-board-wrapper">
+        <div class="game-status-bar">
+          ${this.currentTurn === 'B' ? 'あなたのターン (⚫ 黒)' : (this.isAi ? `AI Level ${this.aiLevel} のターン (⚪ 白)` : '相手のターン (⚪ 白)')}
+        </div>
+        <div class="gomoku-grid">
+          ${this.board.map((row, r) => row.map((cell, c) => `
+            <div class="gomoku-cell" data-r="${r}" data-c="${c}">
+              ${cell === 'B' ? '<div class="stone black"></div>' : cell === 'W' ? '<div class="stone white"></div>' : ''}
+            </div>
+          `).join('')).join('')}
+        </div>
+      </div>
+    `;
+
+    this.container.querySelectorAll('.gomoku-cell').forEach(cell => {
+      cell.addEventListener('click', () => {
+        const r = parseInt(cell.dataset.r);
+        const c = parseInt(cell.dataset.c);
+        this.makeMove(r, c);
+      });
+    });
+  }
+
+  makeMove(r, c) {
+    if (this.isOver || this.board[r][c] !== null || (this.isAi && this.currentTurn !== 'B')) return;
+
+    audioManager.playSE('place');
+    this.board[r][c] = this.currentTurn;
+
+    if (this.checkWin(r, c, this.currentTurn)) {
+      this.isOver = true;
+      this.render();
+      const isWin = (this.currentTurn === 'B');
+      audioManager.playSE(isWin ? 'win' : 'lose');
+      setTimeout(() => this.onFinish(isWin ? 'win' : 'lose'), 500);
+      return;
+    }
+
+    this.currentTurn = (this.currentTurn === 'B') ? 'W' : 'B';
+    this.render();
+
+    if (this.isAi && this.currentTurn === 'W' && !this.isOver) {
+      setTimeout(() => {
+        const validMoves = [];
+        for (let i = 0; i < 15; i++) {
+          for (let j = 0; j < 15; j++) {
+            if (this.board[i][j] === null) validMoves.push({ r: i, c: j });
+          }
+        }
+        const countAdj = (row, col) => {
+          let count = 0;
+          for (let dr = -1; dr <= 1; dr++) {
+            for (let dc = -1; dc <= 1; dc++) {
+              if (dr === 0 && dc === 0) continue;
+              const nr = row + dr, nc = col + dc;
+              if (nr >= 0 && nr < 15 && nc >= 0 && nc < 15 && this.board[nr][nc] !== null) count++;
+            }
+          }
+          return count;
+        };
+
+        const move = GameAIEngine.getBestMove('gomoku', { validMoves, countAdjacentStones: countAdj }, this.aiLevel);
+        if (move) {
+          audioManager.playSE('place');
+          this.board[move.r][move.c] = 'W';
+
+          if (this.checkWin(move.r, move.c, 'W')) {
+            this.isOver = true;
+            this.render();
+            audioManager.playSE('lose');
+            setTimeout(() => this.onFinish('lose'), 500);
+            return;
+          }
+          this.currentTurn = 'B';
+          this.render();
+        }
+      }, 500);
+    }
+  }
+
+  checkWin(r, c, player) {
+    const dirs = [[1,0],[0,1],[1,1],[1,-1]];
+    for (const [dr, dc] of dirs) {
+      let count = 1;
+      let nr = r + dr, nc = c + dc;
+      while (nr >= 0 && nr < 15 && nc >= 0 && nc < 15 && this.board[nr][nc] === player) { count++; nr += dr; nc += dc; }
+      nr = r - dr; nc = c - dc;
+      while (nr >= 0 && nr < 15 && nc >= 0 && nc < 15 && this.board[nr][nc] === player) { count++; nr -= dr; nc -= dc; }
+      if (count >= 5) return true;
+    }
+    return false;
+  }
+}
+
+/* 9. games/go.js */
+class GoGame {
+  constructor(container, onFinish) {
+    this.container = container;
+    this.onFinish = onFinish;
+    this.boardSize = 9;
+    this.handicap = 0;
+    this.board = [];
+    this.currentTurn = 'B';
+    this.isOver = false;
+    this.passCount = 0;
+  }
+
+  init(isAi, aiLevel, options = {}) {
+    this.isAi = isAi;
+    this.aiLevel = aiLevel;
+    this.boardSize = options.boardSize || 9;
+    this.handicap = options.handicap || 0;
+    this.board = Array(this.boardSize).fill(null).map(() => Array(this.boardSize).fill(null));
+    this.currentTurn = 'B';
+    this.isOver = false;
+    this.passCount = 0;
+
+    if (this.handicap > 0) {
+      if (this.boardSize === 9) { this.board[2][6] = 'B'; this.board[6][2] = 'B'; }
+      else if (this.boardSize === 13) { this.board[3][9] = 'B'; this.board[9][3] = 'B'; }
+      else { this.board[3][15] = 'B'; this.board[15][3] = 'B'; }
+      this.currentTurn = 'W';
+    }
+    this.render();
+  }
+
+  getValidMoves() {
+    const moves = [];
+    for (let r = 0; r < this.boardSize; r++) {
+      for (let c = 0; c < this.boardSize; c++) {
+        if (this.board[r][c] === null) moves.push({ r, c });
+      }
+    }
+    return moves;
+  }
+
+  evaluateGoMove(r, c, level) {
+    return 10 - (Math.abs(r - Math.floor(this.boardSize / 2)) + Math.abs(c - Math.floor(this.boardSize / 2)));
+  }
+
+  render() {
+    this.container.innerHTML = `
+      <div class="game-board-wrapper">
+        <div class="game-status-bar">
+          囲碁 ${this.boardSize}路盤 (${this.handicap > 0 ? '置石2石' : '置石なし'})
+          ｜ ${this.currentTurn === 'B' ? '⚫ 黒のターン' : '⚪ 白のターン'}
+        </div>
+        <div class="go-grid-container" style="grid-template-columns: repeat(${this.boardSize}, 1fr); grid-template-rows: repeat(${this.boardSize}, 1fr);">
+          ${this.board.map((row, r) => row.map((cell, c) => `
+            <div class="go-cell" data-r="${r}" data-c="${c}">
+              ${cell === 'B' ? '<div class="stone black"></div>' : cell === 'W' ? '<div class="stone white"></div>' : ''}
+            </div>
+          `).join('')).join('')}
+        </div>
+        <div class="go-controls" style="margin-top: 1rem; display: flex; gap: 1rem;">
+          <button id="go-pass-btn" class="btn btn-secondary">パス (${this.passCount}/2)</button>
+          <button id="go-resign-btn" class="btn btn-danger">投了</button>
+        </div>
+      </div>
+    `;
+
+    this.container.querySelectorAll('.go-cell').forEach(cell => {
+      cell.addEventListener('click', () => {
+        const r = parseInt(cell.dataset.r);
+        const c = parseInt(cell.dataset.c);
+        this.makeMove(r, c);
+      });
+    });
+
+    const passBtn = this.container.querySelector('#go-pass-btn');
+    if (passBtn) passBtn.addEventListener('click', () => this.handlePass());
+
+    const resignBtn = this.container.querySelector('#go-resign-btn');
+    if (resignBtn) resignBtn.addEventListener('click', () => this.handleResign());
+  }
+
+  makeMove(r, c) {
+    if (this.isOver || this.board[r][c] !== null || (this.isAi && this.currentTurn !== 'B')) return;
+
+    audioManager.playSE('place');
+    this.board[r][c] = this.currentTurn;
+    this.passCount = 0;
+
+    this.currentTurn = (this.currentTurn === 'B') ? 'W' : 'B';
+    this.render();
+
+    if (this.isAi && this.currentTurn === 'W' && !this.isOver) {
+      setTimeout(() => {
+        const move = GameAIEngine.getBestMove('go', { validMoves: this.getValidMoves(), evaluateGoMove: this.evaluateGoMove.bind(this) }, this.aiLevel);
+        if (move && !move.pass) {
+          audioManager.playSE('place');
+          this.board[move.r][move.c] = 'W';
+          this.passCount = 0;
+          this.currentTurn = 'B';
+          this.render();
+        } else {
+          this.handlePass();
+        }
+      }, 600);
+    }
+  }
+
+  handlePass() {
+    this.passCount++;
+    audioManager.playSE('click');
+    if (this.passCount >= 2) {
+      this.finishGame();
+      return;
+    }
+    this.currentTurn = (this.currentTurn === 'B') ? 'W' : 'B';
+    this.render();
+
+    if (this.isAi && this.currentTurn === 'W' && !this.isOver) {
+      setTimeout(() => this.handlePass(), 500);
+    }
+  }
+
+  handleResign() {
+    this.isOver = true;
+    audioManager.playSE('lose');
+    setTimeout(() => this.onFinish('lose'), 300);
+  }
+
+  finishGame() {
+    this.isOver = true;
+    let bStones = 0, wStones = 0;
+    for (let r = 0; r < this.boardSize; r++) {
+      for (let c = 0; c < this.boardSize; c++) {
+        if (this.board[r][c] === 'B') bStones++;
+        if (this.board[r][c] === 'W') wStones++;
+      }
+    }
+    const isWin = (bStones >= wStones);
+    audioManager.playSE(isWin ? 'win' : 'lose');
+    setTimeout(() => this.onFinish(isWin ? 'win' : 'lose'), 500);
+  }
+}
+
+/* 10. games/chess.js */
+class ChessGame {
+  constructor(container, onFinish) {
+    this.container = container;
+    this.onFinish = onFinish;
+    this.selectedSquare = null;
+    this.currentTurn = 'w';
+    this.isOver = false;
+  }
+
+  init(isAi, aiLevel) {
+    this.isAi = isAi;
+    this.aiLevel = aiLevel;
+    this.selectedSquare = null;
+    this.currentTurn = 'w';
+    this.isOver = false;
+    this.board = [
+      ['r','n','b','q','k','b','n','r'],
+      ['p','p','p','p','p','p','p','p'],
+      Array(8).fill(null), Array(8).fill(null),
+      Array(8).fill(null), Array(8).fill(null),
+      ['P','P','P','P','P','P','P','P'],
+      ['R','N','B','Q','K','B','N','R']
+    ];
+    this.render();
+  }
+
+  getPieceSymbol(p) {
+    const symbols = {
+      'K': '♔', 'Q': '♕', 'R': '♖', 'B': '♗', 'N': '♘', 'P': '♙',
+      'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟'
+    };
+    return symbols[p] || '';
+  }
+
+  render() {
+    this.container.innerHTML = `
+      <div class="game-board-wrapper">
+        <div class="game-status-bar">
+          ${this.currentTurn === 'w' ? 'あなたのターン (白 ♔)' : (this.isAi ? `AI Level ${this.aiLevel} のターン (黒 ♚)` : '相手のターン (黒 ♚)')}
+        </div>
+        <div class="chess-grid">
+          ${this.board.map((row, r) => row.map((piece, c) => {
+            const isSelected = this.selectedSquare && this.selectedSquare.r === r && this.selectedSquare.c === c;
+            const isDark = (r + c) % 2 === 1;
+            return `
+              <div class="chess-cell ${isDark ? 'dark' : 'light'} ${isSelected ? 'selected' : ''}" data-r="${r}" data-c="${c}">
+                <span class="chess-piece ${piece && piece === piece.toUpperCase() ? 'white-piece' : 'black-piece'}">
+                  ${this.getPieceSymbol(piece)}
+                </span>
+              </div>
+            `;
+          }).join('')).join('')}
+        </div>
+      </div>
+    `;
+
+    this.container.querySelectorAll('.chess-cell').forEach(cell => {
+      cell.addEventListener('click', () => {
+        const r = parseInt(cell.dataset.r);
+        const c = parseInt(cell.dataset.c);
+        this.handleSquareClick(r, c);
+      });
+    });
+  }
+
+  handleSquareClick(r, c) {
+    if (this.isOver || (this.isAi && this.currentTurn !== 'w')) return;
+    const piece = this.board[r][c];
+
+    if (this.selectedSquare) {
+      if (this.selectedSquare.r === r && this.selectedSquare.c === c) {
+        this.selectedSquare = null;
+        this.render();
+        return;
+      }
+      this.movePiece(this.selectedSquare.r, this.selectedSquare.c, r, c);
+      this.selectedSquare = null;
+    } else {
+      if (piece && ((this.currentTurn === 'w' && piece === piece.toUpperCase()) || (this.currentTurn === 'b' && piece === piece.toLowerCase()))) {
+        this.selectedSquare = { r, c };
+        this.render();
+      }
+    }
+  }
+
+  movePiece(fr, fc, tr, tc) {
+    const piece = this.board[fr][fc];
+    const targetPiece = this.board[tr][tc];
+
+    audioManager.playSE('place');
+    this.board[tr][tc] = piece;
+    this.board[fr][fc] = null;
+
+    if (targetPiece === 'k' || targetPiece === 'K') {
+      this.isOver = true;
+      this.render();
+      const isWin = (this.currentTurn === 'w');
+      audioManager.playSE(isWin ? 'win' : 'lose');
+      setTimeout(() => this.onFinish(isWin ? 'win' : 'lose'), 500);
+      return;
+    }
+
+    this.currentTurn = (this.currentTurn === 'w') ? 'b' : 'w';
+    this.render();
+
+    if (this.isAi && this.currentTurn === 'b' && !this.isOver) {
+      setTimeout(() => {
+        const moves = [];
+        for (let r = 0; r < 8; r++) {
+          for (let c = 0; c < 8; c++) {
+            const p = this.board[r][c];
+            if (p && p === p.toLowerCase()) {
+              for (let tr = 0; tr < 8; tr++) {
+                for (let tc = 0; tc < 8; tc++) {
+                  if (tr !== r || tc !== c) {
+                    const dest = this.board[tr][tc];
+                    if (!dest || dest === dest.toUpperCase()) {
+                      moves.push({ fr: r, fc: c, tr, tc, captureValue: dest ? 10 : 0 });
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        const bestMove = GameAIEngine.getBestMove('chess', { legalMoves: moves }, this.aiLevel);
+        if (bestMove) this.movePiece(bestMove.fr, bestMove.fc, bestMove.tr, bestMove.tc);
+      }, 600);
+    }
+  }
+}
+
+/* 11. games/shogi.js */
+class ShogiGame {
+  constructor(container, onFinish) {
+    this.container = container;
+    this.onFinish = onFinish;
+    this.selectedSquare = null;
+    this.currentTurn = 'S';
+    this.isOver = false;
+  }
+
+  init(isAi, aiLevel) {
+    this.isAi = isAi;
+    this.aiLevel = aiLevel;
+    this.selectedSquare = null;
+    this.currentTurn = 'S';
+    this.isOver = false;
+    this.board = [
+      ['g_K','g_G','g_S','g_N','g_L','g_N','g_S','g_G','g_K'],
+      [null,  'g_R', null,  null,  null,  null,  null,  'g_B', null],
+      ['g_P','g_P','g_P','g_P','g_P','g_P','g_P','g_P','g_P'],
+      Array(9).fill(null), Array(9).fill(null), Array(9).fill(null),
+      ['s_P','s_P','s_P','s_P','s_P','s_P','s_P','s_P','s_P'],
+      [null,  's_B', null,  null,  null,  null,  null,  's_R', null],
+      ['s_K','s_G','s_S','s_N','s_L','s_N','s_S','s_G','s_K']
+    ];
+    this.render();
+  }
+
+  getPieceName(code) {
+    if (!code) return '';
+    const map = {
+      's_K': '玉', 's_G': '金', 's_S': '銀', 's_N': '桂', 's_L': '香', 's_B': '角', 's_R': '飛', 's_P': '歩',
+      'g_K': '王', 'g_G': '金', 'g_S': '銀', 'g_N': '桂', 'g_L': '香', 'g_B': '角', 'g_R': '飛', 'g_P': '歩'
+    };
+    return map[code] || '';
+  }
+
+  render() {
+    this.container.innerHTML = `
+      <div class="game-board-wrapper">
+        <div class="game-status-bar">
+          ${this.currentTurn === 'S' ? 'あなたのターン (先手 ☖)' : (this.isAi ? `AI Level ${this.aiLevel} のターン (後手 ☗)` : '相手のターン (後手 ☗)')}
+        </div>
+        <div class="shogi-grid">
+          ${this.board.map((row, r) => row.map((cell, c) => {
+            const isSelected = this.selectedSquare && this.selectedSquare.r === r && this.selectedSquare.c === c;
+            const isGote = cell && cell.startsWith('g_');
+            return `
+              <div class="shogi-cell ${isSelected ? 'selected' : ''}" data-r="${r}" data-c="${c}">
+                ${cell ? `<div class="shogi-piece ${isGote ? 'gote' : 'sente'}">${this.getPieceName(cell)}</div>` : ''}
+              </div>
+            `;
+          }).join('')).join('')}
+        </div>
+      </div>
+    `;
+
+    this.container.querySelectorAll('.shogi-cell').forEach(cell => {
+      cell.addEventListener('click', () => {
+        const r = parseInt(cell.dataset.r);
+        const c = parseInt(cell.dataset.c);
+        this.handleClick(r, c);
+      });
+    });
+  }
+
+  handleClick(r, c) {
+    if (this.isOver || (this.isAi && this.currentTurn !== 'S')) return;
+    const cell = this.board[r][c];
+
+    if (this.selectedSquare) {
+      if (this.selectedSquare.r === r && this.selectedSquare.c === c) {
+        this.selectedSquare = null;
+        this.render();
+        return;
+      }
+      this.movePiece(this.selectedSquare.r, this.selectedSquare.c, r, c);
+      this.selectedSquare = null;
+    } else {
+      if (cell && ((this.currentTurn === 'S' && cell.startsWith('s_')) || (this.currentTurn === 'G' && cell.startsWith('g_')))) {
+        this.selectedSquare = { r, c };
+        this.render();
+      }
+    }
+  }
+
+  movePiece(fr, fc, tr, tc) {
+    const piece = this.board[fr][fc];
+    const target = this.board[tr][tc];
+
+    audioManager.playSE('place');
+    this.board[tr][tc] = piece;
+    this.board[fr][fc] = null;
+
+    if (target === 'g_K' || target === 's_K') {
+      this.isOver = true;
+      this.render();
+      const isWin = (this.currentTurn === 'S');
+      audioManager.playSE(isWin ? 'win' : 'lose');
+      setTimeout(() => this.onFinish(isWin ? 'win' : 'lose'), 500);
+      return;
+    }
+
+    this.currentTurn = (this.currentTurn === 'S') ? 'G' : 'S';
+    this.render();
+
+    if (this.isAi && this.currentTurn === 'G' && !this.isOver) {
+      setTimeout(() => {
+        const moves = [];
+        for (let r = 0; r < 9; r++) {
+          for (let c = 0; c < 9; c++) {
+            const p = this.board[r][c];
+            if (p && p.startsWith('g_')) {
+              for (let tr = 0; tr < 9; tr++) {
+                for (let tc = 0; tc < 9; tc++) {
+                  if (tr !== r || tc !== c) {
+                    const dest = this.board[tr][tc];
+                    if (!dest || dest.startsWith('s_')) {
+                      moves.push({ fr: r, fc: c, tr, tc, captureValue: dest ? 10 : 0 });
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        const best = GameAIEngine.getBestMove('shogi', { legalMoves: moves }, this.aiLevel);
+        if (best) this.movePiece(best.fr, best.fc, best.tr, best.tc);
+      }, 600);
+    }
+  }
+}
+
+/* 12. games/playing_cards.js */
+class PlayingCardsGame {
+  constructor(container, onFinish) {
+    this.container = container;
+    this.onFinish = onFinish;
+    this.subType = 'cards_daifugo';
+    this.deck = [];
+    this.playerHand = [];
+    this.aiHand = [];
+    this.tableCards = [];
+    this.currentTurn = 'player';
+    this.isOver = false;
+  }
+
+  init(subType, isAi, aiLevel) {
+    this.subType = subType;
+    this.isAi = isAi;
+    this.aiLevel = aiLevel;
+    this.isOver = false;
+    this.currentTurn = 'player';
+    this.tableCards = [];
+
+    this.createDeck();
+    this.dealCards();
+    this.render();
+  }
+
+  createDeck() {
+    const suits = ['♠', '♥', '♦', '♣'];
+    this.deck = [];
+    suits.forEach(s => {
+      for (let v = 1; v <= 13; v++) {
+        this.deck.push({ suit: s, value: v, isRed: (s === '♥' || s === '♦') });
+      }
+    });
+    if (this.subType === 'cards_oldmaid' || this.subType === 'cards_jijinuki') {
+      this.deck.push({ suit: '🃏', value: 99, isJoker: true });
+    }
+    this.deck.sort(() => Math.random() - 0.5);
+  }
+
+  dealCards() {
+    if (this.subType === 'cards_jijinuki') this.deck.pop();
+    const half = Math.floor(this.deck.length / 2);
+    this.playerHand = this.deck.slice(0, half);
+    this.aiHand = this.deck.slice(half);
+
+    if (this.subType === 'cards_oldmaid' || this.subType === 'cards_jijinuki') {
+      this.playerHand = this.removePairs(this.playerHand);
+      this.aiHand = this.removePairs(this.aiHand);
+    }
+  }
+
+  removePairs(hand) {
+    const counts = {};
+    hand.forEach(c => {
+      if (!c.isJoker) counts[c.value] = (counts[c.value] || 0) + 1;
+    });
+    return hand.filter(c => c.isJoker || (counts[c.value] % 2 !== 0));
+  }
+
+  getGameTitle() {
+    const names = {
+      'cards_daifugo': 'トランプ：大富豪',
+      'cards_sevens': 'トランプ：7ならべ',
+      'cards_speed': 'トランプ：スピード',
+      'cards_oldmaid': 'トランプ：ババ抜き',
+      'cards_jijinuki': 'トランプ：ジジ抜き'
+    };
+    return names[this.subType] || 'トランプ';
+  }
+
+  render() {
+    this.container.innerHTML = `
+      <div class="game-board-wrapper">
+        <div class="game-status-bar">
+          ${this.getGameTitle()} ｜ ${this.currentTurn === 'player' ? 'あなたの番' : (this.isAi ? `AI Level ${this.aiLevel} の番` : '相手の番')}
+        </div>
+
+        <div class="card-table-area">
+          <div class="opponent-hand-display">
+            相手の手札: ${this.aiHand.length} 枚
+          </div>
+
+          <div class="center-table-display">
+            ${this.tableCards.length > 0 ? `
+              <div class="card ${this.tableCards[this.tableCards.length - 1].isRed ? 'red' : ''}">
+                <span class="card-suit">${this.tableCards[this.tableCards.length - 1].suit}</span>
+                <span class="card-value">${this.tableCards[this.tableCards.length - 1].value}</span>
+              </div>
+            ` : '<div class="empty-table-slot">場札なし</div>'}
+          </div>
+
+          <div class="player-hand-display">
+            <div class="hand-label">あなたの手札 (${this.playerHand.length}枚):</div>
+            <div class="card-hand-row">
+              ${this.playerHand.map((card, idx) => `
+                <div class="card ${card.isRed ? 'red' : ''} ${card.isJoker ? 'joker' : ''}" data-idx="${idx}">
+                  <span class="card-suit">${card.suit}</span>
+                  <span class="card-value">${card.isJoker ? 'JOKER' : card.value}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+
+        <div class="card-action-controls" style="margin-top: 1rem;">
+          ${this.subType === 'cards_daifugo' ? '<button id="card-pass-btn" class="btn btn-secondary">パス</button>' : ''}
+          ${(this.subType === 'cards_oldmaid' || this.subType === 'cards_jijinuki') && this.currentTurn === 'player' ? '<button id="card-draw-btn" class="btn btn-primary">相手の手札を1枚引く</button>' : ''}
+        </div>
+      </div>
+    `;
+
+    this.container.querySelectorAll('.player-hand-display .card').forEach(cardEl => {
+      cardEl.addEventListener('click', () => {
+        const idx = parseInt(cardEl.dataset.idx);
+        this.playPlayerCard(idx);
+      });
+    });
+
+    const passBtn = this.container.querySelector('#card-pass-btn');
+    if (passBtn) passBtn.addEventListener('click', () => this.handlePass());
+
+    const drawBtn = this.container.querySelector('#card-draw-btn');
+    if (drawBtn) drawBtn.addEventListener('click', () => this.drawFromOpponent());
+  }
+
+  playPlayerCard(idx) {
+    if (this.isOver || this.currentTurn !== 'player') return;
+    const card = this.playerHand[idx];
+    audioManager.playSE('place');
+
+    this.playerHand.splice(idx, 1);
+    this.tableCards.push(card);
+
+    if (this.playerHand.length === 0) {
+      this.finishGame(true);
+      return;
+    }
+    this.currentTurn = 'ai';
+    this.render();
+
+    if (this.isAi && !this.isOver) setTimeout(() => this.playAiTurn(), 700);
+  }
+
+  drawFromOpponent() {
+    if (this.isOver || this.currentTurn !== 'player' || this.aiHand.length === 0) return;
+
+    audioManager.playSE('click');
+    const randomIdx = Math.floor(Math.random() * this.aiHand.length);
+    const drawn = this.aiHand.splice(randomIdx, 1)[0];
+    this.playerHand.push(drawn);
+    this.playerHand = this.removePairs(this.playerHand);
+
+    if (this.playerHand.length === 0) {
+      this.finishGame(true);
+      return;
+    }
+
+    this.currentTurn = 'ai';
+    this.render();
+    if (this.isAi && !this.isOver) setTimeout(() => this.playAiTurn(), 700);
+  }
+
+  playAiTurn() {
+    if (this.isOver) return;
+
+    if (this.subType === 'cards_oldmaid' || this.subType === 'cards_jijinuki') {
+      if (this.playerHand.length > 0) {
+        audioManager.playSE('click');
+        const randomIdx = Math.floor(Math.random() * this.playerHand.length);
+        const drawn = this.playerHand.splice(randomIdx, 1)[0];
+        this.aiHand.push(drawn);
+        this.aiHand = this.removePairs(this.aiHand);
+
+        if (this.aiHand.length === 0) {
+          this.finishGame(false);
+          return;
+        }
+      }
+    } else {
+      if (this.aiHand.length > 0) {
+        audioManager.playSE('place');
+        const card = this.aiHand.pop();
+        this.tableCards.push(card);
+
+        if (this.aiHand.length === 0) {
+          this.finishGame(false);
+          return;
+        }
+      }
+    }
+    this.currentTurn = 'player';
+    this.render();
+  }
+
+  handlePass() {
+    audioManager.playSE('click');
+    this.currentTurn = 'ai';
+    this.render();
+    if (this.isAi && !this.isOver) setTimeout(() => this.playAiTurn(), 600);
+  }
+
+  finishGame(isPlayerWin) {
+    this.isOver = true;
+    this.render();
+    audioManager.playSE(isPlayerWin ? 'win' : 'lose');
+    setTimeout(() => this.onFinish(isPlayerWin ? 'win' : 'lose'), 500);
+  }
+}
+
+/* 13. app.js */
+class AppController {
+  constructor() {
+    this.currentMode = null;
+    this.selectedGameId = null;
+    this.selectedAiLevel = 1;
+    this.currentGameInstance = null;
+
+    this.initElements();
+    this.bindEvents();
+    this.updateHeaderUI();
+    this.showScreen('home');
+  }
+
+  initElements() {
+    this.screens = {
+      home: document.getElementById('screen-home'),
+      mode: document.getElementById('screen-mode'),
+      aiLevel: document.getElementById('screen-ai-level'),
+      matching: document.getElementById('screen-matching'),
+      gameSelect: document.getElementById('screen-game-select'),
+      gameplay: document.getElementById('screen-gameplay')
+    };
+
+    this.modals = {
+      settings: document.getElementById('modal-settings'),
+      supabase: document.getElementById('modal-supabase'),
+      titles: document.getElementById('modal-titles')
+    };
+  }
+
+  showScreen(screenKey) {
+    audioManager.playSE('click');
+    Object.keys(this.screens).forEach(key => {
+      if (this.screens[key]) this.screens[key].classList.remove('active');
+    });
+    if (this.screens[screenKey]) {
+      this.screens[screenKey].classList.add('active');
+    }
+  }
+
+  openModal(modalKey) {
+    audioManager.playSE('click');
+    if (this.modals[modalKey]) this.modals[modalKey].classList.add('active');
+  }
+
+  closeModal(modalKey) {
+    if (this.modals[modalKey]) this.modals[modalKey].classList.remove('active');
+  }
+
+  updateHeaderUI() {
+    const user = rankTitleManager.userData;
+    document.getElementById('header-username').textContent = user.username;
+    const titleObj = rankTitleManager.getEquippedTitle();
+    document.getElementById('header-title').textContent = `称号: ${titleObj.name}`;
+  }
+
+  bindEvents() {
+    document.getElementById('btn-home-play').addEventListener('click', () => {
+      audioManager.startBGM();
+      this.showScreen('mode');
+    });
+    document.getElementById('btn-home-settings').addEventListener('click', () => {
+      this.openModal('settings');
+    });
+
+    document.getElementById('mode-card-ai').addEventListener('click', () => {
+      this.currentMode = 'ai';
+      this.renderAiLevelScreen();
+      this.showScreen('aiLevel');
+    });
+    document.getElementById('mode-card-casual').addEventListener('click', () => {
+      this.currentMode = 'casual';
+      this.renderGameSelectScreen();
+      this.showScreen('gameSelect');
+    });
+    document.getElementById('mode-card-ranked').addEventListener('click', () => {
+      this.currentMode = 'ranked';
+      this.renderGameSelectScreen();
+      this.showScreen('gameSelect');
+    });
+
+    document.querySelectorAll('.btn-back-home').forEach(btn => {
+      btn.addEventListener('click', () => this.showScreen('home'));
+    });
+    document.querySelectorAll('.btn-back-mode').forEach(btn => {
+      btn.addEventListener('click', () => this.showScreen('mode'));
+    });
+
+    document.getElementById('btn-cancel-matching').addEventListener('click', () => {
+      this.showScreen('gameSelect');
+    });
+
+    document.getElementById('btn-quit-game').addEventListener('click', () => {
+      if (confirm('ゲームを終了してゲーム選択画面へ戻りますか？')) {
+        this.showScreen('gameSelect');
+      }
+    });
+
+    document.getElementById('btn-supabase-modal').addEventListener('click', () => {
+      document.getElementById('supabase-input-url').value = supabaseManager.url;
+      document.getElementById('supabase-input-key').value = supabaseManager.key;
+      this.openModal('supabase');
+    });
+
+    document.getElementById('btn-titles-modal').addEventListener('click', () => {
+      this.renderTitlesModal();
+      this.openModal('titles');
+    });
+
+    document.querySelectorAll('.modal-close-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const modal = e.target.closest('.modal-overlay');
+        if (modal) modal.classList.remove('active');
+      });
+    });
+
+    document.getElementById('slider-bgm').addEventListener('input', (e) => {
+      audioManager.setBgmVolume(e.target.value);
+    });
+    document.getElementById('slider-se').addEventListener('input', (e) => {
+      audioManager.setSeVolume(e.target.value);
+    });
+    document.getElementById('btn-test-se').addEventListener('click', () => {
+      audioManager.playSE('unlock');
+    });
+
+    document.getElementById('btn-save-supabase').addEventListener('click', () => {
+      const url = document.getElementById('supabase-input-url').value;
+      const key = document.getElementById('supabase-input-key').value;
+      supabaseManager.saveCredentials(url, key);
+      document.getElementById('supabase-status-msg').textContent = '✅ 設定を保存し、Supabaseクライアントを更新しました！';
+      setTimeout(() => this.closeModal('supabase'), 1500);
+    });
+  }
+
+  renderAiLevelScreen() {
+    const container = document.getElementById('ai-level-container');
+    container.innerHTML = '';
+    for (let lvl = 1; lvl <= 20; lvl++) {
+      const card = document.createElement('div');
+      card.className = 'ai-level-card';
+      card.innerHTML = `
+        <div class="ai-level-num">Level ${lvl}</div>
+        <div style="font-size: 0.8rem; margin-top: 0.3rem;">${lvl === 1 ? '入門' : lvl <= 10 ? '中級' : '上級'}</div>
+      `;
+
+      card.addEventListener('click', () => {
+        this.selectedAiLevel = lvl;
+        this.renderGameSelectScreen();
+        this.showScreen('gameSelect');
+      });
+
+      container.appendChild(card);
+    }
+  }
+
+  renderGameSelectScreen() {
+    const container = document.getElementById('game-selection-container');
+    container.innerHTML = '';
+
+    GAMES_LIST.forEach(game => {
+      const rankInfo = rankTitleManager.getRankInfo(game.id);
+      const card = document.createElement('div');
+      card.className = 'game-card';
+      card.innerHTML = `
+        <div class="game-card-icon">${game.icon}</div>
+        <div class="game-card-title">${game.name}</div>
+        <div class="game-card-rank">ランク: ${rankInfo.name}</div>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">${game.desc}</div>
+      `;
+
+      card.addEventListener('click', () => {
+        this.selectedGameId = game.id;
+        if (game.hasSubOptions) {
+          this.promptSubOptions(game);
+        } else {
+          this.proceedToMatchingOrPlay();
+        }
+      });
+
+      container.appendChild(card);
+    });
+  }
+
+  promptSubOptions(game) {
+    const size = prompt('盤面サイズを選択してください:\n9 (9路盤)\n13 (13路盤)\n19 (19路盤)', '9');
+    const boardSize = [9, 13, 19].includes(parseInt(size)) ? parseInt(size) : 9;
+
+    const handicapChoice = prompt('置石ルールを選択してください:\n0 (置石なし - 互先)\n2 (置石あり - 2石ハンデ)', '0');
+    const handicap = parseInt(handicapChoice) === 2 ? 2 : 0;
+
+    this.selectedGoOptions = { boardSize, handicap };
+    this.proceedToMatchingOrPlay();
+  }
+
+  proceedToMatchingOrPlay() {
+    const userRank = rankTitleManager.getRankInfo(this.selectedGameId);
+
+    if (this.currentMode === 'ai') {
+      this.startGameplay(true);
+    } else {
+      this.showScreen('matching');
+      document.getElementById('matching-status-text').textContent = `${this.currentMode === 'ranked' ? 'ランクマッチ' : '通常マッチ'} 探索中...`;
+      document.getElementById('matching-sub-text').textContent = `あなたのランク: ${userRank.name}`;
+
+      supabaseManager.startMatching(this.selectedGameId, this.currentMode, userRank.id, (matchResult) => {
+        audioManager.playSE('unlock');
+        alert(`対戦相手が見つかりました！\n対戦相手: ${matchResult.opponentName} (${matchResult.opponentRank.name})`);
+        this.startGameplay(false);
+      });
+    }
+  }
+
+  startGameplay(isAi) {
+    this.showScreen('gameplay');
+    const mount = document.getElementById('game-board-mount');
+    mount.innerHTML = '';
+
+    const gameObj = GAMES_LIST.find(g => g.id === this.selectedGameId);
+    document.getElementById('gameplay-header-info').textContent = 
+      `${gameObj ? gameObj.name : ''} ｜ ${isAi ? `VS AI Level ${this.selectedAiLevel}` : 'VS オンラインプレイヤー'}`;
+
+    const onFinishCallback = (result) => {
+      const isWin = (result === 'win');
+      const isDraw = (result === 'draw');
+
+      rankTitleManager.addMatchResult(this.selectedGameId, isWin, isDraw, isAi, this.selectedAiLevel);
+      this.updateHeaderUI();
+
+      const newRank = rankTitleManager.getRankInfo(this.selectedGameId);
+      alert(`対戦終了！ 結果: ${isWin ? '🏆 勝利！' : isDraw ? '🤝 引き分け' : '❌ 敗北'}\n現在のランク: ${newRank.name}`);
+      this.showScreen('gameSelect');
+    };
+
+    if (this.selectedGameId === 'tictactoe') {
+      this.currentGameInstance = new TicTacToeGame(mount, onFinishCallback);
+      this.currentGameInstance.init(isAi, this.selectedAiLevel);
+    } else if (this.selectedGameId === 'reversi') {
+      this.currentGameInstance = new ReversiGame(mount, onFinishCallback);
+      this.currentGameInstance.init(isAi, this.selectedAiLevel);
+    } else if (this.selectedGameId === 'gomoku') {
+      this.currentGameInstance = new GomokuGame(mount, onFinishCallback);
+      this.currentGameInstance.init(isAi, this.selectedAiLevel);
+    } else if (this.selectedGameId === 'go') {
+      this.currentGameInstance = new GoGame(mount, onFinishCallback);
+      this.currentGameInstance.init(isAi, this.selectedAiLevel, this.selectedGoOptions || {});
+    } else if (this.selectedGameId === 'chess') {
+      this.currentGameInstance = new ChessGame(mount, onFinishCallback);
+      this.currentGameInstance.init(isAi, this.selectedAiLevel);
+    } else if (this.selectedGameId === 'shogi') {
+      this.currentGameInstance = new ShogiGame(mount, onFinishCallback);
+      this.currentGameInstance.init(isAi, this.selectedAiLevel);
+    } else if (this.selectedGameId.startsWith('cards_')) {
+      this.currentGameInstance = new PlayingCardsGame(mount, onFinishCallback);
+      this.currentGameInstance.init(this.selectedGameId, isAi, this.selectedAiLevel);
+    }
+  }
+
+  renderTitlesModal() {
+    const container = document.getElementById('titles-list-container');
+    const unlocked = rankTitleManager.userData.unlockedTitles;
+    const equippedId = rankTitleManager.userData.equippedTitleId;
+
+    document.getElementById('titles-progress-bar').textContent = `獲得称号: ${unlocked.length} / ${ALL_TITLES.length}`;
+    container.innerHTML = '';
+
+    ALL_TITLES.forEach(title => {
+      const isUnlocked = unlocked.includes(title.id);
+      const isEquipped = equippedId === title.id;
+
+      const item = document.createElement('div');
+      item.style.cssText = `
+        background: rgba(255,255,255,0.05);
+        border: 1px solid ${isEquipped ? 'var(--accent-gold)' : isUnlocked ? 'var(--border-glow)' : 'rgba(255,255,255,0.05)'};
+        border-radius: 10px;
+        padding: 0.75rem;
+        opacity: ${isUnlocked ? '1' : '0.45'};
+      `;
+      item.innerHTML = `
+        <div style="font-weight: bold; font-size: 0.95rem; color: ${isUnlocked ? '#fff' : '#888'};">
+          ${isUnlocked ? '🏆' : '🔒'} ${title.name}
+          ${isEquipped ? '<span style="color:var(--accent-gold); font-size:0.75rem;">(装備中)</span>' : ''}
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.3rem;">${title.desc}</div>
+        ${isUnlocked && !isEquipped ? `<button class="btn btn-secondary btn-equip-title" data-id="${title.id}" style="padding:0.2rem 0.6rem; font-size:0.75rem; margin-top:0.5rem;">装備する</button>` : ''}
+      `;
+
+      if (isUnlocked && !isEquipped) {
+        item.querySelector('.btn-equip-title').addEventListener('click', (e) => {
+          const tid = parseInt(e.target.dataset.id);
+          rankTitleManager.equipTitle(tid);
+          this.updateHeaderUI();
+          this.renderTitlesModal();
+        });
+      }
+
+      container.appendChild(item);
+    });
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  window.appController = new AppController();
+});
+  </script>
 </body>
 </html>
