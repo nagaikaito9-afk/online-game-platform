@@ -7,6 +7,11 @@
   <link rel="icon" type="image/png" href="favicon.png">
   <meta name="description" content="囲碁(9/13/19路盤・置石)、将棋、チェス、オセロ、五目並べ、トランプ全5種、〇✕ゲームがSupabase連携で遊べるオンライン対戦ゲームプラットフォーム。200段階ランク＆300称号搭載！">
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* CSS読み込み時の非表示・基本レイアウトガード */
+    .screen-view { display: none !important; }
+    .screen-view.active { display: flex !important; flex-direction: column; align-items: center; }
+  </style>
   <!-- Supabase JS CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>

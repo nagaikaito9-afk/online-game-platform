@@ -16,13 +16,15 @@ class SupabaseManager {
   }
 
   initClient() {
-    if (this.isConfigured && window.supabase) {
+    if (this.isConfigured && typeof window.supabase !== 'undefined' && window.supabase.createClient) {
       try {
         this.client = window.supabase.createClient(this.url, this.key);
         console.log('Supabase client initialized.');
       } catch (e) {
-        console.error('Supabase initialization failed:', e);
+        console.warn('Supabase initialization failed:', e);
       }
+    } else {
+      console.log('Supabase CDN not loaded or credentials default fallback.');
     }
   }
 

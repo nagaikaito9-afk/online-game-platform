@@ -12,6 +12,7 @@ class AppController {
     this.initElements();
     this.bindEvents();
     this.updateHeaderUI();
+    this.showScreen('home'); // 初期画面をホームに確実に設定
   }
 
   initElements() {
