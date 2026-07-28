@@ -4,10 +4,17 @@ AntiGravity（AIアシスタント）のセッションが終了・リセット�
 
 ---
 
-## 🌐 基本情報 ＆ 公開URL
-- **アプリ名**: VersaPlay Online
-- **本番Web公開URL**: [https://online-game-platform-three.vercel.app/](https://online-game-platform-three.vercel.app/)
-- **GitHubリポジトリ**: [https://github.com/nagaikaito9-afk/online-game-platform.git](https://github.com/nagaikaito9-afk/online-game-platform.git)
+## 🌐 プロジェクト ＆ リポジトリ別公開情報
+
+### 🎮 1. WEBLOX (3Dロブロックス風メタバース)
+- **GitHubリポジトリ**: `WEBLOX` (`https://github.com/nagaikaito9-afk/WEBLOX.git`)
+- **Vercel プロジェクト名**: `new-weblox`
+- **格納ディレクトリ**: `WEBLOX/`
+
+### 🎯 2. VersaPlay Online (2D対戦ゲームプラットフォーム)
+- **GitHubリポジトリ**: `online-game-platform` (`https://github.com/nagaikaito9-afk/online-game-platform.git`)
+- **Vercel 公開URL**: [https://online-game-platform-three.vercel.app/](https://online-game-platform-three.vercel.app/)
+- **格納ディレクトリ**: `online-game-platform/`
 
 ---
 
