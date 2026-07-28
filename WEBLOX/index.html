@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WEBLOX | 3Dオンラインメタバース＆ゲームプラットフォーム</title>
+  <meta name="description" content="ロブロックス風3Dメタバース「WEBLOX」。アバターカスタマイズ、Obbyアスレチック、コインレース、3Dバトルアリーナ、ワールド建築がオンラインで遊べる！">
+  <link rel="stylesheet" href="style.css">
+  <!-- Three.js 3Dグラフィックライブラリ -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+  <!-- 3Dレンダリングキャンバス -->
+  <canvas id="weblox-canvas"></canvas>
+
+  <!-- HUD UIオーバーレイ -->
+  <div class="ui-overlay">
+    
+    <!-- トップバー -->
+    <div class="ui-top-bar">
+      <div class="weblox-logo">
+        <span>🧊</span> WEBLOX
+      </div>
+
+      <div id="current-world-title" style="font-weight: bold; font-size: 1.2rem; color: var(--accent-gold); background: var(--bg-panel); padding: 0.5rem 1.2rem; border-radius: 20px; border: 1px solid var(--border-glow);">
+        🏙️ WEBLOX セントラルロビー
+      </div>
+
+      <div class="user-status-card">
+        <span id="weblox-coin-score" style="font-weight: bold; color: var(--accent-gold);">🪙 0</span>
+        <button id="btn-open-shop" class="btn btn-primary">🛍️ アバターショップ</button>
+        <button id="btn-open-worlds" class="btn btn-secondary">🌐 ワールド切替</button>
+      </div>
+    </div>
+
+    <!-- ボトムバー (チャット & エモート) -->
+    <div class="ui-bottom-bar">
+      <!-- チャットパネル -->
+      <div class="chat-box-container">
+        <div id="weblox-chat-messages" class="chat-messages">
+          <div style="color: var(--text-muted); font-size: 0.75rem;">💬 WEBLOX 3Dチャットへようこそ！</div>
+        </div>
+        <div style="display: flex; gap: 0.3rem;">
+          <input type="text" id="weblox-chat-input" placeholder="チャットを入力..." style="flex: 1; padding: 0.4rem 0.6rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.6); color: #fff; font-size: 0.85rem;">
+          <button id="btn-send-weblox-chat" class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">送信</button>
+        </div>
+      </div>
+
+      <!-- 操作ヒント & エモートバー -->
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
+        <div style="font-size: 0.75rem; background: rgba(0,0,0,0.6); padding: 0.4rem 0.8rem; border-radius: 8px; color: var(--text-muted);">
+          🎮 操作方法: [WASD] 移動 ｜ [Space] ジャンプ ｜ [マウスドラッグ] 360度カメラ回転 ｜ [B] ブロック設置 (建築モード)
+        </div>
+        <div id="emote-bar" class="emote-bar"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- モーダル1: アバターショップ (カスタマイズ) -->
+  <div id="modal-shop" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 style="font-size: 1.4rem;">🛍️ 3Dアバターショップ＆着替え</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <div>
+          <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">🎨 肌のカラーを選択</label>
+          <div id="shop-colors-grid" style="display: flex; gap: 0.8rem; flex-wrap: wrap;"></div>
+        </div>
+        <div>
+          <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">🧢 帽子・アクセサリを選択</label>
+          <div id="shop-hats-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.8rem;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- モーダル2: ワールド切替 -->
+  <div id="modal-worlds" class="modal-overlay">
+    <div class="modal-content" style="max-width: 650px;">
+      <div class="modal-header">
+        <h3 style="font-size: 1.4rem;">🌐 3Dゲームワールド一覧</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div id="worlds-list-container" style="display: flex; flex-direction: column; gap: 1rem; max-height: 450px; overflow-y: auto;"></div>
+    </div>
+  </div>
+
+  <!-- WEBLOX スクリプト群 -->
+  <script src="js/config.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/avatar.js"></script>
+  <script src="js/world.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
