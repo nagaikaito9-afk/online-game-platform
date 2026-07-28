@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cell Simulation | 全200種類 物理・化学・生命物質シミュレーター</title>
-  <meta name="description" content="全200種類の物理・化学・生命物質を選択・検索できるリアルタイムピクセルシミュレーター。流体物理、相変態、細胞分裂、火と水と溶岩の反応！">
+  <title>Cell Simulation | 超リアル重力加速度 ＆ 100倍速ピクセル物理シミュレーター</title>
+  <meta name="description" content="重力加速度(v_y = v_y + g*dt)、熱伝導(℃)、水面水平流動を現実さながらにリアルタイム物理演算する超高精細シミュレーター。時間停止から100倍速まで自由自在！">
   <link rel="icon" type="image/png" href="../favicon.png">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -17,13 +17,16 @@
         🧪 Cell Simulation (Powder Toy Edition)
       </span>
       <span style="font-size: 0.85rem; color: var(--text-sub);">
-        選択中物質: <strong id="current-selected-material-display" style="color:var(--accent-cyan);">水 (Water)</strong>
+        選択中: <strong id="current-selected-material-display" style="color:var(--accent-cyan);">水 (Water)</strong>
+      </span>
+      <span style="font-size: 0.85rem; color: var(--text-sub); margin-left: 0.5rem;">
+        進行速度: <strong id="current-time-speed-display" style="color:var(--accent-gold);">1x</strong>
       </span>
     </div>
 
     <!-- 実験プリセットボタン群 (※alert不使用) -->
     <div style="display: flex; gap: 0.6rem;">
-      <button id="btn-preset-lava-water" style="background: linear-gradient(135deg, #ff3366, #00f2fe); color: #fff; border:none; padding:0.4rem 0.8rem; border-radius:8px; font-weight:bold; font-size:0.8rem; cursor:pointer;">🌋 溶岩 ✕ 水 実験</button>
+      <button id="btn-preset-lava-water" style="background: linear-gradient(135deg, #ff3366, #00f2fe); color: #fff; border:none; padding:0.4rem 0.8rem; border-radius:8px; font-weight:bold; font-size:0.8rem; cursor:pointer;">🌋 1200℃ 溶岩 ✕ 水 実験</button>
       <button id="btn-preset-human-acid" style="background: linear-gradient(135deg, #f0a096, #a0ff00); color: #000; border:none; padding:0.4rem 0.8rem; border-radius:8px; font-weight:bold; font-size:0.8rem; cursor:pointer;">🚶 人間組織 ✕ 酸 実験</button>
     </div>
   </div>
@@ -34,7 +37,7 @@
   <!-- カスタムエレガントトースト通知 (※alertは一切不使用) -->
   <div id="custom-toast" class="custom-toast-notification"></div>
 
-  <!-- 画面下部 メニューバー (「🧪 物質」ボタン ＆ ツールバー) -->
+  <!-- 画面下部 メニューバー (「🧪 物質」ボタン ＆ 100倍速タイムコントロール) -->
   <div class="powder-toolbar-bottom">
     
     <!-- 「🧪 物質」ボタン (200種類カタログオープン) -->
@@ -42,25 +45,29 @@
       🧪 物質を選択 (全200種類)
     </button>
 
-    <!-- ツールボックス (ブラシサイズ, 清掃, スピード) -->
+    <!-- ツールボックス (ブラシサイズ, 100倍速タイムコントロール, 清掃) -->
     <div class="toolbar-actions">
       <!-- ペンサイズ -->
       <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(0,0,0,0.4); padding: 0.4rem 0.8rem; border-radius: 10px; font-size: 0.8rem;">
         <span>🖌️ ペン径:</span>
-        <input type="range" id="slider-brush-size" min="1" max="25" value="5" style="width: 80px;">
+        <input type="range" id="slider-brush-size" min="1" max="25" value="5" style="width: 70px;">
         <span id="brush-size-val" style="font-weight: bold; color: var(--accent-cyan);">5 px</span>
       </div>
 
-      <!-- タイムコントロール (Pause, 1x, 5x, 10x) -->
-      <div style="display: flex; gap: 0.3rem;">
+      <!-- タイムコントロール (0x, 0.5x, 1x, 5x, 10x, 25x, 50x, 100x) -->
+      <div style="display: flex; gap: 0.25rem;">
         <button class="time-btn" data-speed="0">⏸️</button>
+        <button class="time-btn" data-speed="0.5">0.5x</button>
         <button class="time-btn active" data-speed="1">1x</button>
         <button class="time-btn" data-speed="5">5x</button>
-        <button class="time-btn" data-speed="10">10x 🚀</button>
+        <button class="time-btn" data-speed="10">10x</button>
+        <button class="time-btn" data-speed="25">25x</button>
+        <button class="time-btn" data-speed="50">50x</button>
+        <button class="time-btn" data-speed="100" style="color:var(--accent-gold);">100x 🚀</button>
       </div>
 
       <!-- 清掃 -->
-      <button id="btn-clear-canvas" style="background: var(--accent-red); color: #fff; border:none; padding:0.5rem 1rem; border-radius:8px; font-weight:bold; cursor:pointer;">🧹 クリア</button>
+      <button id="btn-clear-canvas" style="background: var(--accent-red); color: #fff; border:none; padding:0.5rem 0.9rem; border-radius:8px; font-weight:bold; cursor:pointer;">🧹 クリア</button>
     </div>
 
   </div>

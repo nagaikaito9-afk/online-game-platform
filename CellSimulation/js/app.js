@@ -1,6 +1,6 @@
 /**
  * Cell Simulation - app.js
- * メインコントロール・全200種類物質カタログ＆リアルタイム検索UI
+ * メインコントローラー・100倍速タイムコントロール・リアルタイム熱力学表示 (※alert一切全廃)
  */
 
 class CellSimulationApp {
@@ -45,37 +45,38 @@ class CellSimulationApp {
       document.getElementById('brush-size-val').textContent = `${e.target.value} px`;
     });
 
-    // タイムコントロール (Pause, 1x, 5x, 10x)
+    // タイムコントロール (0x, 0.5x, 1x, 5x, 10x, 25x, 50x, 100x)
     document.querySelectorAll('.time-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         if (window.cellAudioEngine) window.cellAudioEngine.playSE('click');
         document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
         e.target.classList.add('active');
 
-        const speed = parseInt(e.target.dataset.speed);
-        this.engine.speed = speed;
+        const speed = parseFloat(e.target.dataset.speed);
+        this.engine.timeScale = speed;
+        document.getElementById('current-time-speed-display').textContent = `${speed}x`;
       });
     });
 
-    // 画面清掃 (Clear) ボタン
+    // 清掃ボタン
     document.getElementById('btn-clear-canvas').addEventListener('click', () => {
       if (window.cellAudioEngine) window.cellAudioEngine.playSE('click');
       this.engine.clearGrid();
-      this.showToast('🧹 キャンバス上の物質をクリアしました');
+      this.showToast('🧹 キャンバスをクリアしました');
     });
 
-    // 「🧪 物質」カタログラージボタン
+    // 「🧪 物質」カタログボタン
     document.getElementById('btn-open-material-catalog').addEventListener('click', () => {
       if (window.cellAudioEngine) window.cellAudioEngine.playSE('click');
       document.getElementById('modal-material-catalog').classList.add('active');
     });
 
-    // 物質検索入力フィルター
+    // 検索窓
     document.getElementById('catalog-search-input').addEventListener('input', (e) => {
       this.renderCatalogGrid(e.target.value.trim());
     });
 
-    // カテゴリフィルタータブ
+    // カテゴリタブ
     document.querySelectorAll('.catalog-cat-tab').forEach(tab => {
       tab.addEventListener('click', (e) => {
         if (window.cellAudioEngine) window.cellAudioEngine.playSE('click');
@@ -88,7 +89,7 @@ class CellSimulationApp {
       });
     });
 
-    // プリセット配置 (溶岩 ✕ 水 実験)
+    // 溶岩 ✕ 水 実験
     document.getElementById('btn-preset-lava-water').addEventListener('click', () => {
       if (window.cellAudioEngine) window.cellAudioEngine.playSE('combine');
       this.engine.clearGrid();
@@ -98,15 +99,15 @@ class CellSimulationApp {
 
       for (let y = cy; y < cy + 20; y++) {
         for (let x = cx - 35; x < cx + 35; x++) {
-          this.engine.setPixel(x, y, 2); // 2: 溶岩
+          this.engine.setPixel(x, y, 2); // 溶岩 (1200℃)
         }
       }
       for (let y = cy - 30; y < cy - 5; y++) {
         for (let x = cx - 30; x < cx + 30; x++) {
-          this.engine.setPixel(x, y, 1); // 1: 水
+          this.engine.setPixel(x, y, 1); // 水
         }
       }
-      this.showToast('🌋 溶岩 ✕ 水 の流体・爆発反応実験プリセットを配置しました！');
+      this.showToast('🌋 1200℃ 溶岩 ✕ 水 の爆発的水蒸気・流体化実験を配置！');
     });
 
     document.querySelectorAll('.modal-close-btn').forEach(btn => {
@@ -124,7 +125,6 @@ class CellSimulationApp {
     this.engine.drawBrush(mx, my);
   }
 
-  // 200種類物質カタログモーダルの描画 ＆ 検索
   renderCatalogGrid(keyword = '') {
     const grid = document.getElementById('catalog-materials-grid');
     if (!grid) return;
