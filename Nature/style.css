@@ -1,0 +1,197 @@
+/* ==========================================================================
+   Nature - 地球大自然 ＆ 水循環物理シミュレーター CSS
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Share+Tech+Mono&display=swap');
+
+:root {
+  --bg-dark: #070a12;
+  --panel-bg: rgba(15, 23, 42, 0.90);
+  --panel-border: rgba(255, 255, 255, 0.12);
+  --accent-cyan: #38bdf8;
+  --accent-green: #4ade80;
+  --accent-gold: #fbbf24;
+  --accent-red: #f43f5e;
+  --accent-blue: #60a5fa;
+  --text-main: #f8fafc;
+  --text-sub: #94a3b8;
+  --font-main: 'Outfit', sans-serif;
+  --font-mono: 'Share Tech Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-main);
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  user-select: none;
+}
+
+/* トップステータス ＆ ヘッダー */
+.top-nav {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 54px;
+  padding: 0 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(10, 15, 30, 0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--panel-border);
+  z-index: 50;
+}
+
+.brand-title {
+  font-weight: 900;
+  font-size: 1.25rem;
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-badge {
+  font-size: 0.85rem;
+  color: var(--text-sub);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* メインキャンバス */
+#nature-canvas {
+  margin-top: 54px;
+  width: 100vw;
+  height: calc(100vh - 124px);
+  display: block;
+  background: #020617;
+  cursor: crosshair;
+}
+
+/* ボトムツールバー */
+.bottom-toolbar {
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 100%;
+  height: 70px;
+  background: rgba(10, 15, 30, 0.95);
+  border-top: 1px solid var(--panel-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  z-index: 50;
+  backdrop-filter: blur(16px);
+}
+
+/* ツール選択ボタン群 */
+.tool-group {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+}
+
+.tool-btn {
+  padding: 0.45rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.05);
+  color: var(--text-main);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.tool-btn:hover {
+  background: rgba(255,255,255,0.12);
+  transform: translateY(-2px);
+}
+
+.tool-btn.active {
+  border-color: var(--accent-cyan);
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(74, 222, 128, 0.25));
+  color: var(--accent-cyan);
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+}
+
+/* 100倍速タイムバー ＆ アクション */
+.toolbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.speed-control-group {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(0,0,0,0.4);
+  padding: 0.3rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.speed-btn {
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.speed-btn:hover {
+  color: #fff;
+}
+
+.speed-btn.active {
+  background: var(--accent-cyan);
+  color: #000;
+  box-shadow: 0 2px 8px rgba(56, 189, 248, 0.4);
+}
+
+/* トースト通知 */
+.custom-toast {
+  position: fixed;
+  top: 4.8rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid var(--accent-cyan);
+  color: var(--accent-cyan);
+  padding: 0.65rem 1.6rem;
+  border-radius: 30px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  box-shadow: 0 10px 25px rgba(56, 189, 248, 0.25);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 100;
+}
+
+.custom-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nature | 大自然 ＆ 地球水循環物理シミュレーター</title>
+  <meta name="description" content="太陽熱による蒸発から上昇気流、雲の形成、雨・雪の降下、植物の生長まで。100倍速タイムスライダーで大自然の水循環工程をリアルタイム体験！">
+  <link rel="icon" type="image/png" href="../favicon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- トップステータス ＆ ヘッダー -->
+  <div class="top-nav">
+    <div class="brand-title">
+      <span>🌿 Nature (Earth Water Cycle)</span>
+    </div>
+
+    <!-- リアルタイム環境ステータス -->
+    <div style="display: flex; gap: 0.8rem; align-items: center;">
+      <span class="status-badge">💧 水: <strong id="stat-water" style="color:var(--accent-cyan);">0</strong></span>
+      <span class="status-badge">☁️ 雲: <strong id="stat-cloud" style="color:#fff;">0</strong></span>
+      <span class="status-badge">🌧️ 雨: <strong id="stat-rain" style="color:var(--accent-blue);">0</strong></span>
+      <span class="status-badge">🌱 森林: <strong id="stat-plant" style="color:var(--accent-green);">0</strong></span>
+      <span class="status-badge">🚀 進行速度: <strong id="stat-speed" style="color:var(--accent-gold);">1x</strong></span>
+    </div>
+
+    <!-- 実験プリセットボタン -->
+    <div style="display: flex; gap: 0.5rem;">
+      <button id="btn-preset-cycle" style="background: linear-gradient(135deg, #0284c7, #16a34a); color: #fff; border:none; padding:0.4rem 0.8rem; border-radius:8px; font-weight:bold; font-size:0.8rem; cursor:pointer;">🌍 水循環 ＆ 大自然発生</button>
+      <button id="btn-preset-rainstorm" style="background: linear-gradient(135deg, #0f172a, #38bdf8); color: #fff; border:none; padding:0.4rem 0.8rem; border-radius:8px; font-weight:bold; font-size:0.8rem; cursor:pointer;">⛈️ 巨大雨雲 ＆ 大雨</button>
+    </div>
+  </div>
+
+  <!-- メイン物理キャンバス -->
+  <canvas id="nature-canvas"></canvas>
+
+  <!-- カスタムトースト通知 -->
+  <div id="custom-toast" class="custom-toast"></div>
+
+  <!-- ボトムツールバー (要素パレット ＆ 100倍速タイムバー) -->
+  <div class="bottom-toolbar">
+    <!-- ツール切り替えボタンパレット -->
+    <div class="tool-group">
+      <button class="tool-btn active" data-tool="1">💧 水 (Water)</button>
+      <button class="tool-btn" data-tool="8">☀️ 太陽熱 (Sun Heat)</button>
+      <button class="tool-btn" data-tool="9">❄️ 寒気 (Cold Air)</button>
+      <button class="tool-btn" data-tool="5">☁️ 雲 (Cloud)</button>
+      <button class="tool-btn" data-tool="6">🌧️ 雨 (Rain)</button>
+      <button class="tool-btn" data-tool="7">🌱 植物の種 (Seed)</button>
+      <button class="tool-btn" data-tool="2">🪨 土壌 (Soil)</button>
+      <button class="tool-btn" data-tool="0">🧹 消しゴム (Eraser)</button>
+    </div>
+
+    <!-- 100倍速タイムバー ＆ 操作 -->
+    <div class="toolbar-controls">
+      <!-- ペン径 -->
+      <div style="display: flex; align-items: center; gap: 0.4rem; background: rgba(0,0,0,0.3); padding: 0.35rem 0.7rem; border-radius: 10px; font-size: 0.8rem;">
+        <span>🖌️ ペン径:</span>
+        <input type="range" id="slider-brush" min="1" max="20" value="6" style="width: 60px;">
+        <span id="val-brush" style="font-weight: bold; color: var(--accent-cyan);">6 px</span>
+      </div>
+
+      <!-- タイムスピード (0x, 1x, 5x, 10x, 25x, 50x, 100x) -->
+      <div class="speed-control-group">
+        <button class="speed-btn" data-speed="0">⏸️</button>
+        <button class="speed-btn active" data-speed="1">1x</button>
+        <button class="speed-btn" data-speed="5">5x</button>
+        <button class="speed-btn" data-speed="10">10x</button>
+        <button class="speed-btn" data-speed="25">25x</button>
+        <button class="speed-btn" data-speed="50">50x</button>
+        <button class="speed-btn" data-speed="100" style="color:var(--accent-gold);">100x 🚀</button>
+      </div>
+
+      <!-- クリアボタン -->
+      <button id="btn-clear" style="background: var(--accent-red); color: #fff; border:none; padding:0.45rem 0.85rem; border-radius:8px; font-weight:bold; cursor:pointer; font-size:0.85rem;">🧹 クリア</button>
+    </div>
+  </div>
+
+  <!-- スクリプト類 -->
+  <script src="js/audio.js"></script>
+  <script src="js/nature_engine.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
