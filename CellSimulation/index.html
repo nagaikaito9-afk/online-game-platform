@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cell Simulation | 超リアル重力加速度 ＆ 100倍速ピクセル物理シミュレーター</title>
-  <meta name="description" content="重力加速度(v_y = v_y + g*dt)、熱伝導(℃)、水面水平流動を現実さながらにリアルタイム物理演算する超高精細シミュレーター。時間停止から100倍速まで自由自在！">
+  <title>Cell Simulation | 超リアル物理演算 ＆ 100倍速ピクセル物理シミュレーター</title>
+  <meta name="description" content="重力加速度、密度浮力、熱力学相転移、水面水平流動を現実さながらにリアルタイム物理演算する超高精細シミュレーター。時間停止から100倍速まで自由自在！">
   <link rel="icon" type="image/png" href="../favicon.png">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
   <!-- トップステータス ＆ 実験ヘッダー -->
-  <div style="position: absolute; top: 0; left: 0; width: 100%; height: 50px; padding: 0 1.2rem; display: flex; justify-content: space-between; align-items: center; background: rgba(18,21,32,0.9); backdrop-filter: blur(10px); z-index: 40; border-bottom: 1px solid var(--panel-border);">
+  <div style="position: absolute; top: 0; left: 0; width: 100%; height: 50px; padding: 0 1.2rem; display: flex; justify-content: space-between; align-items: center; background: rgba(18,21,32,0.95); backdrop-filter: blur(12px); z-index: 40; border-bottom: 1px solid var(--panel-border);">
     <div style="display: flex; align-items: center; gap: 1rem;">
       <span style="font-weight: 900; font-size: 1.1rem; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
         🧪 Cell Simulation (Powder Toy Edition)
@@ -20,14 +20,17 @@
         選択中: <strong id="current-selected-material-display" style="color:var(--accent-cyan);">水 (Water)</strong>
       </span>
       <span style="font-size: 0.85rem; color: var(--text-sub); margin-left: 0.5rem;">
-        進行速度: <strong id="current-time-speed-display" style="color:var(--accent-gold);">1x</strong>
+        速度: <strong id="current-time-speed-display" style="color:var(--accent-gold);">1x</strong>
       </span>
     </div>
 
-    <!-- 実験プリセットボタン群 (※alert不使用) -->
-    <div style="display: flex; gap: 0.6rem;">
-      <button id="btn-preset-lava-water" style="background: linear-gradient(135deg, #ff3366, #00f2fe); color: #fff; border:none; padding:0.4rem 0.8rem; border-radius:8px; font-weight:bold; font-size:0.8rem; cursor:pointer;">🌋 1200℃ 溶岩 ✕ 水 実験</button>
-      <button id="btn-preset-human-acid" style="background: linear-gradient(135deg, #f0a096, #a0ff00); color: #000; border:none; padding:0.4rem 0.8rem; border-radius:8px; font-weight:bold; font-size:0.8rem; cursor:pointer;">🚶 人間組織 ✕ 酸 実験</button>
+    <!-- リアル実験プリセットボタン群 (※alert不使用) -->
+    <div style="display: flex; gap: 0.5rem; overflow-x: auto;">
+      <button id="btn-preset-lava-water" style="background: linear-gradient(135deg, #ff3366, #00f2fe); color: #fff; border:none; padding:0.4rem 0.7rem; border-radius:8px; font-weight:bold; font-size:0.78rem; cursor:pointer;">🌋 溶岩✕水 沸騰</button>
+      <button id="btn-preset-explosion" style="background: linear-gradient(135deg, #ff9900, #ff0000); color: #fff; border:none; padding:0.4rem 0.7rem; border-radius:8px; font-weight:bold; font-size:0.78rem; cursor:pointer;">🔥 火薬庫 大爆発</button>
+      <button id="btn-preset-acid-corrosion" style="background: linear-gradient(135deg, #a0ff00, #009900); color: #000; border:none; padding:0.4rem 0.7rem; border-radius:8px; font-weight:bold; font-size:0.78rem; cursor:pointer;">🧪 強烈 酸侵食</button>
+      <button id="btn-preset-nitrogen-freeze" style="background: linear-gradient(135deg, #00d2ff, #3a7bd5); color: #fff; border:none; padding:0.4rem 0.7rem; border-radius:8px; font-weight:bold; font-size:0.78rem; cursor:pointer;">❄️ 液体窒素 凍結</button>
+      <button id="btn-preset-density-oil" style="background: linear-gradient(135deg, #fce38a, #f38181); color: #000; border:none; padding:0.4rem 0.7rem; border-radius:8px; font-weight:bold; font-size:0.78rem; cursor:pointer;">💧 密度分離 (油・水・水銀)</button>
     </div>
   </div>
 

@@ -1,6 +1,6 @@
 /**
  * Cell Simulation - app.js
- * メインコントローラー・100倍速タイムコントロール・リアルタイム熱力学表示 (※alert一切全廃)
+ * メインコントローラー・100倍速タイムコントロール・リアルタイム実験プリセット (※alert一切全廃)
  */
 
 class CellSimulationApp {
@@ -19,7 +19,7 @@ class CellSimulationApp {
     if (!toast) return;
     toast.textContent = message;
     toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 3000);
+    setTimeout(() => toast.classList.remove('show'), 3200);
   }
 
   bindEvents() {
@@ -89,26 +89,127 @@ class CellSimulationApp {
       });
     });
 
-    // 溶岩 ✕ 水 実験
+    // --------------------------------------------------------
+    // 🧪 リアル実験プリセットイベント群
+    // --------------------------------------------------------
+
+    // 1. 溶岩 ✕ 水 実験
     document.getElementById('btn-preset-lava-water').addEventListener('click', () => {
-      if (window.cellAudioEngine) window.cellAudioEngine.playSE('combine');
+      if (window.cellAudioEngine) window.cellAudioEngine.playSE('boil');
       this.engine.clearGrid();
 
       const cx = Math.floor(this.engine.cols / 2);
       const cy = Math.floor(this.engine.rows / 2);
 
-      for (let y = cy; y < cy + 20; y++) {
+      for (let y = cy; y < cy + 18; y++) {
         for (let x = cx - 35; x < cx + 35; x++) {
           this.engine.setPixel(x, y, 2); // 溶岩 (1200℃)
         }
       }
-      for (let y = cy - 30; y < cy - 5; y++) {
+      for (let y = cy - 28; y < cy - 5; y++) {
         for (let x = cx - 30; x < cx + 30; x++) {
           this.engine.setPixel(x, y, 1); // 水
         }
       }
-      this.showToast('🌋 1200℃ 溶岩 ✕ 水 の爆発的水蒸気・流体化実験を配置！');
+      this.showToast('🌋 1200℃ 溶岩 ✕ 水 爆発的水蒸気・玄武岩化実験！');
     });
+
+    // 2. 火薬庫 大爆発 実験
+    const btnExp = document.getElementById('btn-preset-explosion');
+    if (btnExp) {
+      btnExp.addEventListener('click', () => {
+        if (window.cellAudioEngine) window.cellAudioEngine.playSE('explode');
+        this.engine.clearGrid();
+
+        const cx = Math.floor(this.engine.cols / 2);
+        const cy = Math.floor(this.engine.rows / 2);
+
+        // 火薬ブロック
+        for (let y = cy - 15; y < cy + 15; y++) {
+          for (let x = cx - 25; x < cx + 25; x++) {
+            this.engine.setPixel(x, y, 14); // 火薬
+          }
+        }
+        // 火種
+        this.engine.setPixel(cx, cy - 16, 38); // 火
+        this.showToast('🔥 火薬庫の爆発 ＆ 火花スパーク連鎖実験！');
+      });
+    }
+
+    // 3. 強烈 酸侵食 実験
+    const btnAcid = document.getElementById('btn-preset-acid-corrosion');
+    if (btnAcid) {
+      btnAcid.addEventListener('click', () => {
+        if (window.cellAudioEngine) window.cellAudioEngine.playSE('acid');
+        this.engine.clearGrid();
+
+        const cx = Math.floor(this.engine.cols / 2);
+        const cy = Math.floor(this.engine.rows / 2);
+
+        // 人間組織と鉄・木のレイヤー
+        for (let y = cy; y < cy + 20; y++) {
+          for (let x = cx - 40; x < cx + 40; x++) {
+            const eId = (x < cx - 15) ? 22 : (x > cx + 15 ? 27 : 34); // 鉄, 人間組織, 木
+            this.engine.setPixel(x, y, eId);
+          }
+        }
+        // 酸を注ぐ
+        for (let y = cy - 25; y < cy - 2; y++) {
+          for (let x = cx - 12; x < cx + 12; x++) {
+            this.engine.setPixel(x, y, 4); // 酸
+          }
+        }
+        this.showToast('🧪 物質侵食 ＆ 泡発生 酸実験！');
+      });
+    }
+
+    // 4. 液体窒素 超低温凍結 実験
+    const btnNitro = document.getElementById('btn-preset-nitrogen-freeze');
+    if (btnNitro) {
+      btnNitro.addEventListener('click', () => {
+        if (window.cellAudioEngine) window.cellAudioEngine.playSE('boil');
+        this.engine.clearGrid();
+
+        const cx = Math.floor(this.engine.cols / 2);
+        const cy = Math.floor(this.engine.rows / 2);
+
+        // 水の池
+        for (let y = cy; y < cy + 25; y++) {
+          for (let x = cx - 35; x < cx + 35; x++) {
+            this.engine.setPixel(x, y, 1); // 水 (20℃)
+          }
+        }
+        // 液体窒素 (-196℃)
+        for (let y = cy - 20; y < cy - 2; y++) {
+          for (let x = cx - 15; x < cx + 15; x++) {
+            this.engine.setPixel(x, y, 7);
+          }
+        }
+        this.showToast('❄️ -196℃ 液体窒素 ✕ 水プール 超低温凍結実験！');
+      });
+    }
+
+    // 5. 密度分離 (油・水・水銀) 実験
+    const btnDensity = document.getElementById('btn-preset-density-oil');
+    if (btnDensity) {
+      btnDensity.addEventListener('click', () => {
+        if (window.cellAudioEngine) window.cellAudioEngine.playSE('click');
+        this.engine.clearGrid();
+
+        const cx = Math.floor(this.engine.cols / 2);
+        const cy = Math.floor(this.engine.rows / 2);
+
+        // 混ざった液体（下から水銀・水・石油）をランダムに配置して分離を観察
+        for (let y = cy - 20; y < cy + 20; y++) {
+          for (let x = cx - 30; x < cx + 30; x++) {
+            const rand = Math.random();
+            const elemId = rand < 0.33 ? 5 : (rand < 0.66 ? 1 : 3); // 水銀, 水, 石油
+            this.engine.setPixel(x, y, elemId);
+          }
+        }
+        this.showToast('💧 密度分離演算（水銀 density 14 ＞ 水 5 ＞ 石油 3）実験！');
+      });
+    }
 
     document.querySelectorAll('.modal-close-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
