@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Make the slime bigger | スライム巨大化 ＆ 全200種ガチャ育成バトル</title>
+  <meta name="description" content="スライムを餌でプニプニ巨大化させて分裂・繁殖！バトルで勝利して獲得したチケットで全200種類のスライムガチャを回そう！">
+  <link rel="icon" type="image/png" href="../favicon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ヘッダーナビ (リソース ＆ コレクション数) -->
+  <div class="header-nav">
+    <div class="brand-title">
+      <span>🟢 Make the slime bigger</span>
+    </div>
+
+    <div class="user-resources">
+      <div class="res-item ticket">
+        <span>🎟️ ガチャチケット:</span>
+        <strong id="val-tickets">5 枚</strong>
+      </div>
+      <div class="res-item">
+        <span>📚 図鑑収集率:</span>
+        <strong id="val-codex-count" style="color:var(--accent-cyan);">1 / 200 (0.5%)</strong>
+      </div>
+      <div class="res-item">
+        <span>⚔️ バトル勝利数:</span>
+        <strong id="val-wins" style="color:var(--accent-green);">0 勝</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- スライム物理キャンバス -->
+  <canvas id="slime-canvas"></canvas>
+
+  <!-- トースト通知 -->
+  <div id="custom-toast" class="custom-toast"></div>
+
+  <!-- アクションバー -->
+  <div class="bottom-action-bar">
+    <div class="action-btn-group">
+      <button id="btn-feed" class="act-btn feed">🍏 餌やり＆巨大化</button>
+      <button id="btn-split" class="act-btn split">💥 2体に分裂</button>
+      <button id="btn-breed" class="act-btn breed">💕 スライム繁殖</button>
+    </div>
+
+    <div class="action-btn-group">
+      <button id="btn-battle" class="act-btn battle">⚔️ バトル (チケット獲得)</button>
+      <button id="btn-open-gacha" class="act-btn gacha">🎟️ 200種スライムガチャ</button>
+      <button id="btn-open-codex" class="act-btn codex">📚 全200種図鑑</button>
+    </div>
+  </div>
+
+  <!-- モーダル 1: 🎟️ ガチャ画面 -->
+  <div id="modal-gacha" class="modal-overlay">
+    <div class="modal-content" style="max-width: 650px; text-align: center;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2 style="font-size:1.6rem; color:var(--accent-gold);">🎟️ 全200種類 スライムガチャ</h2>
+        <button class="modal-close">&times;</button>
+      </div>
+
+      <p style="color:var(--text-sub); margin:0.8rem 0;">バトルで敵を倒すとガチャチケットを獲得できます！アルティメットスライムを引き当てよう！</p>
+
+      <div style="background:rgba(0,0,0,0.3); padding:1rem; border-radius:16px; margin-bottom:1.5rem; text-align:left; font-size:0.85rem; color:var(--text-sub);">
+        <strong>【全200種 排出確率】</strong><br>
+        🟢 コモン(80種): 45% / 🔵 アンコモン(60種): 30% / 🟣 レア(30種): 15% / 🟡 エピック(15種): 6.5%<br>
+        🔴 レジェンド(8種): 2.5% / ✨ ミシック(4種): 0.8% / 🌟 ゴッド(2種): 0.18% / 👑 アルティメット(1種): 0.02%
+      </div>
+
+      <div style="display:flex; gap:1rem; justify-content:center;">
+        <button id="btn-gacha-1" style="background:linear-gradient(135deg, #d97706, #fbbf24); color:#000; font-weight:900; padding:0.8rem 1.6rem; border-radius:14px; border:none; cursor:pointer; font-size:1.05rem;">
+          🎟️ 1回ガチャ (1枚)
+        </button>
+        <button id="btn-gacha-10" style="background:linear-gradient(135deg, #e11d48, #f43f5e); color:#fff; font-weight:900; padding:0.8rem 1.6rem; border-radius:14px; border:none; cursor:pointer; font-size:1.05rem;">
+          🚀 10連ガチャ (10枚)
+        </button>
+      </div>
+
+      <!-- ガチャ結果コンテナ -->
+      <div id="gacha-results" class="gacha-result-container"></div>
+    </div>
+  </div>
+
+  <!-- モーダル 2: 📚 全200種類図鑑画面 -->
+  <div id="modal-codex" class="modal-overlay">
+    <div class="modal-content">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <div>
+          <h2 style="font-size:1.6rem; color:var(--accent-purple);">📚 全200種類 スライム図鑑</h2>
+          <div id="codex-progress-text" style="font-size:0.85rem; color:var(--text-sub);">収集率: 1 / 200 種類</div>
+        </div>
+        <button class="modal-close">&times;</button>
+      </div>
+
+      <!-- 8レアリティフィルタータブ -->
+      <div style="display:flex; gap:0.4rem; overflow-x:auto; margin-bottom:1rem;">
+        <button class="codex-tab active" data-rarity="ALL">すべて (200)</button>
+        <button class="codex-tab" data-rarity="コモン">🟢 コモン(80)</button>
+        <button class="codex-tab" data-rarity="アンコモン">🔵 アンコモン(60)</button>
+        <button class="codex-tab" data-rarity="レア">🟣 レア(30)</button>
+        <button class="codex-tab" data-rarity="エピック">🟡 エピック(15)</button>
+        <button class="codex-tab" data-rarity="レジェンド">🔴 レジェンド(8)</button>
+        <button class="codex-tab" data-rarity="ミシック">✨ ミシック(4)</button>
+        <button class="codex-tab" data-rarity="ゴッド">🌟 ゴッド(2)</button>
+        <button class="codex-tab" data-rarity="アルティメット">👑 アルティメット(1)</button>
+      </div>
+
+      <!-- 図鑑グリッド -->
+      <div id="codex-grid" class="codex-grid"></div>
+    </div>
+  </div>
+
+  <!-- スクリプト統合 -->
+  <script src="js/slimes_database.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/slime_engine.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -6,7 +6,7 @@ AntiGravity はセッションが新しくなった時でも、必ずこのル�
 - ユーザーとは常に**親しみやすい友達口調（タメ口・フレンドリー）**で会話する。
 
 ## 📁 フォルダ構成とルール
-- **`Nature/`**: Nature 3D 地球進化 ＆ 宇宙文明 50ステージ3D観察シミュレーター
+- **`SlimeBigger/`**: Make the slime bigger (スライム巨大化・給餌・分裂・繁殖・バトル・全200種ガチャ育成ゲーム)
 - **`CellSimulation/`**: 生命・宇宙・細胞発生・文明検証 放置シミュレーションゲーム (The Powder Toy型 超リアル物理)
 - **`online-game-platform/`**: ボードゲーム・対戦プラットフォーム
 - ルート直下には記憶ファイル `chat_history.md` と各ゲーム用プロジェクトフォルダのみが存在する。
@@ -14,10 +14,10 @@ AntiGravity はセッションが新しくなった時でも、必ずこのル�
 
 ## 🔑 主要設定・公開情報
 
-### 🌿 1. Nature 3D (地球進化 ＆ 宇宙文明 50ステージ3D観察シミュレーター)
+### 🟢 1. Make the slime bigger (スライム巨大化 ＆ 全200種ガチャ育成バトル)
 - **GitHub**: `https://github.com/nagaikaito9-afk/online-game-platform.git`
-- **Vercel ディレクトリ**: `Nature/`
-- **フォルダー**: `Nature/`
+- **Vercel ディレクトリ**: `SlimeBigger/`
+- **フォルダー**: `SlimeBigger/`
 
 ### 🔬 2. CellSimulation (The Powder Toy型 ピクセル物理シミュレーター)
 - **GitHub**: `https://github.com/nagaikaito9-afk/online-game-platform.git`
