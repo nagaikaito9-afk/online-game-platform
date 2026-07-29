@@ -1,18 +1,18 @@
 /* ==========================================================================
-   Nature - 地球大自然 ＆ 水循環物理シミュレーター CSS
+   Nature 3D - 地球進化 ＆ 宇宙文明クロニクル CSS
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Share+Tech+Mono&display=swap');
 
 :root {
-  --bg-dark: #070a12;
-  --panel-bg: rgba(15, 23, 42, 0.90);
-  --panel-border: rgba(255, 255, 255, 0.12);
+  --bg-dark: #030712;
+  --panel-bg: rgba(15, 23, 42, 0.88);
+  --panel-border: rgba(255, 255, 255, 0.14);
   --accent-cyan: #38bdf8;
   --accent-green: #4ade80;
   --accent-gold: #fbbf24;
+  --accent-purple: #c084fc;
   --accent-red: #f43f5e;
-  --accent-blue: #60a5fa;
   --text-main: #f8fafc;
   --text-sub: #94a3b8;
   --font-main: 'Outfit', sans-serif;
@@ -21,13 +21,11 @@
 
 * {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+  margin: 0; padding: 0;
 }
 
 body, html {
-  width: 100%;
-  height: 100%;
+  width: 100%; height: 100%;
   overflow: hidden;
   font-family: var(--font-main);
   background-color: var(--bg-dark);
@@ -35,116 +33,36 @@ body, html {
   user-select: none;
 }
 
-/* トップステータス ＆ ヘッダー */
-.top-nav {
+/* トップバー */
+.top-bar {
   position: absolute;
   top: 0; left: 0;
-  width: 100%;
-  height: 54px;
+  width: 100%; height: 56px;
   padding: 0 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(10, 15, 30, 0.92);
+  background: rgba(10, 15, 30, 0.90);
   backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--panel-border);
   z-index: 50;
 }
 
-.brand-title {
+.brand-logo {
+  font-size: 1.15rem;
   font-weight: 900;
-  font-size: 1.25rem;
-  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
 }
 
-.status-badge {
-  font-size: 0.85rem;
-  color: var(--text-sub);
-  background: rgba(255, 255, 255, 0.06);
-  padding: 0.3rem 0.8rem;
-  border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.08);
-}
-
-/* メインキャンバス */
-#nature-canvas {
-  margin-top: 54px;
-  width: 100vw;
-  height: calc(100vh - 124px);
-  display: block;
-  background: #020617;
-  cursor: crosshair;
-}
-
-/* ボトムツールバー */
-.bottom-toolbar {
-  position: absolute;
-  bottom: 0; left: 0;
-  width: 100%;
-  height: 70px;
-  background: rgba(10, 15, 30, 0.95);
-  border-top: 1px solid var(--panel-border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 1.5rem;
-  z-index: 50;
-  backdrop-filter: blur(16px);
-}
-
-/* ツール選択ボタン群 */
-.tool-group {
-  display: flex;
-  gap: 0.4rem;
-  overflow-x: auto;
-}
-
-.tool-btn {
-  padding: 0.45rem 0.85rem;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.05);
-  color: var(--text-main);
-  font-size: 0.85rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
+/* 10000倍速タイムバー */
+.speed-bar {
   display: flex;
   align-items: center;
   gap: 0.35rem;
-}
-
-.tool-btn:hover {
-  background: rgba(255,255,255,0.12);
-  transform: translateY(-2px);
-}
-
-.tool-btn.active {
-  border-color: var(--accent-cyan);
-  background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(74, 222, 128, 0.25));
-  color: var(--accent-cyan);
-  box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
-}
-
-/* 100倍速タイムバー ＆ アクション */
-.toolbar-controls {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.speed-control-group {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
   background: rgba(0,0,0,0.4);
-  padding: 0.3rem;
+  padding: 0.3rem 0.6rem;
   border-radius: 12px;
   border: 1px solid rgba(255,255,255,0.08);
 }
@@ -161,21 +79,206 @@ body, html {
   transition: all 0.15s ease;
 }
 
-.speed-btn:hover {
-  color: #fff;
-}
+.speed-btn:hover { color: #fff; }
 
 .speed-btn.active {
   background: var(--accent-cyan);
   color: #000;
-  box-shadow: 0 2px 8px rgba(56, 189, 248, 0.4);
+  box-shadow: 0 2px 10px rgba(56, 189, 248, 0.4);
 }
 
-/* トースト通知 */
+/* 写真 ＆ 動画保存ボタン */
+.media-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.media-btn {
+  padding: 0.45rem 0.9rem;
+  border-radius: 10px;
+  border: none;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.media-btn.snapshot {
+  background: linear-gradient(135deg, #0284c7, #38bdf8);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+}
+
+.media-btn.record {
+  background: linear-gradient(135deg, #e11d48, #fb7185);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(225, 29, 72, 0.3);
+}
+
+.media-btn.recording {
+  animation: pulse 1s infinite alternate;
+  background: #ff0033 !important;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.05); }
+}
+
+.media-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.15);
+}
+
+/* 3D キャンバス */
+#nature-canvas {
+  width: 100vw;
+  height: 100vh;
+  display: block;
+  background: #000;
+}
+
+/* ステージ情報カード (画面左上) */
+.stage-info-card {
+  position: absolute;
+  top: 70px; left: 1.5rem;
+  width: 340px;
+  background: var(--panel-bg);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  padding: 1.2rem;
+  z-index: 40;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+  pointer-events: none;
+}
+
+.stage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.badge {
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+  color: #000;
+  font-weight: 900;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 20px;
+}
+
+.era {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--accent-gold);
+  font-weight: bold;
+}
+
+.stage-info-card .title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, #fff, var(--accent-cyan));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.stage-info-card .desc {
+  font-size: 0.82rem;
+  color: var(--text-sub);
+  line-height: 1.5;
+}
+
+/* 操作ガイド (画面右上) */
+.controls-guide {
+  position: absolute;
+  top: 70px; right: 1.5rem;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 0.8rem 1.1rem;
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  pointer-events: none;
+}
+
+/* ボトムバー (全50ステージスライダー) */
+.bottom-bar {
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 100%; height: 75px;
+  background: rgba(10, 15, 30, 0.92);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--panel-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  gap: 1rem;
+  z-index: 50;
+}
+
+.nav-stage-btn {
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  border: 1px solid var(--panel-border);
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  font-weight: bold;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.nav-stage-btn:hover {
+  border-color: var(--accent-cyan);
+  background: rgba(255,255,255,0.12);
+}
+
+.stage-slider-container {
+  flex: 1;
+  max-width: 600px;
+}
+
+.stage-slider-container input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent-cyan);
+  cursor: pointer;
+}
+
+.btn-catalog {
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  border: 1px solid var(--accent-cyan);
+  background: linear-gradient(135deg, rgba(56,189,248,0.2), rgba(192,132,252,0.2));
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-catalog:hover {
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+  color: #000;
+}
+
+/* トースト */
 .custom-toast {
   position: fixed;
-  top: 4.8rem;
-  left: 50%;
+  top: 4.8rem; left: 50%;
   transform: translateX(-50%) translateY(-20px);
   background: rgba(15, 23, 42, 0.95);
   border: 1px solid var(--accent-cyan);
@@ -185,8 +288,7 @@ body, html {
   font-weight: 700;
   font-size: 0.9rem;
   box-shadow: 0 10px 25px rgba(56, 189, 248, 0.25);
-  opacity: 0;
-  pointer-events: none;
+  opacity: 0; pointer-events: none;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   z-index: 100;
 }
@@ -194,4 +296,58 @@ body, html {
 .custom-toast.show {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+}
+
+/* モーダル */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(14px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.modal-overlay.active {
+  opacity: 1; pointer-events: auto;
+}
+
+.modal-content {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 20px;
+  padding: 2rem;
+  width: 90%; max-width: 900px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.modal-close-btn {
+  background: none; border: none;
+  color: #fff; font-size: 1.8rem;
+  cursor: pointer;
+}
+
+.stages-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.9rem;
+}
+
+.stage-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 0.9rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.stage-card:hover, .stage-card.active {
+  border-color: var(--accent-cyan);
+  background: rgba(56,189,248,0.15);
+  transform: translateY(-2px);
 }
