@@ -1,9 +1,8 @@
 /**
  * Nature 3D - app.js
- * 全50ステージデータベース ＆ 10000倍速進化 ＆ 写真/動画保存コントローラー
+ * 全50ステージDB ＆ 視点モード(1:地球, 2:地形, 3:詳細, 4:細胞) ＆ 写真/動画保存
  */
 
-// 全50ステージ詳細データベース
 const STAGES_DATA = [
   { id: 1, era: "46億年前", title: "地球誕生 ＆ マグマオーシャン", desc: "微惑星の衝突エネルギーにより、誕生直後の地球全表層が灼熱のマグマの海で覆われていた時代。大気は二酸化炭素と水蒸気で満ちている。" },
   { id: 2, era: "45億年前", title: "微惑星の大衝突 ＆ 月の誕生", desc: "原始地球に火星サイズの天体「テイア」が衝突。飛び散った破片が集まり、地球の伴天体である「月」が形成された。" },
@@ -88,21 +87,52 @@ class Nature3DApp {
     this.currentStageId = stageId;
     const stage = STAGES_DATA[stageId - 1];
 
-    // UI更新
     document.getElementById('stage-number-badge').textContent = `Stage ${stage.id} / 50`;
     document.getElementById('stage-era-text').textContent = stage.era;
     document.getElementById('stage-title-text').textContent = stage.title;
     document.getElementById('stage-desc-text').textContent = stage.desc;
     document.getElementById('stage-range-slider').value = stage.id;
 
-    // 3D ビジュアル更新
     this.engine.setStageVisuals(stage.id);
 
-    // SE再生
+    if (window.natureAudioEngine) window.natureAudioEngine.playSE('click');
+  }
+
+  // 👁️ 視点モード切り替え
+  switchViewMode(mode) {
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+    const activeBtn = document.querySelector(`.view-btn[data-view="${mode}"]`);
+    if (activeBtn) activeBtn.classList.add('active');
+
+    this.engine.setViewMode(mode);
+
+    const modeNames = {
+      1: "🌍 1: 地球観察モード (Global Orbit)",
+      2: "🏔️ 2: 地形観察モード (Terrain View)",
+      3: "🧍 3: 詳細観察モード (Macro Detail)",
+      4: "🔬 4: 細胞規模観察モード (Micro Cell)"
+    };
+
+    this.showToast(`👁️ 視点切替: 【${modeNames[mode]}】`);
     if (window.natureAudioEngine) window.natureAudioEngine.playSE('click');
   }
 
   bindEvents() {
+    // 👁️ 視点モードボタン
+    document.querySelectorAll('.view-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const mode = parseInt(e.target.dataset.view);
+        this.switchViewMode(mode);
+      });
+    });
+
+    // キーボードショートカット (キー 1, 2, 3, 4)
+    window.addEventListener('keydown', (e) => {
+      if (['1', '2', '3', '4'].includes(e.key)) {
+        this.switchViewMode(parseInt(e.key));
+      }
+    });
+
     // スライダー操作
     document.getElementById('stage-range-slider').addEventListener('input', (e) => {
       this.setStage(parseInt(e.target.value));
@@ -117,7 +147,7 @@ class Nature3DApp {
       this.setStage(this.currentStageId + 1);
     });
 
-    // 倍速ボタン (0x, 1x, 10x, 100x, 1000x, 10000x)
+    // 倍速ボタン
     document.querySelectorAll('.speed-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         if (window.natureAudioEngine) window.natureAudioEngine.playSE('click');
@@ -130,34 +160,32 @@ class Nature3DApp {
       });
     });
 
-    // 📸 写真保存 (Capture PNG)
+    // 📸 写真保存
     document.getElementById('btn-snapshot').addEventListener('click', () => {
       try {
         const dataURL = this.canvas.toDataURL('image/png');
         const link = document.createElement('a');
-        link.download = `Nature3D_Stage${this.currentStageId}_${Date.now()}.png`;
+        link.download = `Nature3D_ViewMode${this.engine.currentViewMode}_Stage${this.currentStageId}.png`;
         link.href = dataURL;
         link.click();
-        this.showToast('📸 3D高画質スナップショット画像をPCへ保存しました！');
+        this.showToast('📸 視点モード画面をPNGで保存しました！');
       } catch (e) {
         console.error(e);
         this.showToast('⚠️ キャプチャエラーが発生しました');
       }
     });
 
-    // 🎥 動画録画保存 (Record Video WebM)
+    // 🎥 動画録画保存
     const recordBtn = document.getElementById('btn-record');
     recordBtn.addEventListener('click', () => {
       if (!this.isRecording) {
-        // 録画開始
         this.startRecording();
         recordBtn.textContent = '⏹️ 録画を停止して保存';
         recordBtn.classList.add('recording');
-        this.showToast('🎥 3D進化画面の録画を開始しました...');
+        this.showToast('🎥 視点画面の録画を開始しました...');
       } else {
-        // 録画停止 ＆ ダウンロード
         this.stopRecording();
-        recordBtn.textContent = '🎥 動画を録画保存';
+        recordBtn.textContent = '🎥 動画録画';
         recordBtn.classList.remove('recording');
       }
     });
@@ -174,11 +202,11 @@ class Nature3DApp {
     });
   }
 
-  // 🎥 録画開始 (MediaRecorder API)
+  // 🎥 録画開始
   startRecording() {
     this.recordedChunks = [];
     try {
-      const stream = this.canvas.captureStream(30); // 30fps
+      const stream = this.canvas.captureStream(30);
       this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
 
       this.mediaRecorder.ondataavailable = (e) => {
@@ -192,16 +220,16 @@ class Nature3DApp {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `Nature3D_Evolution_Stage${this.currentStageId}.webm`;
+        a.download = `Nature3D_Video_ViewMode${this.engine.currentViewMode}_Stage${this.currentStageId}.webm`;
         a.click();
-        this.showToast('🎥 3D観察動画 (.webm) をPCへ正常に保存しました！');
+        this.showToast('🎥 観察動画 (.webm) を正常に保存しました！');
       };
 
       this.mediaRecorder.start();
       this.isRecording = true;
     } catch (e) {
       console.error(e);
-      this.showToast('⚠️ このブラウザは動画録画APIに対応していません');
+      this.showToast('⚠️ 録画APIエラー');
     }
   }
 
@@ -236,7 +264,6 @@ class Nature3DApp {
     });
   }
 
-  // 自動進化ループ (10000倍速で時代が前進)
   startEvolutionLoop() {
     let tickCount = 0;
     setInterval(() => {

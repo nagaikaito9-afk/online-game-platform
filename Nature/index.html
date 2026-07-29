@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nature 3D | 地球進化 ＆ 宇宙文明クロニクル (全50ステージ3D観察)</title>
-  <meta name="description" content="46億年前の地球誕生から生命の出現、恐竜の時代、人類文明、そして未来の宇宙開拓まで全50ステージを3Dでゆっくり自由拡大観察！10000倍速進化、写真・動画保存機能搭載。">
+  <meta name="description" content="46億年前の地球誕生から生命の出現、恐竜の時代、人類文明、そして未来の宇宙開拓まで全50ステージを3Dでゆっくり自由拡大観察！視点切り替え(地球/地形/詳細/細胞)機能、10000倍速、写真・動画保存機能搭載。">
   <link rel="icon" type="image/png" href="../favicon.png">
   <link rel="stylesheet" href="style.css">
   <!-- Three.js ＆ OrbitControls CDN -->
@@ -19,9 +19,18 @@
       <span>🪐 Nature 3D: 地球進化 ＆ 宇宙文明クロニクル</span>
     </div>
 
+    <!-- 👁️ 4段階 視点モード切り替えボタンパレット -->
+    <div class="view-mode-bar">
+      <span style="font-size:0.78rem; color:var(--text-sub);">👁️ 視点モード:</span>
+      <button class="view-btn active" data-view="1">🌍 1: 地球観察</button>
+      <button class="view-btn" data-view="2">🏔️ 2: 地形観察</button>
+      <button class="view-btn" data-view="3">🧍 3: 詳細観察</button>
+      <button class="view-btn" data-view="4">🔬 4: 細胞規模</button>
+    </div>
+
     <!-- タイムコントロール (0x ～ 10000x) -->
     <div class="speed-bar">
-      <span style="font-size: 0.8rem; color: var(--text-sub);">進行速度:</span>
+      <span style="font-size: 0.78rem; color: var(--text-sub);">進行速度:</span>
       <button class="speed-btn" data-speed="0">⏸️ 0x</button>
       <button class="speed-btn active" data-speed="1">1x</button>
       <button class="speed-btn" data-speed="10">10x</button>
@@ -32,8 +41,8 @@
 
     <!-- キャプチャ ＆ 録画保存ツール -->
     <div class="media-actions">
-      <button id="btn-snapshot" class="media-btn snapshot">📸 写真を保存</button>
-      <button id="btn-record" class="media-btn record">🎥 動画を録画保存</button>
+      <button id="btn-snapshot" class="media-btn snapshot">📸 写真保存</button>
+      <button id="btn-record" class="media-btn record">🎥 動画録画</button>
     </div>
   </div>
 
@@ -52,9 +61,10 @@
 
   <!-- 操作ガイド (画面右上) -->
   <div class="controls-guide">
-    <div>🖱️ <strong>左ドラッグ</strong>: 3D視点回転</div>
-    <div>📜 <strong>ホイールズーム</strong>: 拡大・縮小</div>
-    <div>🖱️ <strong>右ドラッグ</strong>: 視点移動 (Pan)</div>
+    <div>👁️ <strong>キー 1/2/3/4</strong>: 視点切り替え</div>
+    <div>🖱️ <strong>左ドラッグ</strong>: 視点3D回転</div>
+    <div>📜 <strong>ホイール</strong>: 拡大・縮小</div>
+    <div>🖱️ <strong>右ドラッグ</strong>: 平行移動</div>
   </div>
 
   <!-- トースト通知 -->
