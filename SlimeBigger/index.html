@@ -4,21 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Make the slime bigger | スライム巨大化 ＆ 全200種ガチャ育成バトル</title>
-  <meta name="description" content="スライムを餌でプニプニ巨大化させて分裂・繁殖！バトルで勝利して獲得したチケットで全200種類のスライムガチャを回そう！">
+  <meta name="description" content="スライムを巨大化・分裂！バトル勝利でスライムマネーとチケットを獲得して、SHOPでおいしい餌や繁殖薬を買い全200種類のスライムガチャに挑もう！">
   <link rel="icon" type="image/png" href="../favicon.png">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- ヘッダーナビ (リソース ＆ コレクション数) -->
+  <!-- ヘッダーナビ (スライムマネー, ガチャチケット, 収集率) -->
   <div class="header-nav">
     <div class="brand-title">
       <span>🟢 Make the slime bigger</span>
     </div>
 
     <div class="user-resources">
+      <div class="res-item money">
+        <span>🪙 スライムマネー:</span>
+        <strong id="val-money" style="color:var(--accent-gold);">200 🪙</strong>
+      </div>
       <div class="res-item ticket">
-        <span>🎟️ ガチャチケット:</span>
+        <span>🎟️ チケット:</span>
         <strong id="val-tickets">5 枚</strong>
       </div>
       <div class="res-item">
@@ -26,7 +30,7 @@
         <strong id="val-codex-count" style="color:var(--accent-cyan);">1 / 200 (0.5%)</strong>
       </div>
       <div class="res-item">
-        <span>⚔️ バトル勝利数:</span>
+        <span>⚔️ 勝利数:</span>
         <strong id="val-wins" style="color:var(--accent-green);">0 勝</strong>
       </div>
     </div>
@@ -38,22 +42,111 @@
   <!-- トースト通知 -->
   <div id="custom-toast" class="custom-toast"></div>
 
-  <!-- アクションバー -->
+  <!-- アクションバー (SHOPボタン追加, 餌・繁殖ボタン削除) -->
   <div class="bottom-action-bar">
     <div class="action-btn-group">
-      <button id="btn-feed" class="act-btn feed">🍏 餌やり＆巨大化</button>
+      <button id="btn-open-shop" class="act-btn shop">🛒 SHOP (ショップ)</button>
       <button id="btn-split" class="act-btn split">💥 2体に分裂</button>
-      <button id="btn-breed" class="act-btn breed">💕 スライム繁殖</button>
     </div>
 
     <div class="action-btn-group">
-      <button id="btn-battle" class="act-btn battle">⚔️ バトル (チケット獲得)</button>
+      <button id="btn-battle" class="act-btn battle">⚔️ バトル (マネー＆チケットGET)</button>
       <button id="btn-open-gacha" class="act-btn gacha">🎟️ 200種スライムガチャ</button>
       <button id="btn-open-codex" class="act-btn codex">📚 全200種図鑑</button>
     </div>
   </div>
 
-  <!-- モーダル 1: 🎟️ ガチャ画面 -->
+  <!-- モーダル 1: 🛒 SHOP (ショップ) 画面 -->
+  <div id="modal-shop" class="modal-overlay">
+    <div class="modal-content" style="max-width: 850px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <div>
+          <h2 style="font-size:1.6rem; color:var(--accent-gold);">🛒 スライム SHOP (ショップ)</h2>
+          <div style="font-size:0.85rem; color:var(--text-sub);">所持マネー: <strong id="shop-user-money" style="color:var(--accent-gold);">200 🪙</strong></div>
+        </div>
+        <button class="modal-close">&times;</button>
+      </div>
+
+      <!-- 商品リストグリッド -->
+      <div class="shop-grid">
+
+        <!-- 餌 Tier 1 -->
+        <div class="shop-card">
+          <div class="shop-icon">🍏</div>
+          <div class="shop-title">スモールゼリー</div>
+          <div class="shop-desc">小さなゼリー。スライムがちょっと大きく成長。(サイズ +10)</div>
+          <div class="shop-price">🪙 50 🪙</div>
+          <button class="buy-btn" data-buy="food-1">購入して与える</button>
+        </div>
+
+        <!-- 餌 Tier 2 -->
+        <div class="shop-card">
+          <div class="shop-icon">🍎</div>
+          <div class="shop-title">ミディアムケーキ</div>
+          <div class="shop-desc">ほどよいケーキ。スライムがすくすく成長！(サイズ +25)</div>
+          <div class="shop-price">🪙 150 🪙</div>
+          <button class="buy-btn" data-buy="food-2">購入して与える</button>
+        </div>
+
+        <!-- 餌 Tier 3 -->
+        <div class="shop-card">
+          <div class="shop-icon">🍊</div>
+          <div class="shop-title">ラージプリン</div>
+          <div class="shop-desc">大きなプリン。スライムがグングン巨大化！(サイズ +60)</div>
+          <div class="shop-price">🪙 400 🪙</div>
+          <button class="buy-btn" data-buy="food-3">購入して与える</button>
+        </div>
+
+        <!-- 餌 Tier 4 -->
+        <div class="shop-card">
+          <div class="shop-icon">🍇</div>
+          <div class="shop-title">メガフルーツパフェ</div>
+          <div class="shop-desc">特大パフェ。スライムが一気に大成長！(サイズ +150)</div>
+          <div class="shop-price">🪙 1,000 🪙</div>
+          <button class="buy-btn" data-buy="food-4">購入して与える</button>
+        </div>
+
+        <!-- 餌 Tier 5 (最高峰) -->
+        <div class="shop-card highlight">
+          <div class="shop-icon">👑</div>
+          <div class="shop-title">キングスターフルーツ</div>
+          <div class="shop-desc">伝説の果実。スライムが超爆発的に超巨大化！(サイズ +400)</div>
+          <div class="shop-price">🪙 3,000 🪙</div>
+          <button class="buy-btn" data-buy="food-5">購入して与える</button>
+        </div>
+
+        <!-- 繁殖薬 -->
+        <div class="shop-card breed-card">
+          <div class="shop-icon">💕</div>
+          <div class="shop-title">恋のしずく (繁殖薬)</div>
+          <div class="shop-desc">愛の媚薬。使用するとスライムが交配して新たな二世スライムが誕生！</div>
+          <div class="shop-price">🪙 300 🪙</div>
+          <button class="buy-btn" data-buy="breed">購入して繁殖させる</button>
+        </div>
+
+        <!-- ガチャチケット1枚 -->
+        <div class="shop-card">
+          <div class="shop-icon">🎟️</div>
+          <div class="shop-title">ガチャチケット (1枚)</div>
+          <div class="shop-desc">スライムガチャを1回引けるチケット。</div>
+          <div class="shop-price">🪙 200 🪙</div>
+          <button class="buy-btn" data-buy="ticket-1">購入する</button>
+        </div>
+
+        <!-- ガチャチケット10連パック -->
+        <div class="shop-card">
+          <div class="shop-icon">🎟️✨</div>
+          <div class="shop-title">ガチャチケット (10連パック)</div>
+          <div class="shop-desc">お得な10連パック！(200 🪙 お得)</div>
+          <div class="shop-price">🪙 1,800 🪙</div>
+          <button class="buy-btn" data-buy="ticket-10">購入する</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- モーダル 2: 🎟️ ガチャ画面 -->
   <div id="modal-gacha" class="modal-overlay">
     <div class="modal-content" style="max-width: 650px; text-align: center;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -61,7 +154,7 @@
         <button class="modal-close">&times;</button>
       </div>
 
-      <p style="color:var(--text-sub); margin:0.8rem 0;">バトルで敵を倒すとガチャチケットを獲得できます！アルティメットスライムを引き当てよう！</p>
+      <p style="color:var(--text-sub); margin:0.8rem 0;">バトル勝利やSHOPでチケットを獲得できます！アルティメットスライムを引き当てよう！</p>
 
       <div style="background:rgba(0,0,0,0.3); padding:1rem; border-radius:16px; margin-bottom:1.5rem; text-align:left; font-size:0.85rem; color:var(--text-sub);">
         <strong>【全200種 排出確率】</strong><br>
@@ -78,12 +171,11 @@
         </button>
       </div>
 
-      <!-- ガチャ結果コンテナ -->
       <div id="gacha-results" class="gacha-result-container"></div>
     </div>
   </div>
 
-  <!-- モーダル 2: 📚 全200種類図鑑画面 -->
+  <!-- モーダル 3: 📚 全200種類図鑑画面 -->
   <div id="modal-codex" class="modal-overlay">
     <div class="modal-content">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
@@ -94,7 +186,6 @@
         <button class="modal-close">&times;</button>
       </div>
 
-      <!-- 8レアリティフィルタータブ -->
       <div style="display:flex; gap:0.4rem; overflow-x:auto; margin-bottom:1rem;">
         <button class="codex-tab active" data-rarity="ALL">すべて (200)</button>
         <button class="codex-tab" data-rarity="コモン">🟢 コモン(80)</button>
@@ -107,7 +198,6 @@
         <button class="codex-tab" data-rarity="アルティメット">👑 アルティメット(1)</button>
       </div>
 
-      <!-- 図鑑グリッド -->
       <div id="codex-grid" class="codex-grid"></div>
     </div>
   </div>

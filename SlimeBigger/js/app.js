@@ -1,6 +1,6 @@
 /**
  * Make the slime bigger - app.js
- * メインコントローラー・単発/10連ガチャ・全200種図鑑・バトル報酬システム
+ * メインコントローラー・スライムマネー・🛒 SHOPシステム・ガチャ・図鑑
  */
 
 class SlimeApp {
@@ -9,10 +9,11 @@ class SlimeApp {
     this.engine = new SlimeEngine(this.canvas);
 
     // セーブデータ / ステート
+    this.money = 200; // 初期所持スライムマネー (200 🪙)
     this.tickets = 5; // 初期ガチャチケット
     this.wins = 0;
     this.battleStage = 1;
-    this.unlockedSlimes = new Set([1]); // 初期スライム (ID: 1) 解放
+    this.unlockedSlimes = new Set([1]); // 初期スライム (ID: 1)
     this.currentCodexFilter = 'ALL';
 
     this.bindEvents();
@@ -29,67 +30,68 @@ class SlimeApp {
   }
 
   updateUI() {
+    document.getElementById('val-money').textContent = `${this.money.toLocaleString()} 🪙`;
     document.getElementById('val-tickets').textContent = `${this.tickets} 枚`;
     document.getElementById('val-wins').textContent = `${this.wins} 勝`;
 
     const count = this.unlockedSlimes.size;
     const pct = ((count / 200) * 100).toFixed(1);
     document.getElementById('val-codex-count').textContent = `${count} / 200 (${pct}%)`;
+
+    const shopMoney = document.getElementById('shop-user-money');
+    if (shopMoney) shopMoney.textContent = `${this.money.toLocaleString()} 🪙`;
   }
 
   bindEvents() {
-    // 1. 給餌 ＆ 巨大化ボタン
-    document.getElementById('btn-feed').addEventListener('click', () => {
-      this.engine.feedSlimes();
-      this.showToast('🍏 餌を与えてスライムを巨大化させました！');
+    // 🛒 SHOP モーダルを開く
+    document.getElementById('btn-open-shop').addEventListener('click', () => {
+      if (window.slimeAudioEngine) window.slimeAudioEngine.playSE('click');
+      this.updateUI();
+      document.getElementById('modal-shop').classList.add('active');
     });
 
-    // 2. 分裂ボタン
+    // 🛒 SHOP 購入処理
+    document.querySelectorAll('.buy-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const itemType = e.target.dataset.buy;
+        this.processShopPurchase(itemType);
+      });
+    });
+
+    // 💥 分裂ボタン
     document.getElementById('btn-split').addEventListener('click', () => {
       const res = this.engine.splitSlime();
       this.showToast(res.msg);
     });
 
-    // 3. 繁殖ボタン
-    document.getElementById('btn-breed').addEventListener('click', () => {
-      const res = this.engine.breedSlimes();
-      if (res.success) {
-        this.updateUI();
-      }
-      this.showToast(res.msg);
-    });
-
-    // 4. バトルボタン (チケット獲得)
+    // ⚔️ バトルボタン
     document.getElementById('btn-battle').addEventListener('click', () => {
       if (window.slimeAudioEngine) window.slimeAudioEngine.playSE('click');
       this.engine.startBattle(this.battleStage);
-      this.showToast(`⚔️ 【デビルスライム Lv.${this.battleStage}】とのバトルを開始！対戦に勝利してチケットをGET！`);
+      this.showToast(`⚔️ 【デビルスライム Lv.${this.battleStage}】とのバトルを開始！勝利してマネーとチケットをGET！`);
     });
 
-    // 5. ガチャモーダル
+    // 🎟️ ガチャモーダル
     document.getElementById('btn-open-gacha').addEventListener('click', () => {
       if (window.slimeAudioEngine) window.slimeAudioEngine.playSE('click');
       document.getElementById('modal-gacha').classList.add('active');
     });
 
-    // 6. 単発ガチャ引き (1枚)
     document.getElementById('btn-gacha-1').addEventListener('click', () => {
       this.drawGacha(1);
     });
 
-    // 7. 10連ガチャ引き (10枚)
     document.getElementById('btn-gacha-10').addEventListener('click', () => {
       this.drawGacha(10);
     });
 
-    // 8. 全200種図鑑モーダル
+    // 📚 全200種図鑑モーダル
     document.getElementById('btn-open-codex').addEventListener('click', () => {
       if (window.slimeAudioEngine) window.slimeAudioEngine.playSE('click');
       this.renderCodexGrid();
       document.getElementById('modal-codex').classList.add('active');
     });
 
-    // 図鑑レアリティタブ
     document.querySelectorAll('.codex-tab').forEach(tab => {
       tab.addEventListener('click', (e) => {
         if (window.slimeAudioEngine) window.slimeAudioEngine.playSE('click');
@@ -100,7 +102,6 @@ class SlimeApp {
       });
     });
 
-    // モーダル閉じる
     document.querySelectorAll('.modal-close').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const m = e.target.closest('.modal-overlay');
@@ -108,7 +109,6 @@ class SlimeApp {
       });
     });
 
-    // キャンバスクリック (スライムタップ)
     this.canvas.addEventListener('click', (e) => {
       const rect = this.canvas.getBoundingClientRect();
       const mx = e.clientX - rect.left;
@@ -117,10 +117,51 @@ class SlimeApp {
     });
   }
 
-  // 🎟️ ガチャ抽選ロジック (全200種から確率に応じて厳密ピック)
+  // 🛒 SHOP 商品の購入 ＆ 処理
+  processShopPurchase(itemType) {
+    const prices = {
+      'food-1': { price: 50, growth: 10, name: '🍏 スモールゼリー' },
+      'food-2': { price: 150, growth: 25, name: '🍎 ミディアムケーキ' },
+      'food-3': { price: 400, growth: 60, name: '🍊 ラージプリン' },
+      'food-4': { price: 1000, growth: 150, name: '🍇 メガフルーツパフェ' },
+      'food-5': { price: 3000, growth: 400, name: '👑 キングスターフルーツ' },
+      'breed': { price: 300, name: '💕 恋のしずく (繁殖薬)' },
+      'ticket-1': { price: 200, count: 1, name: '🎟️ ガチャチケット (1枚)' },
+      'ticket-10': { price: 1800, count: 10, name: '🎟️ ガチャチケット (10連パック)' }
+    };
+
+    const item = prices[itemType];
+    if (!item) return;
+
+    if (this.money < item.price) {
+      this.showToast(`⚠️ スライムマネーが足りません！ (必要: ${item.price} 🪙, 所持: ${this.money} 🪙) バトルで稼ごう！`);
+      return;
+    }
+
+    this.money -= item.price;
+    this.updateUI();
+
+    if (itemType.startsWith('food-')) {
+      // 5段階の餌
+      this.engine.feedTierSlimes(item.growth);
+      this.showToast(`🛒 【${item.name}】を購入して与えました！スライムがさらに爆発巨大化！(サイズ +${item.growth})`);
+    } else if (itemType === 'breed') {
+      // 繁殖薬
+      const res = this.engine.breedSlimes();
+      this.showToast(res.msg);
+    } else if (itemType.startsWith('ticket-')) {
+      // チケットパック
+      this.tickets += item.count;
+      this.updateUI();
+      if (window.slimeAudioEngine) window.slimeAudioEngine.playSE('gacha');
+      this.showToast(`🛒 【${item.name}】を購入しました！ (チケット +${item.count}枚)`);
+    }
+  }
+
+  // 🎟️ ガチャ抽選
   drawGacha(count) {
     if (this.tickets < count) {
-      this.showToast(`⚠️ ガチャチケットが足りません！(必要: ${count}枚, 所持: ${this.tickets}枚) バトルで集めよう！`);
+      this.showToast(`⚠️ ガチャチケットが足りません！SHOPで購入するかバトルで集めよう！`);
       return;
     }
 
@@ -131,15 +172,11 @@ class SlimeApp {
     const resultsContainer = document.getElementById('gacha-results');
     resultsContainer.innerHTML = '';
 
-    const drawnSlimes = [];
-
     for (let i = 0; i < count; i++) {
       const slime = this.rollSlimeByRarity();
-      drawnSlimes.push(slime);
       this.unlockedSlimes.add(slime.id);
-      this.engine.addSlimeFromGacha(slime); // キャンバスにも追加！
+      this.engine.addSlimeFromGacha(slime);
 
-      // ガチャカード描画
       const card = document.createElement('div');
       const rInfo = window.RARITY_INFO[slime.rarity];
       card.className = 'gacha-card';
@@ -157,10 +194,8 @@ class SlimeApp {
     this.showToast(`🎉 ガチャ結果！${count}体の新たなスライムを獲得・図鑑解放しました！`);
   }
 
-  // ガチャ確率計算
   rollSlimeByRarity() {
     const rand = Math.random() * 100;
-
     let targetRarity = 'コモン';
     if (rand < 0.02) targetRarity = 'アルティメット';
     else if (rand < 0.20) targetRarity = 'ゴッド';
@@ -176,7 +211,6 @@ class SlimeApp {
     return picked || window.ALL_SLIMES[0];
   }
 
-  // 📚 全200種類図鑑のグリッド描画
   renderCodexGrid() {
     const grid = document.getElementById('codex-grid');
     if (!grid) return;
@@ -219,12 +253,14 @@ class SlimeApp {
 
       // バトル勝利判定
       if (this.engine.enemySlime && this.engine.enemySlime.hp <= 0 && !this.engine.isBattleActive) {
+        const rewardMoney = 300 * this.battleStage;
         this.wins++;
+        this.money += rewardMoney;
+        this.tickets += 3;
         this.battleStage++;
-        this.tickets += 3; // 🎟️ 勝利報酬チケット +3枚！
         this.engine.enemySlime = null;
         this.updateUI();
-        this.showToast(`🏆 敵ボス撃破！バトル勝利報酬として 【🎟️ ガチャチケット +3枚】 を獲得しました！`);
+        this.showToast(`🏆 敵ボス撃破！勝利報酬として 【🪙 ${rewardMoney} 🪙】 ＆ 【🎟️ ガチャチケット +3枚】 を獲得！`);
       }
 
       this.engine.render();
