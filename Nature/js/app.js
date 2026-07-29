@@ -1,6 +1,6 @@
 /**
  * Nature 3D - app.js
- * 全50ステージDB ＆ 視点モード(1:地球, 2:地形, 3:詳細, 4:細胞) ＆ 写真/動画保存
+ * 全50ステージDB ＆ 劇的 4段階視点モード (1:地球, 2:3D立体地形, 3:3D生き物, 4:3D細胞/DNA) ＆ 写真/動画保存
  */
 
 const STAGES_DATA = [
@@ -98,7 +98,7 @@ class Nature3DApp {
     if (window.natureAudioEngine) window.natureAudioEngine.playSE('click');
   }
 
-  // 👁️ 視点モード切り替え
+  // 👁️ 視点モード切り替え (1:地球, 2:3D立体地形, 3:3D生き物, 4:3D細胞ミクロ)
   switchViewMode(mode) {
     document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
     const activeBtn = document.querySelector(`.view-btn[data-view="${mode}"]`);
@@ -107,10 +107,10 @@ class Nature3DApp {
     this.engine.setViewMode(mode);
 
     const modeNames = {
-      1: "🌍 1: 地球観察モード (Global Orbit)",
-      2: "🏔️ 2: 地形観察モード (Terrain View)",
-      3: "🧍 3: 詳細観察モード (Macro Detail)",
-      4: "🔬 4: 細胞規模観察モード (Micro Cell)"
+      1: "🌍 1: 地球全景観察モード (Global Orbit)",
+      2: "🏔️ 2: 3D立体地形観察モード (Detailed 3D Terrain)",
+      3: "🧍 3: 3D生き物・文明観察モード (3D Organism & Building)",
+      4: "🔬 4: 3D細胞・DNAミクロ観察モード (3D Microscopic DNA World)"
     };
 
     this.showToast(`👁️ 視点切替: 【${modeNames[mode]}】`);
@@ -168,7 +168,7 @@ class Nature3DApp {
         link.download = `Nature3D_ViewMode${this.engine.currentViewMode}_Stage${this.currentStageId}.png`;
         link.href = dataURL;
         link.click();
-        this.showToast('📸 視点モード画面をPNGで保存しました！');
+        this.showToast('📸 3DシーンをPNG画像で保存しました！');
       } catch (e) {
         console.error(e);
         this.showToast('⚠️ キャプチャエラーが発生しました');
@@ -180,9 +180,9 @@ class Nature3DApp {
     recordBtn.addEventListener('click', () => {
       if (!this.isRecording) {
         this.startRecording();
-        recordBtn.textContent = '⏹️ 録画を停止して保存';
+        recordBtn.textContent = '⏹️ 録画停止＆保存';
         recordBtn.classList.add('recording');
-        this.showToast('🎥 視点画面の録画を開始しました...');
+        this.showToast('🎥 3D進化の録画を開始しました...');
       } else {
         this.stopRecording();
         recordBtn.textContent = '🎥 動画録画';
@@ -190,7 +190,7 @@ class Nature3DApp {
       }
     });
 
-    // 全50ステージモーダル
+    // モーダル
     document.getElementById('btn-open-stage-modal').addEventListener('click', () => {
       document.getElementById('modal-stages').classList.add('active');
     });
@@ -202,7 +202,6 @@ class Nature3DApp {
     });
   }
 
-  // 🎥 録画開始
   startRecording() {
     this.recordedChunks = [];
     try {
@@ -222,7 +221,7 @@ class Nature3DApp {
         a.href = url;
         a.download = `Nature3D_Video_ViewMode${this.engine.currentViewMode}_Stage${this.currentStageId}.webm`;
         a.click();
-        this.showToast('🎥 観察動画 (.webm) を正常に保存しました！');
+        this.showToast('🎥 観察動画 (.webm) を正常にダウンロード保存しました！');
       };
 
       this.mediaRecorder.start();
