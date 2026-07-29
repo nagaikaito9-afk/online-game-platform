@@ -17,58 +17,70 @@
       justify-content: center;
       min-height: 100vh;
       background: radial-gradient(circle at center, #1a1e29 0%, #05080f 100%);
+      padding: 2rem 1rem;
     }
     h1 {
       font-size: 2.5rem;
-      background: linear-gradient(135deg, #00f2fe, #7209b7);
+      background: linear-gradient(135deg, #00f2fe, #00ff87);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       margin-bottom: 2rem;
+      text-align: center;
     }
     .portal-grid {
-      display: flex;
-      gap: 2rem;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 320px));
+      gap: 1.8rem;
+      width: 100%;
+      max-width: 1300px;
       justify-content: center;
     }
     .card {
-      background: rgba(255,255,255,0.05);
+      background: rgba(255,255,255,0.04);
       border: 1px solid rgba(0, 242, 254, 0.3);
       border-radius: 20px;
-      padding: 2rem;
-      width: 320px;
+      padding: 1.8rem;
       text-align: center;
       text-decoration: none;
       color: #fff;
-      transition: transform 0.3s, border-color 0.3s;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
     .card:hover {
       transform: translateY(-8px);
       border-color: #00f2fe;
       box-shadow: 0 10px 30px rgba(0, 242, 254, 0.3);
+      background: rgba(255,255,255,0.08);
     }
-    .card-icon { font-size: 4rem; margin-bottom: 1rem; }
-    .card-title { font-size: 1.4rem; font-weight: bold; margin-bottom: 0.5rem; }
-    .card-desc { font-size: 0.85rem; color: #a0aec0; }
+    .card-icon { font-size: 3.5rem; margin-bottom: 0.8rem; }
+    .card-title { font-size: 1.35rem; font-weight: bold; margin-bottom: 0.5rem; }
+    .card-desc { font-size: 0.85rem; color: #a0aec0; line-height: 1.5; }
   </style>
 </head>
 <body>
   <h1>🎮 ゲーム ＆ メタバース ポータル</h1>
   <div class="portal-grid">
+    <a href="Nature/index.html" class="card" style="border-color: #38bdf8;">
+      <div class="card-icon">🌿</div>
+      <div class="card-title">Nature (大自然 ＆ 水循環)</div>
+      <div class="card-desc">太陽熱の蒸発から上昇気流、雲の凝結、雨・雪の降下、草木の森林生長を100倍速で観測する大自然シミュレーター！</div>
+    </a>
     <a href="CellSimulation/index.html" class="card" style="border-color: #00ff87;">
       <div class="card-icon">🔬</div>
       <div class="card-title">Cell Simulation</div>
-      <div class="card-desc">宇宙のゆらぎから地球、化学進化、奇跡の細胞誕生、文明の開花を倍速検証する放置シミュレーション！</div>
+      <div class="card-desc">超リアル物理・熱力学相転移・水圧流動・爆発連鎖・赤熱発光を100倍速で検証する高精細ピクセルシミュレーター！</div>
     </a>
-    <a href="WEBLOX/index.html" class="card">
+    <a href="WEBLOX/index.html" class="card" style="border-color: #ff007f;">
       <div class="card-icon">🧊</div>
       <div class="card-title">WEBLOX (Roblox 3D)</div>
-      <div class="card-desc">3Dアバター作成、Obby、バトル、そして WEBLOX Studio で3Dゲームを制作＆公開！</div>
+      <div class="card-desc">3Dアバター作成、Obby、バトル、そして WEBLOX Studio で3Dゲームを制作＆公開するメタバース！</div>
     </a>
-    <a href="online-game-platform/index.html" class="card">
+    <a href="online-game-platform/index.html" class="card" style="border-color: #ffb703;">
       <div class="card-icon">🎯</div>
       <div class="card-title">対戦ゲームプラットフォーム</div>
-      <div class="card-desc">囲碁・将棋・オセロ・チェス・五目並べ・トランプ・〇✕オンライン対戦＆ランク！</div>
+      <div class="card-desc">囲碁・将棋・オセロ・チェス・五目並べ・トランプ・〇✕オンライン対戦 ＆ 200段階ランクシステム！</div>
     </a>
   </div>
 </body>
