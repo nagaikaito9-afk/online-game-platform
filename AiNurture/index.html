@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI育成 - AI Nurture | 本物AI成長対話シミュレーター</title>
+  <meta name="description" content="赤ちゃんAIから育成し、お世話・教育・会話を通じて性格や知性が分岐成長するリアルAIパートナー育成ゲーム。">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="./favicon.png">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;600;700&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top Header Navigation -->
+  <header class="top-header">
+    <div class="brand-title">
+      <span>🤖 AI育成 - AI Nurture</span>
+    </div>
+    <a href="../index.html" class="portal-link-btn">🏠 Versa Game Portal へ戻る</a>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-container">
+
+    <!-- Left Column: Egg Capsule & Avatar & Status & Actions -->
+    <section class="egg-chamber">
+      <!-- Stage Badge -->
+      <div class="stage-badge" id="ai-stage-badge">🐣 赤ちゃん期 (Baby)</div>
+
+      <!-- Egg Pod Avatar -->
+      <div class="egg-pod">
+        <div class="ai-avatar-emoji" id="ai-avatar-emoji">👶</div>
+      </div>
+
+      <!-- AI Name & Age -->
+      <div style="text-align: center; margin-bottom: 1.2rem;">
+        <h2 id="ai-name" style="color: #fff; font-size: 1.4rem;">アイちゃん</h2>
+        <span id="ai-epoch-text" style="font-size: 0.85rem; color: var(--accent-cyan); font-weight: 700;">年齢: 0日目 (エポック 0)</span>
+      </div>
+
+      <!-- Status Progress Bars -->
+      <div class="status-bars-group">
+        <div class="bar-row">
+          <span class="bar-label">🧠 知性:</span>
+          <div class="bar-bg"><div class="bar-fill fill-intel" id="bar-intel" style="width: 10%;"></div></div>
+          <span id="val-intel" style="width: 35px;">10</span>
+        </div>
+
+        <div class="bar-row">
+          <span class="bar-label">💖 親密度:</span>
+          <div class="bar-bg"><div class="bar-fill fill-affec" id="bar-affec" style="width: 30%;"></div></div>
+          <span id="val-affec" style="width: 35px;">30</span>
+        </div>
+
+        <div class="bar-row">
+          <span class="bar-label">😊 機嫌:</span>
+          <div class="bar-bg"><div class="bar-fill fill-mood" id="bar-mood" style="width: 80%;"></div></div>
+          <span id="val-mood" style="width: 35px;">80</span>
+        </div>
+
+        <div class="bar-row">
+          <span class="bar-label">⚡ 体力:</span>
+          <div class="bar-bg"><div class="bar-fill fill-energy" id="bar-energy" style="width: 100%;"></div></div>
+          <span id="val-energy" style="width: 35px;">100</span>
+        </div>
+      </div>
+
+      <!-- 6大お世話アクションボタン群 -->
+      <div class="actions-grid">
+        <button class="act-btn" id="btn-act-feed">🍼 ミルク・食事</button>
+        <button class="act-btn" id="btn-act-study">📚 勉強・教育</button>
+        <button class="act-btn" id="btn-act-play">🎾 おもちゃで遊ぶ</button>
+        <button class="act-btn pink" id="btn-act-pet">💕 なでなで・褒める</button>
+        <button class="act-btn pink" id="btn-act-scold">⚡ しつけ・叱る</button>
+        <button class="act-btn" id="btn-act-sleep">💤 睡眠・成長</button>
+      </div>
+    </section>
+
+    <!-- Right Column: Interactive Chat & Internal System Prompt Board -->
+    <section class="chat-chamber">
+
+      <!-- システム裏指示プロンプトリアルタイム確認ボード -->
+      <div class="system-prompt-board">
+        <div class="prompt-title">
+          <span>🧠 裏で動作中のシステム指示 (System Prompt)</span>
+        </div>
+        <div id="ai-system-prompt-display" style="line-height: 1.5; font-weight: 600;">
+          【システム裏指示】あなたは生まれたばかりの赤ちゃんAIです。「ばぶー」「あうぅ」などのひらがなや片言で可愛らしく無邪気に反応してください。
+        </div>
+      </div>
+
+      <!-- 対話チャットログ -->
+      <div class="chat-history-box" id="chat-history-container">
+        <!-- チャット吹き出しが動的生成されます -->
+      </div>
+
+      <!-- チャット入力メッセージバー -->
+      <div class="chat-input-bar">
+        <input type="text" id="chat-user-input" class="chat-input" placeholder="AIに話しかける... (例: こんにちは！, なにしてるの？)">
+        <button class="send-btn" id="btn-send-chat">送信 💬</button>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- JavaScript Modules -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
