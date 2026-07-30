@@ -61,6 +61,10 @@ class KanjiSearchApp {
         const activePanel = document.getElementById(`panel-${this.currentTab}`);
         if (activePanel) activePanel.classList.add('active');
 
+        if (this.currentTab === 'handwriting' && this.handwritingCanvas) {
+          this.handwritingCanvas.redraw();
+        }
+
         this.executeSearch();
       });
     });
