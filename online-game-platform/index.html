@@ -2535,6 +2535,25 @@ class AppController {
     };
   }
 
+  showScreen(target) {
+    if (!this.screens) return;
+    Object.keys(this.screens).forEach(key => {
+      if (this.screens[key]) {
+        this.screens[key].classList.toggle('active', key === target);
+      }
+    });
+  }
+
+  openModal(target) {
+    if (!this.modals || !this.modals[target]) return;
+    this.modals[target].classList.add('active');
+  }
+
+  closeModal(target) {
+    if (!this.modals || !this.modals[target]) return;
+    this.modals[target].classList.remove('active');
+  }
+
   // 初回アクセス時のアカウント登録モーダル判定
   checkAccountSetup() {
     const user = rankTitleManager.userData;

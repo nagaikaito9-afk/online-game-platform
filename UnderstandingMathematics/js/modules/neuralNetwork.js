@@ -230,7 +230,7 @@ export class NeuralNetworkModule {
 
                 let { out } = this.forward(nx, ny);
 
-                let r = Math.floor(out * 00 + (1 - out) * 255);
+                let r = Math.floor(out * 0 + (1 - out) * 255);
                 let g = Math.floor(out * 243 + (1 - out) * 0);
                 let b = Math.floor(out * 255 + (1 - out) * 128);
 
