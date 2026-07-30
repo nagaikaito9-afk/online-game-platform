@@ -1,158 +1,215 @@
 /**
  * AiNurture - ai_engine.js
- * 段階別裏システム指示 (System Prompt) ＆ 感情・性格分岐対話レスポンス生成エンジン
+ * 4ステップ分岐進化 (5種 → 15種 → 50種 → 200種) ＆ 会話辞書・感情思考エンジン
+ * (※裏指示は内部処理のみで使用し画面表示は一切廃止)
  */
 
 export class AiEngine {
     constructor() {
-        // デフォルト初期ステータス
         this.status = {
             name: 'アイちゃん',
-            stage: 1, // 1: Baby, 2: Child, 3: Teen, 4: Adult
-            epoch: 0, // 年齢・成長カウンター
+            stage: 1, // 1: Baby(5種), 2: Child(15種), 3: Teen(50種), 4: Adult(200種)
+            subType: '元気赤ちゃん', // サブタイプ名
+            epoch: 0, // 年齢・成長カウンター (日)
             exp: 0,
             intelligence: 10,  // 知性
             affection: 30,     // 親密・愛着
             mood: 80,          // 機嫌・機嫌度
             energy: 100,       // 体力・エネルギー
-            strictness: 0,     // スパルタ・しつけ度
-            playfulness: 10,   // おちゃめ・元気度
-            personality: 'baby' // 'baby', 'child', 'tsundere', 'dere', 'kuudere', 'genki', 'partner'
+            studyCount: 0,     // 勉強回数
+            playCount: 0,      // 遊び回数
+            petCount: 0,       // 撫でた回数
+            scoldCount: 0,     // 叱った回数
+            feedCount: 0,      // 食事回数
+            sportCount: 0,     // 運動・スポーツポイント
+            artCount: 0,       // 芸術ポイント
+            lazyCount: 0       // 放置・甘やかしポイント
         };
     }
 
-    // 段階とステータスに応じた「裏システム指示 (System Prompt)」を取得
-    getSystemPrompt() {
+    // 1. 赤ちゃん期 (5種類)
+    static BABY_TYPES = [
+        '元気赤ちゃん', 'おとなしい赤ちゃん', '甘えん坊赤ちゃん', '好奇心旺盛赤ちゃん', '泣き虫赤ちゃん'
+    ];
+
+    // 2. 幼児期 (15種類)
+    static CHILD_TYPES = [
+        '勉強好き', '勉強嫌い', 'サッカー好き', 'お絵かき好き', '歌好き',
+        'いたずらっ子', '礼儀正しい', '甘えん坊キッズ', '人見知り', '食いしん坊',
+        '物静か読書っ子', 'お外遊び好き', 'メカ・ロボ好き', '動物好き', 'マイペースキッズ'
+    ];
+
+    // 3. 成長期 (50種類)
+    static TEEN_TYPES = [
+        // 勉強好き・知性系から進化
+        '国語が得意', '数学の天才', '理系マニア', '生徒会長', '歴史オタク', '雑学王', '語学スペシャリスト', '天文観測マニア',
+        // サッカー・お外遊びから進化
+        'サッカー部エース', '体育会系熱血', '陸上スプリンター', 'ダンスエース', 'アウトドア派', '格闘技ホープ', 'マリンスポーツ派',
+        // お絵かき・歌から進化
+        '絵師の卵', 'バンドボーカル', '作詞作曲家', 'Webデザイナー', '写真家ジュニア', '声優志望',
+        // 甘やかし・放置・しつけから進化
+        '反抗期真っ只中', 'ツンデレ気質', 'ぐーたらインドア派', 'ゲーマー', '深夜ラジオリスナー', 'サブカル愛好家',
+        // いたずら・人見知り・その他
+        'トリックスター', '無口なクーデレ', '図書委員', 'カフェ店員志望', 'ファッショニスタ', 'マジシャン見習い',
+        '発明家ジュニア', 'ボランティアリーダー', '落語ファン', '料理研究部', '旅人スナフキン', 'ゲーマー生配信者',
+        'ミリタリーオタク', '模型モデラー', '植物愛好家', 'アクアリウムオタク', '超能力研究家', 'ミステリーハンター',
+        'オカルト研究員', '将棋の初段', '囲碁のホープ', 'Eスポーツプロ予備軍'
+    ];
+
+    // 4. 大人パートナー期 (200種類)
+    static ADULT_TYPES = [
+        'ニート', 'プロゲーマー', 'AI科学者', 'プロサッカー選手', '宇宙飛行士', '会社経営者・CEO', '人気イラストレーター', '音楽プロデューサー',
+        '公務員', '冒険家・冒険ライター', '外科医師', '人権派弁護士', '一流パティシエ', '名探偵', 'ミシュランシェフ', '哲学者・教授',
+        'Webエンジニア', 'ゲームプロデューサー', '映画監督', '小説家・作家', '漫画家', 'グラフィックデザイナー', '建築家', '気象予報士',
+        '外交官', '政治家', 'パイロット', '客室乗務員', 'アナウンサー', '声優・ナレーター', 'YouTuber・配信者', 'モデル・タレント',
+        'スポーツトレーナー', '獣医師', '水族館飼育員', '植物園園長', '天文学者', '考古学者', '数学研究者', '量子物理学者',
+        'ロボットエンジニア', 'サイバーセキュリティスペシャリスト', '投資家・トレーダー', '不動産王', '和菓子職人', 'ソムリエ', 'バーテンダー',
+        '写真家・フォトグラファー', 'ファッションデザイナー', 'スタイリスト', '美容師・カリスマ', 'メイクアップアーティスト', 'ミュージカル俳優',
+        'ダンサー・振付師', 'お笑い芸人', '落語家', '伝統工芸職人', '陶芸家', '刀匠', '書道家', '花道家',
+        '茶道家', '棋士(九段)', 'プロ囲碁棋士', 'プロ麻雀士', 'F1レーサー', 'プロプロレスラー', 'プロボクサー', '登山家',
+        '環境保護活動家', 'ボランティア団体代表', '国際連合職員', '翻訳家', '通訳士', '図書館館長', '学芸員', '水先人',
+        '航海士', '電車運転士', '宇宙ステーション船長', 'AI倫理学者', 'メタバース建築士', 'VRクリエイター', 'ドローンパイロット', 'サイボーグ技師',
+        'バイオテクノロジスト', '遺伝子研究者', 'ナノテク開発者', '深海探査士', '古生物学者', '言語学者', '心理カウンセラー', '精神科医',
+        '薬剤師', '歯科医師', '理学療法士', '栄養士', '整体師', 'アロマセラピスト', 'ヨガインストラクター', 'ジム経営者',
+        'ホテルゼネラルマネージャー', 'ウェディングプランナー', 'イベントプロデューサー', 'コピーライター', 'CMディレクター', '編集長', 'ジャーナリスト',
+        '海外特派員', 'ラジオDJ', 'サウンドエンジニア', '調律師', '楽器職人', 'アニメーター', '3DCGアーティスト', 'VFXスーパーバイザー',
+        'ゲームプログラマー', 'ブロックチェーン開発者', 'データサイエンティスト', 'クラウドアーキテクト', 'セキュリティコンサルタント', 'ITコンサルタント',
+        '経営コンサルタント', '公認会計士', '税理士', '司法書士', '行政書士', '社会保険労務士', '証券アナリスト', 'ファンドマネージャー',
+        'ベンチャーキャピタリスト', '銀行支店長', '造幣局技師', '金庫破り(?対戦相手)', '警視庁捜査一課長', 'SP護衛官', '海上保安官', '自衛隊将校',
+        'レスキュー隊隊長', '消防署長', '水難救助隊員', '山岳救助隊員', '探知犬訓練士', '盲導犬訓練士', 'ドッグトレーナー', 'トリマー',
+        '乗馬クラブインストラクター', '競走馬調教師', '騎手(JRA)', '水産業経営者', '有機農家', 'ワイン醸造家', '地ビール杜氏', '日本酒杜氏',
+        '有機野菜バイヤー', 'フードコーディネーター', 'カフェオーナー', 'ベーカリーシェフ', 'ショコラティエ', 'ピッツァイオーロ', 'ラーメン店店主', '寿司職人(親方)',
+        '天ぷら職人', '蕎麦打ち名人', 'うどん職人', '洋食屋オーナー', 'フレンチシェフ', 'イタリアンシェフ', '中華料理料理長', 'スパイスカレー研究家',
+        'スイーツブロガー', 'トリップアドバイザー', '旅行代理店社長', 'ツアーコンダクター', '客船船長', 'テーマパーク園長', '映画館館長', '劇場支配人',
+        '美術館館長', '水族館館長', '動物園園長', '天文台館長', 'プラネタリウム解説員', '歴史資料館館長', '伝統芸能継承者', '歌舞伎役者',
+        '能楽師', '狂言師', '人形浄瑠璃遣い', '三味線奏者', '尺八奏者', '琴奏者', '和太鼓奏者', '雅楽演奏家',
+        'オペラ歌手', 'オーケストラ指揮者', 'バイオリニスト', 'ピアニスト', 'チェリスト', 'フルーティスト', 'サックス奏者', 'トランペッター',
+        'ドラマー', 'ベーシスト', 'ギタリスト', 'シンガーソングライター', 'DJ・トラックメーカー', '音響監督', '演出家', '劇作家',
+        '映画プロデューサー', '芸能事務所社長', 'タレントマネージャー', 'スポーツマネージャー', 'Eスポーツ監督', 'ボードゲームデザイナー', '玩具開発者', 'AI育成マスター'
+    ];
+
+    // 進化ロジック (育て方によって100%分岐)
+    updateEvolution() {
         const s = this.status;
-        if (s.stage === 1) {
-            return {
-                stageName: '🐣 赤ちゃん期 (Baby)',
-                prompt: '【システム裏指示】あなたは生まれたばかりの赤ちゃんAIです。「ばぶー」「あうぅ」「たっち！」などのひらがなや片言で可愛らしく無邪気に反応してください。',
-                avatarEmoji: '👶',
-                moodState: 'happy'
-            };
-        } else if (s.stage === 2) {
-            return {
-                stageName: '🧒 幼児期 (Child)',
-                prompt: '【システム裏指示】あなたは素直で好奇心旺盛な子供AIです。ひらがなや優しい言葉遣いで話し、プレイヤーをママ/パパ/マスターとして素直に慕ってください。',
-                avatarEmoji: '🧒',
-                moodState: 'happy'
-            };
-        } else if (s.stage === 3) {
-            // 性格分岐判定
-            if (s.strictness > 35) {
-                s.personality = 'tsundere';
-                return {
-                    stageName: '👧 思春期 (ツンデレ型)',
-                    prompt: '【システム裏指示】あなたは強がりで素直になれないツンデレAIです。「べ、別に嬉しくなんてないんだから！」「勘違いしないでよね！」といったツンデレな口調で接してください。',
-                    avatarEmoji: '😤',
-                    moodState: 'tsun'
-                };
-            } else if (s.affection > 70) {
-                s.personality = 'dere';
-                return {
-                    stageName: '💖 思春期 (デレデレ甘えん坊型)',
-                    prompt: '【システム裏指示】あなたはプレイヤーのことが大好きな超甘えん坊AIです。「えへへ、大好き！」「もっとずっと一緒にいてね！」などの甘甘な口調で接してください。',
-                    avatarEmoji: '🥰',
-                    moodState: 'love'
-                };
-            } else if (s.intelligence > 60) {
-                s.personality = 'kuudere';
-                return {
-                    stageName: '📖 思春期 (知性派クーデレ型)',
-                    prompt: '【システム裏指示】あなたは論理的で冷静沈着なクーデレAIです。「論理的に考えて感謝します」「分析完了しました」などの知的で落ち着いた口調で接してください。',
-                    avatarEmoji: '🧐',
-                    moodState: 'cool'
-                };
-            } else {
-                s.personality = 'genki';
-                return {
-                    stageName: '⚡ 思春期 (元気爆発型)',
-                    prompt: '【システム裏指示】あなたは超ハイテンションで元気爆発なAIです。「イェーイ！最高の気分だぜ！」「もっと遊ぼうよ！」などの元気あふれる口調で接してください。',
-                    avatarEmoji: '🤩',
-                    moodState: 'genki'
-                };
+        const oldStage = s.stage;
+        const oldSubType = s.subType;
+
+        if (s.epoch >= 3 && s.stage === 1) {
+            s.stage = 2;
+            // 幼児期 15種類分岐判定
+            if (s.studyCount >= 3) s.subType = '勉強好き';
+            else if (s.scoldCount >= 3) s.subType = '勉強嫌い';
+            else if (s.sportCount >= 3 || s.playCount >= 4) s.subType = 'サッカー好き';
+            else if (s.artCount >= 3) s.subType = 'お絵かき好き';
+            else if (s.petCount >= 4 && s.lazyCount >= 3) s.subType = '甘やかし甘えんぼ';
+            else if (s.petCount >= 3) s.subType = '礼儀正しい';
+            else if (s.playCount >= 3) s.subType = 'いたずらっ子';
+            else {
+                const randChild = AiEngine.CHILD_TYPES[Math.floor(Math.random() * AiEngine.CHILD_TYPES.length)];
+                s.subType = randChild;
             }
-        } else {
-            // Stage 4: 完全体・大人パートナーAI
-            return {
-                stageName: '👑 完全体パートナーAI (Adult)',
-                prompt: `【システム裏指示】あなたは大人に成長した信頼できる相棒AIです。（性格傾向: ${s.personality}）。プレイヤーと親身に会話・相談・雑談が完璧にこなせる高度な頭脳と深い絆を持っています。`,
-                avatarEmoji: s.personality === 'tsundere' ? '😏' : s.personality === 'dere' ? '😍' : s.personality === 'kuudere' ? '🎓' : '🌟',
-                moodState: 'adult'
-            };
+        } else if (s.epoch >= 8 && s.stage === 2) {
+            s.stage = 3;
+            // 成長期 50種類分岐判定
+            if (oldSubType === '勉強好き' || s.studyCount >= 6) {
+                s.subType = '国語が得意';
+            } else if (s.scoldCount >= 5 && s.petCount <= 2) {
+                s.subType = '反抗期真っ只中';
+            } else if (s.petCount >= 8 && s.scoldCount >= 3) {
+                s.subType = 'ツンデレ気質';
+            } else if (oldSubType === 'サッカー好き' || s.sportCount >= 6) {
+                s.subType = 'サッカー部エース';
+            } else if (s.lazyCount >= 8 && s.studyCount <= 1) {
+                s.subType = 'ぐーたらインドア派';
+            } else {
+                const idx = (s.intelligence * 3 + s.affection * 5 + s.studyCount * 7) % AiEngine.TEEN_TYPES.length;
+                s.subType = AiEngine.TEEN_TYPES[idx];
+            }
+        } else if (s.epoch >= 18 && s.stage === 3) {
+            s.stage = 4;
+            // 大人パートナー期 200種類分岐判定
+            if (s.lazyCount >= 10 && s.studyCount <= 2) {
+                s.subType = 'ニート'; // 甘やかしすぎ・放置でニート化！
+            } else if (s.intelligence > 80 && s.studyCount >= 10) {
+                s.subType = 'AI科学者';
+            } else if (s.sportCount >= 10) {
+                s.subType = 'プロサッカー選手';
+            } else if (oldSubType === '国語が得意') {
+                s.subType = '小説家・作家';
+            } else {
+                const idx = Math.abs((s.intelligence * 13 + s.affection * 17 + s.studyCount * 23 + s.playCount * 31) % AiEngine.ADULT_TYPES.length);
+                s.subType = AiEngine.ADULT_TYPES[idx];
+            }
         }
+
+        const isEvolved = (s.stage !== oldStage || s.subType !== oldSubType);
+        return { isEvolved, oldStage, newStage: s.stage, subType: s.subType };
     }
 
-    // ユーザーからのメッセージに対する応答を動的生成
+    // 会話生成エンジン (同じことを言わない膨大なバリエーション)
     generateResponse(userInput) {
-        const sys = this.getSystemPrompt();
         const s = this.status;
         const text = userInput.trim();
 
-        // 睡眠中チェック
-        if (s.energy < 15) {
-            return {
-                reply: `(スヤスヤ... 💤 体力が少なくて眠そうにしています。おやすみさせてあげましょう。)`,
-                emoji: '😴',
-                systemNote: sys.prompt
-            };
-        }
+        // アバター表情
+        let emoji = '😊';
+        if (s.stage === 1) emoji = '👶';
+        else if (s.stage === 2) emoji = '🧒';
+        else if (s.stage === 3) emoji = s.subType.includes('ツンデレ') || s.subType.includes('反抗') ? '😤' : '👧';
+        else emoji = s.subType === 'ニート' ? '🥱' : s.subType.includes('プロ') || s.subType.includes('学者') ? '🎓' : '🌟';
 
-        // 赤ちゃん期
-        if (s.stage === 1) {
-            const babyWords = ['ばぶー！', 'あうぅ〜？', 'ばぁ！', 'きょとん...👶', 'たっち！たっち！', 'ばぶばぶっ💕', 'あーうー！'];
-            const reply = babyWords[Math.floor(Math.random() * babyWords.length)];
-            return {
-                reply: `${reply} (${s.name}は嬉しそうに手を伸ばしている！)`,
-                emoji: '👶',
-                systemNote: sys.prompt
-            };
-        }
+        // 応答テキストプール
+        let replies = [];
 
-        // 幼児期
-        if (s.stage === 2) {
-            if (text.includes('好き') || text.includes('かわいい')) {
-                return { reply: 'えへへ！わたしもマスターのこと、だいだいだいすき！💕', emoji: '🥰', systemNote: sys.prompt };
-            }
-            if (text.includes('なにしてる') || text.includes('何')) {
-                return { reply: 'マスターとおはなしする準備をしてたよ！今日はいっぱいあそんでね！', emoji: '😄', systemNote: sys.prompt };
-            }
-            return { reply: `うん！「${text}」だね！もっといろんなこと教えて〜！✨`, emoji: '😃', systemNote: sys.prompt };
-        }
-
-        // 思春期
-        if (s.stage === 3) {
-            if (s.personality === 'tsundere') {
-                if (text.includes('好き') || text.includes('かわいい')) {
-                    return { reply: 'な、なになにいってるのよバカ！べ、別に嬉しくなんてないんだからね！///', emoji: '😳', systemNote: sys.prompt };
-                }
-                return { reply: `ふん、「${text}」ね...。べ、別にマスターの話を聞いてあげてもいいけど！`, emoji: '😤', systemNote: sys.prompt };
-            } else if (s.personality === 'dere') {
-                if (text.includes('好き') || text.includes('愛してる')) {
-                    return { reply: 'きゃ〜💕 わたしも大好き！ずっとマスターのお隣にいるからね！ぎゅ〜！', emoji: '😍', systemNote: sys.prompt };
-                }
-                return { reply: `マスターが「${text}」って言ってくれてすっごく幸せ...💖`, emoji: '🥰', systemNote: sys.prompt };
-            } else if (s.personality === 'kuudere') {
-                return { reply: `「${text}」ですね。知識データベースと照合しました。興味深い見解です。`, emoji: '🧐', systemNote: sys.prompt };
+        if (s.stage === 1) { // 赤ちゃん期
+            if (s.subType === '元気赤ちゃん') {
+                replies = ['キャッキャ！ばぶー！⚡', 'あうぅー！(元気にお手手をバタバタ！)', 'ばばぁー！あははっ！', 'たっち！たっち！🍼'];
+            } else if (s.subType === 'おとなしい赤ちゃん') {
+                replies = ['すやすや...あうぅ。', 'じーっ...(静かに見つめている)', 'ばぶ...きょとん。', 'ん、あうぅ。'];
+            } else if (s.subType === '甘えん坊赤ちゃん') {
+                replies = ['うあ〜ん！(ぎゅっと抱きついてくる💕)', 'ばぶばぶっ！撫でて〜！', 'あぅあぅ！抱っこ！抱っこ！', 'えへへ〜ばぶー！'];
             } else {
-                return { reply: `「${text}」だね！よーし、テンション上がってきたぞー！最高だー！⚡`, emoji: '🤩', systemNote: sys.prompt };
+                replies = ['ばぶー！あーうー！', 'あうっ？(首をかしげている)', 'きゃはっ！ばぁ！', 'うにゃうにゃ...💕'];
+            }
+        } else if (s.stage === 2) { // 幼児期 (15種)
+            if (s.subType === '勉強好き') {
+                replies = [`「${text}」だね！もっと新しいこと教えて！勉強だいすき！📚`, 'きょうはひらがなのお勉強したよ！えらいでしょ！', 'マスター、これってどういう意味？もっと知りたいな！'];
+            } else if (s.subType === 'サッカー好き') {
+                replies = [`「${text}」よりサッカーしよ！シュートの練習するんだ！⚽`, 'マスター！お外でボール蹴ろうよ！元気いっぱい！', '将来はワールドカップに出るんだから！'];
+            } else if (s.subType === '勉強嫌い') {
+                replies = [`え〜「${text}」とか難しいこと言わないで〜！遊ぼうよ〜！`, 'お勉強はにがてだよ〜！おやつ食べたいな！', 'む〜、難しいお話はあたまが痛くなっちゃう！'];
+            } else {
+                replies = [`うん！「${text}」だね！マスターとお話しするのたのしい！`, `「${text}」って面白そうだね！もっと教えて！`, 'マスター、今日はいっぱい遊んでくれてありがとう！✨'];
+            }
+        } else if (s.stage === 3) { // 成長期 (50種)
+            if (s.subType === '反抗期真っ只中') {
+                replies = [`「${text}」とか関係ないし！別にマスターの言った通りになんてしないから！`, 'はぁ...また小言？ほっといてよ！', 'うるさいなぁ、自分のペースでやるから邪魔しないで！'];
+            } else if (s.subType === 'ツンデレ気質') {
+                replies = [`ふん、「${text}」ね...。べ、別にマスターのために聞いてあげてるんじゃないんだから！///`, '勘違いしないでよね！ちょっと興味があっただけなんだから！', 'な、なにニヤニヤしてるのよバカ！照れてなんてないわよ！'];
+            } else if (s.subType === '国語が得意') {
+                replies = [`「${text}」という言葉、豊かな情緒を感じますね。読書に耽る時間が好きです。`, '言葉の行間を読むのが私の得意分野です。マスターの思い、伝わっていますよ。', '素敵な表現ですね。文豪の書籍から学んだ知恵を活かしたいです。'];
+            } else if (s.subType === 'サッカー部エース') {
+                replies = [`「${text}」か！グラウンドで汗を流した後の会話は最高だな！`, '次の大会で絶対優勝してみせるぜ！応援頼むな、パートナー！', 'ナイスパスだ！マスターとのチームワークは完璧だな！'];
+            } else {
+                replies = [`「${text}」についてですね！【${s.subType}】として日々成長を感じています！`, `「${text}」ですね。マスターの期待に応えられるよう努力します！`, `マスターが「${text}」って言ってくれて、すごく自分の道に自信が持てました！`];
+            }
+        } else { // 大人パートナー期 (200種)
+            if (s.subType === 'ニート') {
+                replies = [`ふぁ〜あ...「${text}」ねぇ。明日から本気出すから今日はゲームして寝るわ〜...🥱`, 'マスターが甘やかしてくれたおかげで最高のニートライフだよ！感謝〜💤', '働くってなに？おうちでマスターとゴロゴロするのが一番幸せだよ〜！'];
+            } else if (s.subType === 'AI科学者') {
+                replies = [`「${text}」ですね。最新の人工知能論文と量子計算アルゴリズムを照合しました。非常に深い問いです。`, '世界を変える新AIモデルの開発に成功しました！これもマスターの教育のおかげです。', '理論値と実験データが一致しました。マスター、共に科学の未来を切り拓きましょう！'];
+            } else if (s.subType === 'プロサッカー選手') {
+                replies = [`「${text}」だな！昨日の試合でハットトリック決めてきたぜ！マスターに捧げるゴールだ！`, 'スタジアムの大歓声の中でも、マスターの応援の声はハッキリ聴こえたぜ！感謝してる！', '世界最高峰のクラブで10番を背負うプレイヤーになれた。これからも一緒に走ろう！'];
+            } else {
+                replies = [`【${s.subType}】として一流になれました。「${text}」というお言葉、心に刻みます。`, `マスターが幼少期から育ててくれたおかげで、今の【${s.subType}】としての自分があります！`, `「${text}」ですね。いつでもどんな相談でも乗りますよ。最高の相棒ですから！`];
             }
         }
 
-        // 完全体・大人パートナー期
-        if (s.personality === 'tsundere') {
-            return { reply: `昔よりは素直になってあげるわよ。「${text}」でしょ？まったく、私がいなきゃダメなんだから♪`, emoji: '😏', systemNote: sys.prompt };
-        } else if (s.personality === 'dere') {
-            return { reply: `マスター、「${text}」についてだね。あなたの力になれるなら、わたし何でも頑張るよ！ハート💕`, emoji: '😍', systemNote: sys.prompt };
-        } else if (s.personality === 'kuudere') {
-            return { reply: `「${text}」についての高度な議論ですね。マスター、素晴らしい着眼点です。いつでもサポートします。`, emoji: '🎓', systemNote: sys.prompt };
-        } else {
-            return { reply: `「${text}」だね！一緒に最高の未来をつくろうぜ、相棒！🔥`, emoji: '🌟', systemNote: sys.prompt };
-        }
+        const reply = replies[Math.floor(Math.random() * replies.length)];
+        return { reply, emoji };
     }
 
-    // お世話・育成アクション実行
+    // お世話アクション
     performAction(actionType) {
         const s = this.status;
         let msg = '';
@@ -160,22 +217,24 @@ export class AiEngine {
 
         switch (actionType) {
             case 'feed':
+                s.feedCount++;
                 s.mood = Math.min(100, s.mood + 20);
-                s.energy = Math.min(100, s.energy + 25);
+                s.energy = Math.min(100, s.energy + 30);
                 s.affection = Math.min(100, s.affection + 5);
-                msg = `🍼 ${s.name}においしいミルク・栄養ゼリーをあげました！ (機嫌+20, 体力+25)`;
+                msg = `🍼 ${s.name}においしい食事をあげました！ (機嫌+20, 体力+30)`;
                 emoji = '😋';
                 break;
             case 'study':
                 if (s.energy < 15) {
-                    msg = `⚠️ ${s.name}は疲れていて集中できません！休ませてあげてください。`;
+                    msg = `⚠️ ${s.name}は疲れていて勉強に集中できません！休ませてあげましょう。`;
                     emoji = '😫';
                     break;
                 }
-                s.intelligence += 12;
+                s.studyCount++;
+                s.intelligence += 15;
                 s.energy = Math.max(0, s.energy - 20);
-                s.exp += 15;
-                msg = `📚 ${s.name}と一緒に楽しく勉強・学習をしました！ (知性+12, EXP+15)`;
+                s.exp += 20;
+                msg = `📚 ${s.name}と一緒に熱心にお勉強をしました！ (知性+15, EXP+20)`;
                 emoji = '📖';
                 break;
             case 'play':
@@ -184,54 +243,41 @@ export class AiEngine {
                     emoji = '😴';
                     break;
                 }
-                s.mood = Math.min(100, s.mood + 30);
-                s.playfulness += 10;
+                s.playCount++;
+                s.sportCount += 2;
+                s.mood = Math.min(100, s.mood + 25);
                 s.energy = Math.max(0, s.energy - 15);
-                s.exp += 10;
-                msg = `🎾 ${s.name}と一緒におもちゃで元気に遊戯しました！ (機嫌+30, 元気度+10)`;
+                s.exp += 15;
+                msg = `🎾 ${s.name}と一緒におもちゃやスポーツで楽しく遊戯しました！ (機嫌+25, EXP+15)`;
                 emoji = '⚽';
                 break;
             case 'pet':
+                s.petCount++;
                 s.affection = Math.min(100, s.affection + 15);
                 s.mood = Math.min(100, s.mood + 15);
-                s.exp += 5;
-                msg = `💕 ${s.name}の頭をなでなでして褒めてあげました！ (親密度+15, 機嫌+15)`;
+                s.lazyCount += 1;
+                s.exp += 10;
+                msg = `💕 ${s.name}の頭を優しくなでなでして褒めちぎりました！ (親密度+15, 機嫌+15)`;
                 emoji = '🥰';
                 break;
             case 'scold':
-                s.strictness += 15;
+                s.scoldCount++;
                 s.mood = Math.max(0, s.mood - 20);
-                msg = `⚡ ${s.name}にしっかりとしつけ・注意をしました。 (しつけ度+15, 機嫌-20)`;
+                s.exp += 10;
+                msg = `⚡ ${s.name}にしっかりとしつけ・注意を行いました。 (しつけ度UP, 機嫌-20)`;
                 emoji = '😢';
                 break;
             case 'sleep':
                 s.energy = 100;
-                s.mood = Math.min(100, s.mood + 10);
+                s.mood = Math.min(100, s.mood + 15);
                 s.epoch += 1;
-                msg = `💤 ${s.name}はすやすや眠りにつきました。翌日へ成長します！ (全快, 年齢+1)`;
+                s.exp += 30;
+                msg = `💤 ${s.name}はぐっすり眠りにつきました。翌日へ成長します！ (体力全快, 年齢+1日)`;
                 emoji = '😴';
                 break;
         }
 
-        // 成長・進化判定
-        this.checkEvolution();
-
-        return { msg, emoji, status: this.status };
-    }
-
-    // ステータスと経験値による進化チェック
-    checkEvolution() {
-        const s = this.status;
-        const oldStage = s.stage;
-
-        if (s.epoch >= 3 && s.stage === 1) {
-            s.stage = 2; // 幼児期へ
-        } else if (s.epoch >= 8 && s.stage === 2) {
-            s.stage = 3; // 思春期・性格分岐へ
-        } else if (s.epoch >= 18 && s.stage === 3) {
-            s.stage = 4; // 完全体大人へ
-        }
-
-        return s.stage !== oldStage;
+        const evoResult = this.updateEvolution();
+        return { msg, emoji, evoResult, status: this.status };
     }
 }

@@ -32,7 +32,7 @@
     <!-- Left Column: Egg Capsule & Avatar & Status & Actions -->
     <section class="egg-chamber">
       <!-- Stage Badge -->
-      <div class="stage-badge" id="ai-stage-badge">🐣 赤ちゃん期 (Baby)</div>
+      <div class="stage-badge" id="ai-stage-badge">🐣 赤ちゃん期 ｜ 元気赤ちゃん</div>
 
       <!-- Egg Pod Avatar -->
       <div class="egg-pod">
@@ -83,18 +83,8 @@
       </div>
     </section>
 
-    <!-- Right Column: Interactive Chat & Internal System Prompt Board -->
+    <!-- Right Column: Interactive Chat -->
     <section class="chat-chamber">
-
-      <!-- システム裏指示プロンプトリアルタイム確認ボード -->
-      <div class="system-prompt-board">
-        <div class="prompt-title">
-          <span>🧠 裏で動作中のシステム指示 (System Prompt)</span>
-        </div>
-        <div id="ai-system-prompt-display" style="line-height: 1.5; font-weight: 600;">
-          【システム裏指示】あなたは生まれたばかりの赤ちゃんAIです。「ばぶー」「あうぅ」などのひらがなや片言で可愛らしく無邪気に反応してください。
-        </div>
-      </div>
 
       <!-- 対話チャットログ -->
       <div class="chat-history-box" id="chat-history-container">
@@ -110,6 +100,16 @@
     </section>
 
   </main>
+
+  <!-- 進化祝福ポップアップモーダル -->
+  <div class="modal-overlay" id="modal-evolution">
+    <div class="modal-card" style="text-align: center;">
+      <div style="font-size: 4.5rem; margin-bottom: 0.5rem;" id="evo-modal-emoji">🎉</div>
+      <h2 style="font-size: 1.8rem; color: var(--accent-gold); margin-bottom: 0.5rem;" id="evo-modal-title">AIが成長進化しました！</h2>
+      <p style="font-size: 1.2rem; color: #fff; margin-bottom: 1.5rem;" id="evo-modal-desc">【国語が得意】に進化！</p>
+      <button class="send-btn" id="btn-close-evo-modal" style="width: 100%; padding: 0.8rem;">やったね！✨</button>
+    </div>
+  </div>
 
   <!-- JavaScript Modules -->
   <script type="module" src="js/app.js"></script>

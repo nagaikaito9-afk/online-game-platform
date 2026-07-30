@@ -1,6 +1,6 @@
 /**
  * AiNurture - app.js
- * メインコントローラー・お世話アクション・チャットUI・セーブデータ管理・Web Audio API 音声SE
+ * メインコントローラー・お世話アクション・チャットUI・確実進化判定・自動セーブ
  */
 
 import { AiEngine } from './ai_engine.js';
@@ -16,7 +16,7 @@ class AiNurtureApp {
     this.updateUI();
 
     // 初期ウェルカムメッセージ
-    this.addChatBubble('system', '🐣 AIのたまごから新しい生命が誕生しました！優しくお世話して育ててあげましょう。');
+    this.addChatBubble('system', '🐣 AIのたまごから新しい生命が誕生しました！お世話や教育を通じて様々な性格・将来へ成長します！');
     this.triggerAiGreeting();
   }
 
@@ -37,10 +37,15 @@ class AiNurtureApp {
     this.valMood = document.getElementById('val-mood');
     this.valEnergy = document.getElementById('val-energy');
 
-    // Board & Chat
-    this.systemPromptBoard = document.getElementById('ai-system-prompt-display');
+    // Board & Chat & Evolution Modal
     this.chatContainer = document.getElementById('chat-history-container');
     this.chatInput = document.getElementById('chat-user-input');
+
+    this.evoModal = document.getElementById('modal-evolution');
+    this.evoModalEmoji = document.getElementById('evo-modal-emoji');
+    this.evoModalTitle = document.getElementById('evo-modal-title');
+    this.evoModalDesc = document.getElementById('evo-modal-desc');
+    this.btnCloseEvoModal = document.getElementById('btn-close-evo-modal');
   }
 
   bindEvents() {
@@ -57,6 +62,13 @@ class AiNurtureApp {
     this.chatInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') this.handleSendMessage();
     });
+
+    // 進化モーダル閉じる
+    if (this.btnCloseEvoModal) {
+      this.btnCloseEvoModal.addEventListener('click', () => {
+        this.evoModal.classList.remove('active');
+      });
+    }
   }
 
   playSE(type) {
@@ -86,14 +98,15 @@ class AiNurtureApp {
         gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
         osc.start(now);
         osc.stop(now + 0.25);
-      } else if (type === 'scold') {
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(200, now);
-        osc.frequency.linearRampToValueAtTime(100, now + 0.2);
+      } else if (type === 'evo') {
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.setValueAtTime(554.37, now + 0.1);
+        osc.frequency.setValueAtTime(659.25, now + 0.2);
+        osc.frequency.setValueAtTime(880, now + 0.3);
         gain.gain.setValueAtTime(0.4, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
         osc.start(now);
-        osc.stop(now + 0.2);
+        osc.stop(now + 0.4);
       } else {
         osc.frequency.setValueAtTime(600, now);
         gain.gain.setValueAtTime(0.2, now);
@@ -101,9 +114,7 @@ class AiNurtureApp {
         osc.start(now);
         osc.stop(now + 0.1);
       }
-    } catch (e) {
-      // Audio fallback
-    }
+    } catch (e) {}
   }
 
   handleAction(actionType) {
@@ -113,14 +124,28 @@ class AiNurtureApp {
     this.addChatBubble('system', res.msg);
     if (res.emoji) this.avatarEmoji.textContent = res.emoji;
 
+    // 確実な進化判定モーダル表示
+    if (res.evoResult && res.evoResult.isEvolved) {
+      this.playSE('evo');
+      this.showEvolutionModal(res.evoResult.subType);
+    }
+
     this.updateUI();
     this.saveData();
 
-    // アクションに対するAIの自動コメント
+    // AIの自律コメント
     setTimeout(() => {
       const aiResp = this.engine.generateResponse('お世話してくれてありがとう');
       this.addChatBubble('ai', aiResp.reply, aiResp.emoji);
     }, 600);
+  }
+
+  showEvolutionModal(subType) {
+    if (!this.evoModal) return;
+    this.evoModalTitle.textContent = `✨ AIが成長進化しました！`;
+    this.evoModalDesc.textContent = `育ち方によって【${subType}】へ進化！`;
+    this.evoModalEmoji.textContent = '🌟';
+    this.evoModal.classList.add('active');
   }
 
   handleSendMessage() {
@@ -130,7 +155,7 @@ class AiNurtureApp {
     this.chatInput.value = '';
     this.playSE('click');
 
-    // ユーザーメッセージ吹き出し追加
+    // ユーザー吹き出し
     this.addChatBubble('user', text);
 
     // AIの自律応答生成
@@ -139,12 +164,11 @@ class AiNurtureApp {
       this.addChatBubble('ai', res.reply, res.emoji);
       if (res.emoji) this.avatarEmoji.textContent = res.emoji;
       
-      // 愛着・経験値の微増
       this.engine.status.affection = Math.min(100, this.engine.status.affection + 2);
       this.engine.status.exp += 2;
       this.updateUI();
       this.saveData();
-    }, 500);
+    }, 400);
   }
 
   triggerAiGreeting() {
@@ -158,7 +182,7 @@ class AiNurtureApp {
 
     let senderLabel = 'システム';
     if (sender === 'user') senderLabel = 'あなた';
-    if (sender === 'ai') senderLabel = `${this.engine.status.name} ${emoji ? emoji : ''}`;
+    if (sender === 'ai') senderLabel = `${this.engine.status.name} (${this.engine.status.subType}) ${emoji ? emoji : ''}`;
 
     bubble.innerHTML = `
       <span class="bubble-sender">${senderLabel}</span>
@@ -170,12 +194,12 @@ class AiNurtureApp {
   }
 
   updateUI() {
-    const sys = this.engine.getSystemPrompt();
     const s = this.engine.status;
 
-    // Stage & Name & Epoch
-    this.stageBadge.textContent = sys.stageName;
-    this.avatarEmoji.textContent = sys.avatarEmoji;
+    // Stage Name & Badge
+    const stageNames = ['', '🐣 赤ちゃん期', '🧒 幼児期', '👧 成長期', '👑 大人パートナー期'];
+    this.stageBadge.textContent = `${stageNames[s.stage]} ｜ ${s.subType}`;
+    
     this.nameText.textContent = s.name;
     this.epochText.textContent = `年齢: ${s.epoch}日目 (エポック ${s.epoch})`;
 
@@ -189,9 +213,6 @@ class AiNurtureApp {
     this.valAffec.textContent = s.affection;
     this.valMood.textContent = s.mood;
     this.valEnergy.textContent = s.energy;
-
-    // 裏システム指示ボード
-    this.systemPromptBoard.textContent = sys.prompt;
   }
 
   saveData() {
