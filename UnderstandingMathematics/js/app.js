@@ -6,6 +6,10 @@ import { LinearAlgebraModule } from './modules/linearAlgebra.js';
 import { FourierModule } from './modules/fourier.js';
 import { ChaosModule } from './modules/chaos.js';
 import { ProbabilityModule } from './modules/probability.js';
+import { KleinBottleModule } from './modules/kleinBottle.js';
+import { PascalsTriangleModule } from './modules/pascalsTriangle.js';
+import { ExperimentsModule } from './modules/experiments.js';
+import { EverydayObjectsModule } from './modules/everydayObjects.js';
 
 class AppManager {
     constructor() {
@@ -80,16 +84,24 @@ class AppManager {
             'linear-algebra': () => new LinearAlgebraModule(canvasProxy, this.controlsContainer),
             'fourier': () => new FourierModule(canvasProxy, this.controlsContainer),
             'chaos': () => new ChaosModule(canvasProxy, this.controlsContainer),
-            'probability': () => new ProbabilityModule(canvasProxy, this.controlsContainer)
+            'probability': () => new ProbabilityModule(canvasProxy, this.controlsContainer),
+            'klein-bottle': () => new KleinBottleModule(canvasProxy, this.controlsContainer),
+            'pascals-triangle': () => new PascalsTriangleModule(canvasProxy, this.controlsContainer),
+            'experiments': () => new ExperimentsModule(canvasProxy, this.controlsContainer),
+            'everyday-objects': () => new EverydayObjectsModule(canvasProxy, this.controlsContainer)
         };
 
         this.moduleMeta = {
             'trigonometry': { title: '📐 三角関数と単位円', badge: 'Trigonometry & Unit Circle' },
             'calculus': { title: '📈 微積分・極限と面積', badge: 'Calculus: Derivatives & Integrals' },
             'linear-algebra': { title: '🔳 線形代数と行列変換', badge: 'Linear Algebra & Matrix' },
-            'fourier': { title: '🌊 フーリエ級数とエピサイクル', badge: 'Fourier Series & Epicycles' },
+            'fourier': { title: '🌊 フーリエ級数と円軌道', badge: 'Fourier Series & Epicycles' },
             'chaos': { title: '🌀 カオス理論とフラクタル', badge: 'Chaos & Fractals' },
-            'probability': { title: '🎲 確率・統計とモンテカルロ法', badge: 'Probability & Monte Carlo' }
+            'probability': { title: '🎲 確率・統計とモンテカルロ法', badge: 'Probability & Monte Carlo' },
+            'klein-bottle': { title: '🍶 3D クラインの壺', badge: 'Klein Bottle 3D Visualizer' },
+            'pascals-triangle': { title: '🔺 パスカルの三角形', badge: "Pascal's Triangle & Sierpinski" },
+            'experiments': { title: '🧪 直感物理・視覚実験', badge: 'Visual Physics & Math Experiments' },
+            'everyday-objects': { title: '📦 身近なものの3D観察', badge: '3D Everyday Objects Math Observer' }
         };
 
         this.switchModule('trigonometry');
@@ -145,6 +157,16 @@ class AppManager {
         if (toggleBtn && sidebar) {
             toggleBtn.addEventListener('click', () => {
                 sidebar.classList.toggle('open');
+            });
+        }
+
+        // Modal Close Listener
+        const closeBtn = document.getElementById('modal-close-btn');
+        const modal = document.getElementById('math-detail-modal');
+        if (closeBtn && modal) {
+            closeBtn.addEventListener('click', () => modal.style.display = 'none');
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.style.display = 'none';
             });
         }
     }
