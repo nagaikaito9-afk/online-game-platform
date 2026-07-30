@@ -72,9 +72,9 @@ export class PascalsTriangleModule {
 
             <div class="math-card">
                 <h4>🔺 パスカルの三角形と二項係数</h4>
-                各セルは上の2つの数の和で定義され、二項展開 $(a+b)^n$ の係数 ${}_n\\text{C}_k$ を表します。
+                各セルは上の2つの数の和で定義され、二項展開 $(a+b)^n$ の係数 $\\text{C}(n, k)$ を表します。
                 <div class="math-formula-box">
-                    {}_n\\text{C}_k = \\frac{n!}{k!(n-k)!}
+                    \\text{C}(n, k) = \\frac{n!}{k!(n-k)!}
                 </div>
                 <b>操作</b>:<br>
                 ・<b>左ドラッグ</b>: 平面移動<br>
@@ -182,7 +182,7 @@ export class PascalsTriangleModule {
                 行 (Row) <b>n = ${n}</b> , 列 (Column) <b>k = ${k}</b>
             </div>
             <div class="math-formula-box" style="font-size: 1.2rem;">
-                {}_{${n}}\mathrm{C}_{${k}} = ${val.toString()}
+                \\mathrm{C}(${n}, ${k}) = ${val.toString()}
             </div>
             <div style="margin-top: 14px; font-size: 0.9rem; color: var(--text-muted); line-height: 1.6;">
                 ・<b>計算式</b>: $${n}! / (${k}! \\times ${n - k}!)$<br>
