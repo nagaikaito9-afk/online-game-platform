@@ -2554,7 +2554,7 @@ class AppController {
     this.modals[target].classList.remove('active');
   }
 
-  // 途中でタブを閉じたり離脱した場合の切断・不戦敗通知処理
+  // タブ閉じ・切断時の不戦敗ハンドラー
   setupDisconnectHandler() {
     window.addEventListener('beforeunload', () => {
       if (this.currentMatchInfo && this.currentMatchInfo.roomId && supabaseManager.client) {
