@@ -3,63 +3,83 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cell Simulation | 超リアル物理演算 ＆ 100倍速ピクセル物理シミュレーター</title>
-  <meta name="description" content="重力加速度、密度浮力、熱力学相転移、水面水平流動を現実さながらにリアルタイム物理演算する超高精細シミュレーター。時間停止から100倍速まで自由自在！">
+  <title>Cell Simulation | The Powder Toy型 超リアルピクセル物理シミュレーター</title>
+  <meta name="description" content="溶岩、水、水蒸気、熱量相転移、重力、化学反応、生きている細胞、人間組織をリアルタイムに体験できる本格ピクセル物理サンドボックスシミュレーター。">
   <link rel="icon" type="image/png" href="./favicon.png">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
   <!-- トップステータス ＆ 実験ヘッダー -->
-  <div style="position: absolute; top: 0; left: 0; width: 100%; height: 50px; padding: 0 1.2rem; display: flex; justify-content: space-between; align-items: center; background: rgba(18,21,32,0.95); backdrop-filter: blur(12px); z-index: 40; border-bottom: 1px solid var(--panel-border);">
-    <div style="display: flex; align-items: center; gap: 1rem;">
-      <span style="font-weight: 900; font-size: 1.1rem; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-        🧪 Cell Simulation (Powder Toy Edition)
+  <div class="header-bar">
+    <div class="header-left">
+      <span class="app-title">🧪 Cell Simulation (The Powder Toy Edition)</span>
+      <a href="../index.html" class="portal-link">🏠 Versa Game Portal へ戻る</a>
+      <span class="status-info">
+        選択中: <strong id="current-selected-material-display">💧 水 (Water)</strong>
       </span>
-      <a href="../index.html" style="text-decoration:none; color:#fff; background:rgba(255,255,255,0.1); border:1px solid var(--accent-cyan); padding:0.3rem 0.8rem; border-radius:8px; font-size:0.8rem; font-weight:bold;">🏠 Versa Game Portal へ戻る</a>
-      <span style="font-size: 0.85rem; color: var(--text-sub);">
-        選択中: <strong id="current-selected-material-display" style="color:var(--accent-cyan);">水 (Water)</strong>
-      </span>
-      <span style="font-size: 0.85rem; color: var(--text-sub); margin-left: 0.5rem;">
-        速度: <strong id="current-time-speed-display" style="color:var(--accent-gold);">1x</strong>
+      <span class="status-info">
+        速度: <strong id="current-time-speed-display">1x</strong>
       </span>
     </div>
 
     <!-- リアル実験プリセットボタン群 (※alert不使用) -->
-    <div style="display: flex; gap: 0.5rem; overflow-x: auto;">
-      <button id="btn-preset-lava-water" style="background: linear-gradient(135deg, #ff3366, #00f2fe); color: #fff; border:none; padding:0.4rem 0.7rem; border-radius:8px; font-weight:bold; font-size:0.78rem; cursor:pointer;">🌋 溶岩✕水 沸騰</button>
-      <button id="btn-preset-explosion" style="background: linear-gradient(135deg, #ff9900, #ff0000); color: #fff; border:none; padding:0.4rem 0.7rem; border-radius:8px; font-weight:bold; font-size:0.78rem; cursor:pointer;">🔥 火薬庫 大爆発</button>
-      <button id="btn-preset-acid-corrosion" style="background: linear-gradient(135deg, #a0ff00, #009900); color: #000; border:none; padding:0.4rem 0.7rem; border-radius:8px; font-weight:bold; font-size:0.78rem; cursor:pointer;">🧪 強烈 酸侵食</button>
-      <button id="btn-preset-nitrogen-freeze" style="background: linear-gradient(135deg, #00d2ff, #3a7bd5); color: #fff; border:none; padding:0.4rem 0.7rem; border-radius:8px; font-weight:bold; font-size:0.78rem; cursor:pointer;">❄️ 液体窒素 凍結</button>
-      <button id="btn-preset-density-oil" style="background: linear-gradient(135deg, #fce38a, #f38181); color: #000; border:none; padding:0.4rem 0.7rem; border-radius:8px; font-weight:bold; font-size:0.78rem; cursor:pointer;">💧 密度分離 (油・水・水銀)</button>
+    <div class="preset-buttons">
+      <button id="btn-preset-lava-water" class="preset-btn btn-lava">🌋 溶岩✕水 沸騰</button>
+      <button id="btn-preset-explosion" class="preset-btn btn-fire">🔥 火薬庫 大爆発</button>
+      <button id="btn-preset-acid-corrosion" class="preset-btn btn-acid">🧪 強烈 酸侵食</button>
+      <button id="btn-preset-cell-growth" class="preset-btn btn-cell">🦠 細胞自動増殖</button>
+      <button id="btn-preset-human-burn" class="preset-btn btn-human">🚶 人体 vs 溶岩・酸</button>
     </div>
   </div>
 
-  <!-- フルピクセル物理キャンバス (最下部にメニューで隠れない固定床を物理生成) -->
-  <canvas id="sim-canvas" style="margin-top: 50px;"></canvas>
+  <!-- フルピクセル物理キャンバス -->
+  <canvas id="sim-canvas"></canvas>
+
+  <!-- クイック元素・物質選択パレット (The Powder Toy スタイル) -->
+  <div class="quick-element-bar">
+    <button class="elem-btn active" data-id="1" style="--btn-color: #00b4fe;">💧 水</button>
+    <button class="elem-btn" data-id="2" style="--btn-color: #ff3c00;">🌋 溶岩</button>
+    <button class="elem-btn" data-id="28" style="--btn-color: #c8dcff;">☁️ 蒸気</button>
+    <button class="elem-btn" data-id="21" style="--btn-color: #5a5f6e;">🪨 玄武岩</button>
+    <button class="elem-btn" data-id="38" style="--btn-color: #ffb400;">🔥 火</button>
+    <button class="elem-btn" data-id="36" style="--btn-color: #28c85a;">🌿 植物</button>
+    <button class="elem-btn" data-id="33" style="--btn-color: #00ff8c;">🦠 細胞</button>
+    <button class="elem-btn" data-id="34" style="--btn-color: #f0a096;">🚶 人間</button>
+    <button class="elem-btn" data-id="4" style="--btn-color: #a0ff00;">🧪 酸</button>
+    <button class="elem-btn" data-id="13" style="--btn-color: #ebc373;">⏳ 砂</button>
+    <button class="elem-btn" data-id="22" style="--btn-color: #8c96a5;">⚙️ 鉄</button>
+    <button class="elem-btn" data-id="0" style="--btn-color: #ff4757;">🧹 消しゴム</button>
+  </div>
 
   <!-- カスタムエレガントトースト通知 (※alertは一切不使用) -->
   <div id="custom-toast" class="custom-toast-notification"></div>
 
-  <!-- 画面下部 メニューバー (「🧪 物質」ボタン ＆ 100倍速タイムコントロール) -->
+  <!-- 画面下部 メニューバー (ツール ＆ タイムコントロール) -->
   <div class="powder-toolbar-bottom">
     
-    <!-- 「🧪 物質」ボタン (200種類カタログオープン) -->
+    <!-- 「🧪 全物質」ボタン (200種類カタログオープン) -->
     <button id="btn-open-material-catalog" class="btn-open-materials">
-      🧪 物質を選択 (全200種類)
+      🧪 全200種類 物質カタログ
     </button>
 
-    <!-- ツールボックス (ブラシサイズ, 100倍速タイムコントロール, 清掃) -->
+    <!-- ツールボックス (ペン径 1~30px, 重力逆転, 風吹き, タイムコントロール, 清掃) -->
     <div class="toolbar-actions">
-      <!-- ペンサイズ -->
-      <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(0,0,0,0.4); padding: 0.4rem 0.8rem; border-radius: 10px; font-size: 0.8rem;">
+      <!-- ペンサイズ (1px 〜 30px) -->
+      <div class="tool-group">
         <span>🖌️ ペン径:</span>
-        <input type="range" id="slider-brush-size" min="1" max="25" value="5" style="width: 70px;">
-        <span id="brush-size-val" style="font-weight: bold; color: var(--accent-cyan);">5 px</span>
+        <input type="range" id="slider-brush-size" min="1" max="30" value="5">
+        <span id="brush-size-val">5 px</span>
       </div>
 
+      <!-- 重力逆転 -->
+      <button id="btn-toggle-gravity" class="tool-btn">🙃 重力: 通常(下)</button>
+
+      <!-- 風吹き -->
+      <button id="btn-toggle-wind" class="tool-btn">🌪️ 風: 無風</button>
+
       <!-- タイムコントロール (0x, 0.5x, 1x, 5x, 10x, 25x, 50x, 100x) -->
-      <div style="display: flex; gap: 0.25rem;">
+      <div class="time-control-group">
         <button class="time-btn" data-speed="0">⏸️</button>
         <button class="time-btn" data-speed="0.5">0.5x</button>
         <button class="time-btn active" data-speed="1">1x</button>
@@ -71,7 +91,7 @@
       </div>
 
       <!-- 清掃 -->
-      <button id="btn-clear-canvas" style="background: var(--accent-red); color: #fff; border:none; padding:0.5rem 0.9rem; border-radius:8px; font-weight:bold; cursor:pointer;">🧹 クリア</button>
+      <button id="btn-clear-canvas" class="btn-clear">🧹 クリア</button>
     </div>
 
   </div>
@@ -79,9 +99,9 @@
   <!-- モーダル: 全200種類 物質カタログ ＆ 検索 -->
   <div id="modal-material-catalog" class="modal-overlay">
     <div class="modal-content">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <h3 style="font-size: 1.4rem;">🧪 物質・元素カタログ (全200種類)</h3>
-        <button class="modal-close-btn" style="background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer;">&times;</button>
+      <div class="modal-header">
+        <h3>🧪 物質・元素カタログ (全200種類)</h3>
+        <button class="modal-close-btn">&times;</button>
       </div>
 
       <!-- 検索入力窓 -->
@@ -98,10 +118,10 @@
         <div class="catalog-cat-tab" data-cat="エネルギー">🔥 エネルギー</div>
       </div>
 
-      <div id="catalog-count-info" style="font-size: 0.8rem; color: var(--text-sub); margin-bottom: 0.8rem;">表示中: 200 / 200 種類</div>
+      <div id="catalog-count-info" class="catalog-count">表示中: 200 / 200 種類</div>
 
       <!-- 200種類物質カードグリッド -->
-      <div id="catalog-materials-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 0.8rem; max-height: 400px; overflow-y: auto;"></div>
+      <div id="catalog-materials-grid" class="catalog-grid"></div>
     </div>
   </div>
 
