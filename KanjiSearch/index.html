@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>漢字全書 - Kanji Search | 4大検索システム搭載 漢字マスター百科</title>
+  <meta name="description" content="ふりがな検索、漢字直接検索、手書きAIストローク検索、部位（部首）複数選択AND検索に対応したプレミアム漢字検索Webアプリケーション。">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="./favicon.png">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;600;700&family=Noto+Serif+JP:wght@600;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="top-navbar">
+    <div class="brand-title">
+      <span class="brand-icon">🌸</span>
+      <span>漢字全書 - Kanji Search</span>
+    </div>
+    <a href="../index.html" class="portal-link-btn">🏠 Versa Game Portal へ戻る</a>
+  </header>
+
+  <!-- Main Content Wrapper -->
+  <main class="main-wrapper">
+
+    <!-- 4大検索モード切替タブ -->
+    <nav class="search-mode-tabs">
+      <button class="mode-tab active" data-tab="yomi">
+        <span>🌸</span> ふりがな検索
+      </button>
+      <button class="mode-tab" data-tab="kanji">
+        <span>🔍</span> 漢字直接検索
+      </button>
+      <button class="mode-tab" data-tab="handwriting">
+        <span>✍️</span> 手書き検索
+      </button>
+      <button class="mode-tab" data-tab="parts">
+        <span>🧩</span> 部位（部首）検索
+      </button>
+    </nav>
+
+    <!-- 1. ふりがな検索パネル -->
+    <section class="mode-panel active" id="panel-yomi">
+      <div class="search-bar-container">
+        <input type="text" id="input-yomi" class="search-input" placeholder="ひらがな・カタカナを入力... (例: み, なみ, すい, しん)" autofocus>
+      </div>
+      <div style="font-size: 0.85rem; color: var(--text-sub);">
+        💡 「み」と検索すると「南」「見」「未」「美」「三」「味」「水」「身」「海」などが即座にヒットします！
+      </div>
+    </section>
+
+    <!-- 2. 漢字直接検索パネル -->
+    <section class="mode-panel" id="panel-kanji">
+      <div class="search-bar-container">
+        <input type="text" id="input-kanji" class="search-input" placeholder="調べたい漢字を入力... (例: 南, 見, 龍, 漆)">
+      </div>
+      <div style="font-size: 0.85rem; color: var(--text-sub);">
+        💡 読み方や使い方がわからない漢字をそのまま入力して、音訓読み・部首・成り立ち・熟語例を検索できます。
+      </div>
+    </section>
+
+    <!-- 3. 手書き検索パネル -->
+    <section class="mode-panel" id="panel-handwriting">
+      <div class="handwriting-area">
+        <div class="canvas-box">
+          <canvas id="handwriting-canvas" width="320" height="320"></canvas>
+          <div class="canvas-controls">
+            <button class="btn-ctrl" id="btn-hw-clear">🧹 クリア</button>
+            <button class="btn-ctrl" id="btn-hw-undo">↩️ 1画戻す</button>
+          </div>
+        </div>
+        <div style="flex: 1; min-width: 260px;">
+          <h3 style="color: var(--accent-cyan); margin-bottom: 0.8rem;">✍️ 手書きキャンバス</h3>
+          <p style="font-size: 0.9rem; color: var(--text-sub); line-height: 1.6;">
+            左側の枠内にマウスや指で漢字を書いてみてください。<br>
+            画数やストロークの特徴から、形状が似ている漢字の候補がリアルタイムに右側の検索結果へリストアップされます！
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. 部位（部首）検索パネル -->
+    <section class="mode-panel" id="panel-parts">
+      <div class="parts-selection-area">
+        <div class="selected-parts-bar">
+          <span style="font-weight: 700; color: var(--accent-gold);">選択中パーツ (AND検索):</span>
+          <div class="selected-parts-list" id="selected-parts-container">
+            <span style="font-size: 0.85rem; color: var(--text-sub);">（下の部位ボタンをタップして選択してください）</span>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 1rem; align-items: center;">
+          <input type="text" id="filter-parts-input" class="search-input" placeholder="部位をフィルター... (例: 水, 木, 氵, ⻌)" style="padding: 0.6rem 1rem; font-size: 0.95rem;">
+          <button class="btn-ctrl" id="btn-clear-parts">選択全解除</button>
+        </div>
+
+        <div class="parts-grid-container" id="parts-master-grid">
+          <!-- 部位ボタンが画数カテゴリ別に動的描画されます -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 検索結果セクション -->
+    <section class="results-section">
+      <div class="results-section-title">
+        <span>📖 検索結果</span>
+        <span id="results-count-badge" style="font-size: 0.85rem; color: var(--accent-cyan); font-weight: normal; margin-left: 0.5rem;">(40件ヒット)</span>
+      </div>
+
+      <div class="kanji-grid" id="kanji-results-grid">
+        <!-- 漢字カードが動的表示されます -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 漢字詳細ポップアップモーダル -->
+  <div class="modal-overlay" id="modal-kanji-detail">
+    <div class="modal-card">
+      <button class="modal-close-btn" id="modal-detail-close">✕</button>
+      
+      <div class="modal-header">
+        <div class="modal-kanji-big" id="modal-kanji-char">南</div>
+        <div class="modal-meta-group">
+          <div class="modal-meta-row"><span class="modal-meta-label">総画数:</span> <span id="modal-kanji-stroke">9 画</span></div>
+          <div class="modal-meta-row"><span class="modal-meta-label">部首:</span> <span id="modal-kanji-bushu">十 (じゅう)</span></div>
+          <div class="modal-meta-row"><span class="modal-meta-label">区分:</span> <span id="modal-kanji-grade">小2 (常用漢字)</span></div>
+        </div>
+      </div>
+
+      <div class="modal-section-title">🔊 音訓読み</div>
+      <div id="modal-kanji-yomi" style="font-size: 1.1rem; color: var(--accent-cyan); font-weight: 700;">みなみ / ナン / ナ</div>
+
+      <div class="modal-section-title">💡 意味・成り立ち</div>
+      <div id="modal-kanji-meaning" style="font-size: 0.95rem; color: var(--text-main); line-height: 1.5;">方角の一つ。あたたかい南の方角。</div>
+
+      <div class="modal-section-title">📚 活用熟語例</div>
+      <div class="examples-list" id="modal-kanji-examples">
+        <!-- 熟語タグ -->
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Modules -->
+  <script src="js/kanji_database.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

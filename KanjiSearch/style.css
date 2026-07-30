@@ -1,0 +1,471 @@
+/* KanjiSearch - style.css (ネオンプレミアム和風ガラスモフィズムデザイン) */
+
+:root {
+  --bg-primary: #0a0d16;
+  --bg-card: rgba(255, 255, 255, 0.04);
+  --border-glow: rgba(0, 242, 254, 0.3);
+  --border-gold: rgba(243, 156, 18, 0.4);
+  --accent-cyan: #00f2fe;
+  --accent-pink: #ff758c;
+  --accent-gold: #f39c12;
+  --text-main: #f0f4f8;
+  --text-sub: #a0aec0;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Zen Kaku Gothic New', 'Noto Serif JP', 'Inter', system-ui, sans-serif;
+  background: var(--bg-primary);
+  background: radial-gradient(circle at top center, #182035 0%, #080a12 100%);
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ヘッダー */
+.top-navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: rgba(10, 13, 22, 0.85);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.brand-title {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #00f2fe, #ff758c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.brand-icon {
+  font-size: 1.8rem;
+  filter: drop-shadow(0 0 10px rgba(0, 242, 254, 0.6));
+}
+
+.portal-link-btn {
+  text-decoration: none;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-glow);
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.portal-link-btn:hover {
+  background: var(--accent-cyan);
+  color: #000;
+  box-shadow: 0 0 15px rgba(0, 242, 254, 0.5);
+}
+
+/* メインコンテナ */
+.main-wrapper {
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  flex: 1;
+}
+
+/* 4大モード切替タブ */
+.search-mode-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.mode-tab {
+  background: var(--bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.85rem 1.6rem;
+  border-radius: 16px;
+  color: var(--text-sub);
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  transition: all 0.3s ease;
+}
+
+.mode-tab:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.mode-tab.active {
+  background: linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(255, 117, 140, 0.2));
+  border-color: var(--accent-cyan);
+  color: #fff;
+  box-shadow: 0 0 20px rgba(0, 242, 254, 0.3);
+}
+
+/* 各モードパネル */
+.mode-panel {
+  display: none;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 2rem;
+  backdrop-filter: blur(12px);
+  margin-bottom: 2.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.mode-panel.active {
+  display: block;
+}
+
+/* 検索バーコンテナ */
+.search-bar-container {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.search-input {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 1rem 1.5rem;
+  font-size: 1.2rem;
+  color: #fff;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 15px rgba(0, 242, 254, 0.3);
+}
+
+/* 手書きエリア */
+.handwriting-area {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.canvas-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+#handwriting-canvas {
+  border: 2px solid var(--accent-cyan);
+  border-radius: 20px;
+  box-shadow: 0 0 20px rgba(0, 242, 254, 0.25);
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.canvas-controls {
+  display: flex;
+  gap: 1rem;
+}
+
+.btn-ctrl {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-glow);
+  color: #fff;
+  padding: 0.6rem 1.4rem;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: all 0.3s ease;
+}
+
+.btn-ctrl:hover {
+  background: var(--accent-pink);
+  box-shadow: 0 0 15px rgba(255, 117, 140, 0.4);
+}
+
+/* 部位（部首）検索 */
+.parts-selection-area {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.selected-parts-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(243, 156, 18, 0.1);
+  border: 1px solid var(--border-gold);
+  padding: 1rem 1.5rem;
+  border-radius: 16px;
+  min-height: 60px;
+  flex-wrap: wrap;
+}
+
+.selected-parts-list {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.selected-part-tag {
+  background: var(--accent-gold);
+  color: #000;
+  font-weight: 800;
+  padding: 0.3rem 0.8rem;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+}
+
+.selected-part-tag:hover {
+  background: var(--accent-pink);
+  color: #fff;
+}
+
+.parts-grid-container {
+  max-height: 280px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-right: 0.5rem;
+}
+
+.stroke-category {
+  font-weight: bold;
+  color: var(--accent-gold);
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+}
+
+.parts-btn-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
+  gap: 0.6rem;
+}
+
+.part-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: 700;
+  padding: 0.5rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.part-btn:hover {
+  background: rgba(0, 242, 254, 0.2);
+  border-color: var(--accent-cyan);
+}
+
+.part-btn.selected {
+  background: var(--accent-gold);
+  color: #000;
+  border-color: #fff;
+  box-shadow: 0 0 12px rgba(243, 156, 18, 0.6);
+}
+
+/* 漢字グリッド結果表示 */
+.results-section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.kanji-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 1.2rem;
+}
+
+.kanji-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  padding: 1.2rem 0.8rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.kanji-card:hover {
+  transform: translateY(-8px) scale(1.04);
+  border-color: var(--accent-cyan);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 25px rgba(0, 242, 254, 0.25);
+}
+
+.kanji-char {
+  font-size: 3rem;
+  font-family: 'Noto Serif JP', serif;
+  font-weight: 900;
+  background: linear-gradient(135deg, #fff, #a5b4fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.2;
+}
+
+.kanji-yomi {
+  font-size: 0.85rem;
+  color: var(--accent-gold);
+  margin-top: 0.4rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.kanji-meta {
+  font-size: 0.75rem;
+  color: var(--text-sub);
+  margin-top: 0.2rem;
+}
+
+/* ポップアップ詳細モーダル */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(5, 7, 14, 0.85);
+  backdrop-filter: blur(12px);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+.modal-card {
+  background: #111625;
+  border: 1px solid var(--accent-cyan);
+  border-radius: 28px;
+  width: 100%;
+  max-width: 540px;
+  padding: 2.2rem;
+  box-shadow: 0 0 40px rgba(0, 242, 254, 0.3);
+  position: relative;
+  animation: modalIn 0.3s ease;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.9) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 1.2rem;
+  right: 1.2rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #fff;
+  font-size: 1.4rem;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.modal-close-btn:hover {
+  background: var(--accent-pink);
+  transform: rotate(90deg);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 1.2rem;
+}
+
+.modal-kanji-big {
+  font-size: 5rem;
+  font-family: 'Noto Serif JP', serif;
+  font-weight: 900;
+  color: var(--accent-cyan);
+  text-shadow: 0 0 20px rgba(0, 242, 254, 0.6);
+}
+
+.modal-meta-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.modal-meta-row {
+  font-size: 0.95rem;
+  color: var(--text-main);
+}
+
+.modal-meta-label {
+  color: var(--accent-gold);
+  font-weight: 700;
+  margin-right: 0.5rem;
+}
+
+.modal-section-title {
+  font-weight: 700;
+  color: var(--accent-pink);
+  margin-top: 1rem;
+  margin-bottom: 0.4rem;
+  font-size: 1rem;
+}
+
+.examples-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.example-tag {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0.4rem 0.8rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
