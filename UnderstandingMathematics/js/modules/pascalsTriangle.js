@@ -182,7 +182,7 @@ export class PascalsTriangleModule {
                 行 (Row) <b>n = ${n}</b> , 列 (Column) <b>k = ${k}</b>
             </div>
             <div class="math-formula-box" style="font-size: 1.2rem;">
-                _{${n}}\\text{C}_{${k}} = ${val.toString()}
+                {}_{${n}}\mathrm{C}_{${k}} = ${val.toString()}
             </div>
             <div style="margin-top: 14px; font-size: 0.9rem; color: var(--text-muted); line-height: 1.6;">
                 ・<b>計算式</b>: $${n}! / (${k}! \\times ${n - k}!)$<br>

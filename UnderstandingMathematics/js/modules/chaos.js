@@ -280,6 +280,6 @@ export class ChaosModule {
 
         ctx.fillStyle = '#ffffff';
         ctx.font = '14px "Fira Code", monospace';
-        ctx.fillText(`Mandelbrot Set z_{n+1} = z_n^2 + c`, 20, 30);
+        ctx.fillText("Mandelbrot Set z_{n+1} = z_n^2 + c", 20, 30);
     }
 }
