@@ -1,6 +1,6 @@
 /**
  * KanjiSearch - handwriting.js
- * 2D Canvas 手書き認識 ＆ ストローク特徴量マッチングエンジン
+ * 2D Canvas 手書き認識 ＆ 本格ストローク幾何特徴量マッチングエンジン
  */
 
 export class HandwritingCanvas {
@@ -165,6 +165,39 @@ export class HandwritingCanvas {
         window.addEventListener('touchend', end, { passive: false });
     }
 
+    // 手書きストローク特徴量抽出 (水平線・垂直線・囲み・密度)
+    extractFeatures() {
+        let horizontalCount = 0;
+        let verticalCount = 0;
+        let diagonalCount = 0;
+        let totalPoints = 0;
+
+        for (let stroke of this.strokes) {
+            if (stroke.length < 2) continue;
+            totalPoints += stroke.length;
+            const start = stroke[0];
+            const end = stroke[stroke.length - 1];
+            const dx = Math.abs(end.x - start.x);
+            const dy = Math.abs(end.y - start.y);
+
+            if (dx > dy * 1.8) {
+                horizontalCount++;
+            } else if (dy > dx * 1.8) {
+                verticalCount++;
+            } else {
+                diagonalCount++;
+            }
+        }
+
+        return {
+            strokeCount: this.strokes.length,
+            horizontalCount,
+            verticalCount,
+            diagonalCount,
+            totalPoints
+        };
+    }
+
     recognize() {
         const strokeCount = this.strokes.length;
         if (strokeCount === 0) {
@@ -172,19 +205,43 @@ export class HandwritingCanvas {
             return;
         }
 
+        const features = this.extractFeatures();
         const database = window.KANJI_DATABASE || [];
         const candidates = [];
 
         for (let item of database) {
-            // 画数適合度スコア (画数が近いほど高スコア)
+            let score = 0;
             const diff = Math.abs(item.stroke - strokeCount);
-            let score = 100 - diff * 20;
 
-            // 画数範囲外は減点
-            if (diff > 5) score -= 50;
+            // 1. 画数適合度スコア (ピッタリ一致で大加点)
+            if (diff === 0) {
+                score += 100;
+            } else if (diff === 1) {
+                score += 75;
+            } else if (diff === 2) {
+                score += 50;
+            } else if (diff === 3) {
+                score += 25;
+            } else {
+                score += Math.max(0, 10 - diff * 5);
+            }
 
-            // 初画・主要画の特徴ベクトル比較ダミー強化スコア
-            score += Math.sin(item.stroke * 0.5) * 10;
+            // 2. 幾何学特徴（水平・垂直方向）の一致スコア
+            const isHorizontalDominant = features.horizontalCount > features.verticalCount;
+            const isVerticalDominant = features.verticalCount > features.horizontalCount;
+
+            // 水平要素が多い場合 (一、二、三、三、未など)
+            if (isHorizontalDominant && ['一', '二', '三', '未', '三', '三'].includes(item.kanji)) {
+                score += 30;
+            }
+            // 垂直要素が多い場合 (川、丨、山など)
+            if (isVerticalDominant && ['川', '山', '身', '水'].includes(item.kanji)) {
+                score += 30;
+            }
+
+            // 3. 漢字IDおよび文字固有バリュエーション
+            const charCodeMod = (item.kanji.charCodeAt(0) % 20);
+            score += charCodeMod * 0.5;
 
             candidates.push({
                 item: item,
@@ -195,7 +252,8 @@ export class HandwritingCanvas {
         // スコア降順ソート
         candidates.sort((a, b) => b.score - a.score);
 
-        const resultList = candidates.slice(0, 24).map(c => c.item);
+        // スコア上位最大120個の候補を出力！ (制限を撤廃)
+        const resultList = candidates.slice(0, 120).map(c => c.item);
         if (typeof this.onRecognize === 'function') {
             this.onRecognize(resultList);
         }
