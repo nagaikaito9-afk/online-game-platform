@@ -55,10 +55,15 @@ const ALL_ELEMENTS = [
   // 6. エネルギー
   { id: 38, name: '火 (Fire)', cat: 'エネルギー', color: [255, 180, 0, 255], density: -6, state: 'gas', temp: 900, desc: 'プラズマ燃焼。可燃物を焼き尽くし熱を周囲へ拡散。' },
   { id: 39, name: 'プラズマ (Plasma)', cat: 'エネルギー', color: [200, 100, 255, 255], density: -9, state: 'gas', temp: 5000, desc: '極限高電離気体。超高熱光線と破壊力を放出。' },
-  { id: 40, name: '雷火 (Lightning)', cat: 'エネルギー', color: [255, 255, 180, 255], density: 0, state: 'gas', temp: 12000, desc: '超高圧電撃。直撃した物体を分子レベルで瞬時に分解。' }
+  { id: 40, name: '雷火 (Lightning)', cat: 'エネルギー', color: [255, 255, 180, 255], density: 0, state: 'gas', temp: 12000, desc: '超高圧電撃。直撃した物体を分子レベルで瞬時に分解。' },
+
+  // 7. 特殊 ＆ 未来技術 (Special & Ultimate)
+  { id: 41, name: '反物質 (Antimatter)', cat: '特殊', color: [255, 0, 255, 255], density: 0, state: 'solid', temp: 0, desc: '触れたあらゆる物質と対消滅を起こし、激しいスパーク衝撃波を放つ。' },
+  { id: 42, name: 'ブラックホール (BlackHole)', cat: '特殊', color: [10, 10, 30, 255], density: 999, state: 'solid', temp: 0, desc: '周囲の全ピクセルを渦状に強烈吸引・消滅させる極大重力特異点。' },
+  { id: 43, name: '高能率レーザー (Laser)', cat: 'エネルギー', color: [0, 255, 255, 255], density: -10, state: 'gas', temp: 9999, desc: '照射部位の全ピクセルを極限高熱で融解・気化蒸発させる。' }
 ];
 
-// 残り160個の元素を自動補填展開（全200種類）
+// 残り157個の元素を自動補填展開（全200種類）
 const CATEGORY_NAMES = ['固形', '液体', '粉末', '気体', '生命', 'エネルギー', '特殊'];
 const CATEGORY_COLORS = {
   '固形': [150, 155, 160, 255],
@@ -70,7 +75,7 @@ const CATEGORY_COLORS = {
   '特殊': [180, 0, 255, 255]
 };
 
-for (let i = 41; i <= 200; i++) {
+for (let i = 44; i <= 200; i++) {
   const cat = CATEGORY_NAMES[i % CATEGORY_NAMES.length];
   const col = CATEGORY_COLORS[cat];
   const stateMap = { '固形': 'solid', '液体': 'liquid', '粉末': 'powder', '気体': 'gas', '生命': 'solid', 'エネルギー': 'gas', '特殊': 'solid' };

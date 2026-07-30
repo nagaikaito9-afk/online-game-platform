@@ -10,6 +10,9 @@ import { KleinBottleModule } from './modules/kleinBottle.js';
 import { PascalsTriangleModule } from './modules/pascalsTriangle.js';
 import { ExperimentsModule } from './modules/experiments.js';
 import { EverydayObjectsModule } from './modules/everydayObjects.js';
+import { QuantumSimulatorModule } from './modules/quantumSimulator.js';
+import { Relativity3DModule } from './modules/relativity3D.js';
+import { NeuralNetworkModule } from './modules/neuralNetwork.js';
 
 class AppManager {
     constructor() {
@@ -88,7 +91,10 @@ class AppManager {
             'klein-bottle': () => new KleinBottleModule(canvasProxy, this.controlsContainer),
             'pascals-triangle': () => new PascalsTriangleModule(canvasProxy, this.controlsContainer),
             'experiments': () => new ExperimentsModule(canvasProxy, this.controlsContainer),
-            'everyday-objects': () => new EverydayObjectsModule(canvasProxy, this.controlsContainer)
+            'everyday-objects': () => new EverydayObjectsModule(canvasProxy, this.controlsContainer),
+            'quantum-simulator': () => new QuantumSimulatorModule(canvasProxy, this.controlsContainer),
+            'relativity-3d': () => new Relativity3DModule(canvasProxy, this.controlsContainer),
+            'neural-network': () => new NeuralNetworkModule(canvasProxy, this.controlsContainer)
         };
 
         this.moduleMeta = {
@@ -101,7 +107,10 @@ class AppManager {
             'klein-bottle': { title: '🍶 3D クラインの壺', badge: 'Klein Bottle 3D Visualizer' },
             'pascals-triangle': { title: '🔺 パスカルの三角形', badge: "Pascal's Triangle & Sierpinski" },
             'experiments': { title: '🧪 直感物理・視覚実験', badge: 'Visual Physics & Math Experiments' },
-            'everyday-objects': { title: '📦 身近なものの3D観察', badge: '3D Everyday Objects Math Observer' }
+            'everyday-objects': { title: '📦 身近なものの3D観察', badge: '3D Everyday Objects Math Observer' },
+            'quantum-simulator': { title: '⚛️ 量子力学 & 波動関数', badge: 'Quantum Mechanics & Wavepacket' },
+            'relativity-3d': { title: '🌌 3D一般相対性理論 & BH', badge: '3D General Relativity & Black Hole' },
+            'neural-network': { title: '🧠 AIニューラルネットワーク', badge: 'Deep Learning & Backpropagation' }
         };
 
         this.switchModule('trigonometry');

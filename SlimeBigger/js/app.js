@@ -71,6 +71,17 @@ class SlimeApp {
       this.showToast(`⚔️ 【デビルスライム Lv.${this.battleStage}】とのバトルを開始！勝利してマネーとチケットをGET！`);
     });
 
+    // 🏰 ダンジョンボス戦ボタン
+    const dungeonBtn = document.getElementById('btn-dungeon');
+    if (dungeonBtn) {
+      dungeonBtn.addEventListener('click', () => {
+        if (window.slimeAudioEngine) window.slimeAudioEngine.playSE('click');
+        const bossLevel = Math.max(10, this.battleStage * 2);
+        this.engine.startBattle(bossLevel);
+        this.showToast(`🏰 究極ボス【魔王暗黒ドラゴン・スライム (Lv.${bossLevel})】降臨！勝利で超超ボーナス(5000🪙 & 10🎟️)獲得！`);
+      });
+    }
+
     // 🎟️ ガチャモーダル
     document.getElementById('btn-open-gacha').addEventListener('click', () => {
       if (window.slimeAudioEngine) window.slimeAudioEngine.playSE('click');
