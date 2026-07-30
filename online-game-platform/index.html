@@ -2554,6 +2554,18 @@ class AppController {
     this.modals[target].classList.remove('active');
   }
 
+  // 途中でタブを閉じたり離脱した場合の切断・不戦敗通知処理
+  setupDisconnectHandler() {
+    window.addEventListener('beforeunload', () => {
+      if (this.currentMatchInfo && this.currentMatchInfo.roomId && supabaseManager.client) {
+        supabaseManager.client
+          .from('game_rooms')
+          .update({ status: 'abandoned', winner: this.currentMatchInfo.isHost ? 'guest' : 'host' })
+          .eq('id', this.currentMatchInfo.roomId);
+      }
+    });
+  }
+
   // 初回アクセス時のアカウント登録モーダル判定
   checkAccountSetup() {
     const user = rankTitleManager.userData;
