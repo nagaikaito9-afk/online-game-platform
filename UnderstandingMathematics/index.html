@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding Mathematics - 直感と物理で見る数学ワールド</title>
+    <meta name="description" content="幾何学・三角関数、微積分、線形代数、フーリエ解析、カオス理論、確率統計をインタラクティブなビジュアルで体験・理解できるプレミアム数学Webアプリケーション。">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- KaTeX CDN for mathematical typesetting -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-icon">∑</div>
+                <div class="brand-title">Understanding<br>Mathematics</div>
+            </div>
+            
+            <nav class="nav-menu">
+                <div class="nav-item active" data-module="trigonometry">
+                    <span class="icon">📐</span>
+                    <span>三角関数と単位円</span>
+                </div>
+                <div class="nav-item" data-module="calculus">
+                    <span class="icon">📈</span>
+                    <span>微積分・極限と面積</span>
+                </div>
+                <div class="nav-item" data-module="linear-algebra">
+                    <span class="icon">🔳</span>
+                    <span>線形代数と行列変換</span>
+                </div>
+                <div class="nav-item" data-module="fourier">
+                    <span class="icon">🌊</span>
+                    <span>フーリエ級数と円軌道</span>
+                </div>
+                <div class="nav-item" data-module="chaos">
+                    <span class="icon">🌀</span>
+                    <span>カオス理論 & フラクタル</span>
+                </div>
+                <div class="nav-item" data-module="probability">
+                    <span class="icon">🎲</span>
+                    <span>確率・統計 & モンテカルロ</span>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                Interactive Math Simulator v1.0
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="main-content">
+            <!-- Header Bar -->
+            <header class="top-header">
+                <div class="module-title-area">
+                    <button class="btn-icon-toggle" id="sidebar-toggle" style="display: none;">☰</button>
+                    <h2 id="current-module-title">📐 三角関数と単位円</h2>
+                    <span class="module-desc-badge" id="current-module-badge">Trigonometry & Unit Circle</span>
+                </div>
+
+                <div class="header-controls">
+                    <div class="fps-badge" id="fps-counter">60 FPS</div>
+                </div>
+            </header>
+
+            <!-- Interactive Workspace -->
+            <div class="workspace">
+                <!-- Main Canvas Area -->
+                <div class="canvas-viewport">
+                    <canvas id="main-canvas"></canvas>
+                </div>
+
+                <!-- Right Side Interactive Controls -->
+                <aside class="control-panel" id="control-panel-content">
+                    <!-- Dynamic controls rendered via JavaScript modules -->
+                </aside>
+            </div>
+        </main>
+    </div>
+
+    <!-- Main JavaScript App -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
