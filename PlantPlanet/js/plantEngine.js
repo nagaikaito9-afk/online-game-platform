@@ -21,10 +21,13 @@ class PlantEngine {
       gene: gene,
       x: worldX,
       y: worldY,
-      growth: 0.05, // 0.0 ~ 1.0
+      growth: 0.08, // 初期成長率を少し上げて即芽生えが見えるように
       targetHeight: (data.maxHeight || 150) * gene.maxHeightMult,
       rootNode: null,
-      health: 1.0
+      health: 1.0,
+      frozenTimer: 0, // 氷結タイマー
+      swayOffset: Math.random() * 100, // 風による揺れの個体差
+      swayForce: 0 // 竜巻などの風力
     };
 
     this.buildTreeNodes(plant);
@@ -36,7 +39,7 @@ class PlantEngine {
   buildTreeNodes(plant) {
     const d = plant.data;
     const maxH = plant.targetHeight;
-    const maxDepth = Math.min(5, d.maxBranchDepth || 4); // 最大深度を安全に制限
+    const maxDepth = Math.min(5, d.maxBranchDepth || 4); // 安全に制限
 
     const createBranchNode = (startX, startY, length, angle, depth) => {
       if (depth > maxDepth || length < 3) return null;
@@ -55,6 +58,7 @@ class PlantEngine {
         health: 1.0,
         burnt: 0.0,
         acidified: 0.0,
+        frozen: 0.0,
         children: []
       };
 
@@ -78,26 +82,43 @@ class PlantEngine {
   // 植物の更新
   update(speedMultiplier = 1.0) {
     const safeSpeed = Math.max(0, Math.min(500, speedMultiplier || 1.0));
-    const baseGrowthStep = 0.00001 * safeSpeed;
+    // 大幅改善: スピードを従来比 150倍に高速化 (直感的なすくすく育つゲームプレイ体験)
+    const baseGrowthStep = 0.0018 * safeSpeed;
+
+    const now = Date.now();
 
     for (let i = this.plants.length - 1; i >= 0; i--) {
       const p = this.plants[i];
 
-      if (p.growth < 1.0) {
-        p.growth = Math.min(1.0, p.growth + baseGrowthStep * p.gene.speedMult);
+      // 氷結カウントダウン
+      if (p.frozenTimer > 0) {
+        p.frozenTimer -= 1 * safeSpeed;
+        if (p.frozenTimer < 0) p.frozenTimer = 0;
       }
 
+      // 風力衰減
+      if (p.swayForce > 0) {
+        p.swayForce *= 0.95;
+      }
+
+      // 成長処理（氷結していない場合）
+      if (p.frozenTimer <= 0 && p.growth < 1.0) {
+        const speed = (p.data.growthSpeed || 1.0) * p.gene.speedMult;
+        p.growth = Math.min(1.0, p.growth + baseGrowthStep * speed);
+      }
+
+      // 枯死判定
       if (p.health <= 0.05) {
         this.plants.splice(i, 1);
       }
     }
 
-    // 溶け落ちた液滴物理
+    // 溶け落ち・切断・爆発で散る破片の物理シミュレーション
     for (let i = this.fallingDebris.length - 1; i >= 0; i--) {
       const fd = this.fallingDebris[i];
       fd.x += fd.vx;
       fd.y += fd.vy;
-      fd.vy += 0.25;
+      fd.vy += 0.25; // 重力
       fd.life--;
 
       if (fd.life <= 0 || fd.y > 600) {
@@ -106,37 +127,47 @@ class PlantEngine {
     }
   }
 
-  // 物理干渉
+  // ☀️ 太陽光 / 🌧️ 雨 / 💧 水 / 🧪 栄養剤: ダイナミック急成長エフェクト
   applySunlightBeam(wx, wy, radius) {
+    let hitAny = false;
     for (const p of this.plants) {
-      if (Math.abs(p.x - wx) < radius + 80) {
-        p.growth = Math.min(1.0, p.growth + 0.01);
+      if (Math.abs(p.x - wx) < radius + 100) {
+        // 大幅に成長率を加算 (一気に伸びる楽しさ)
+        p.growth = Math.min(1.0, p.growth + 0.15);
+        p.health = Math.min(1.0, p.health + 0.2);
+        // 氷結解除
+        p.frozenTimer = 0;
+        hitAny = true;
       }
     }
+    return hitAny;
   }
 
+  // ☣️ 酸性雨: 紫の腐食 ＋ ドロドロ溶け落ち
   applyAcidRain(wx, wy, radius) {
     for (const p of this.plants) {
       const traverse = (node) => {
         if (!node) return;
 
-        const nodeWorldX = p.x + node.endX;
-        const nodeWorldY = p.y + node.endY;
+        // ノードの現在成長後のワールド絶対座標を算出
+        const progress = Math.max(0, Math.min(1.0, p.growth));
+        const nodeWorldX = p.x + node.endX * progress;
+        const nodeWorldY = p.y + node.endY * progress;
         const dist = Math.hypot(nodeWorldX - wx, nodeWorldY - wy);
 
-        if (dist <= radius) {
-          node.acidified = Math.min(1.0, node.acidified + 0.2);
-          node.health -= 0.12;
+        if (dist <= radius + 30) {
+          node.acidified = Math.min(1.0, node.acidified + 0.35);
+          node.health -= 0.25;
 
-          if (Math.random() < 0.3) {
+          for (let k = 0; k < 3; k++) {
             this.fallingDebris.push({
-              x: nodeWorldX,
+              x: nodeWorldX + (Math.random() - 0.5) * 10,
               y: nodeWorldY,
-              vx: (Math.random() - 0.5) * 1.0,
-              vy: Math.random() * 1.5,
-              radius: 2.5,
-              color: '#c026d3',
-              life: 30
+              vx: (Math.random() - 0.5) * 1.5,
+              vy: Math.random() * 2.0,
+              radius: 2 + Math.random() * 3,
+              color: Math.random() > 0.5 ? '#c026d3' : '#701a75',
+              life: 40
             });
           }
 
@@ -154,28 +185,30 @@ class PlantEngine {
     }
   }
 
+  // 🌋 溶岩: 炎と炭化 ＋ 爆発破片
   applyLavaBurn(wx, wy, radius) {
     for (const p of this.plants) {
       const traverse = (node) => {
         if (!node) return;
 
-        const nodeWorldX = p.x + node.endX;
-        const nodeWorldY = p.y + node.endY;
+        const progress = Math.max(0, Math.min(1.0, p.growth));
+        const nodeWorldX = p.x + node.endX * progress;
+        const nodeWorldY = p.y + node.endY * progress;
         const dist = Math.hypot(nodeWorldX - wx, nodeWorldY - wy);
 
-        if (dist <= radius) {
-          node.burnt = Math.min(1.0, node.burnt + 0.3);
-          node.health -= 0.18;
+        if (dist <= radius + 35) {
+          node.burnt = Math.min(1.0, node.burnt + 0.5);
+          node.health -= 0.35;
 
-          if (Math.random() < 0.4) {
+          for (let k = 0; k < 4; k++) {
             this.fallingDebris.push({
-              x: nodeWorldX,
+              x: nodeWorldX + (Math.random() - 0.5) * 12,
               y: nodeWorldY,
-              vx: (Math.random() - 0.5) * 2.0,
-              vy: -1 - Math.random() * 1.5,
-              radius: 3,
-              color: Math.random() > 0.5 ? '#ff4500' : '#1c1917',
-              life: 35
+              vx: (Math.random() - 0.5) * 4.0,
+              vy: -2 - Math.random() * 3.0,
+              radius: 3 + Math.random() * 3,
+              color: Math.random() > 0.4 ? '#ff4500' : '#1c1917',
+              life: 45
             });
           }
 
@@ -193,19 +226,52 @@ class PlantEngine {
     }
   }
 
+  // ✂️ 剪定 & 🧹 消去: ノード切断 & 破片飛び散り
   removeNodesInRadius(wx, wy, radius) {
     for (let i = this.plants.length - 1; i >= 0; i--) {
       const p = this.plants[i];
+      const rootDist = Math.hypot(p.x - wx, p.y - wy);
+
+      // 地表根元が半径内なら植物ごと消去
+      if (rootDist <= radius + 25) {
+        // 切断エフェクトの破片
+        for (let k = 0; k < 12; k++) {
+          this.fallingDebris.push({
+            x: p.x + (Math.random() - 0.5) * 30,
+            y: p.y - Math.random() * 60,
+            vx: (Math.random() - 0.5) * 5,
+            vy: -2 - Math.random() * 4,
+            radius: 3 + Math.random() * 4,
+            color: p.data.leafColor || '#2e7d32',
+            life: 50
+          });
+        }
+        this.plants.splice(i, 1);
+        continue;
+      }
 
       const traverse = (node) => {
         if (!node) return;
 
         for (let c = node.children.length - 1; c >= 0; c--) {
           const child = node.children[c];
-          const childWorldX = p.x + child.endX;
-          const childWorldY = p.y + child.endY;
+          const progress = Math.max(0, Math.min(1.0, p.growth));
+          const childWorldX = p.x + child.endX * progress;
+          const childWorldY = p.y + child.endY * progress;
 
-          if (Math.hypot(childWorldX - wx, childWorldY - wy) <= radius) {
+          if (Math.hypot(childWorldX - wx, childWorldY - wy) <= radius + 30) {
+            // 切断破片
+            for (let k = 0; k < 5; k++) {
+              this.fallingDebris.push({
+                x: childWorldX,
+                y: childWorldY,
+                vx: (Math.random() - 0.5) * 4,
+                vy: -1 - Math.random() * 3,
+                radius: 3,
+                color: p.data.leafColor || '#4ade80',
+                life: 40
+              });
+            }
             node.children.splice(c, 1);
           } else {
             traverse(child);
@@ -213,26 +279,47 @@ class PlantEngine {
         }
       };
 
-      if (p.rootNode) {
-        if (Math.hypot(p.x - wx, p.y - wy) <= radius) {
-          this.plants.splice(i, 1);
-        } else {
-          traverse(p.rootNode);
-        }
+      if (p.rootNode) traverse(p.rootNode);
+    }
+  }
+
+  // ❄️ 氷結: 植物をカチンコチンに固める
+  applyFreeze(wx, wy, radius) {
+    for (const p of this.plants) {
+      if (Math.abs(p.x - wx) < radius + 100) {
+        p.frozenTimer = 300; // 約5秒〜10秒間凍結
+        const traverse = (node) => {
+          if (!node) return;
+          node.frozen = 1.0;
+          for (const child of node.children) traverse(child);
+        };
+        if (p.rootNode) traverse(p.rootNode);
       }
     }
   }
 
-  // 描画
+  // 🌪️ 竜巻: 風で強烈にしならせる
+  applyTornado(wx, wy, radius) {
+    for (const p of this.plants) {
+      if (Math.abs(p.x - wx) < radius + 150) {
+        p.swayForce = 0.8;
+      }
+    }
+  }
+
+  // 描画メイン
   draw(ctx, camera) {
+    // 根の描画
     for (const p of this.plants) {
       this.drawRoots(ctx, camera, p);
     }
 
+    // 幹・枝・葉の描画
     for (const p of this.plants) {
       this.drawPlantBranches(ctx, camera, p);
     }
 
+    // 落下破片
     for (const fd of this.fallingDebris) {
       const screenPos = camera.worldToScreen(fd.x, fd.y);
       ctx.fillStyle = fd.color;
@@ -256,7 +343,12 @@ class PlantEngine {
 
     ctx.beginPath();
     ctx.moveTo(basePos.x, basePos.y);
-    ctx.quadraticCurveTo(basePos.x - 8 * camera.zoom, basePos.y + rootDepth * 0.5 * camera.zoom, basePos.x + 5 * camera.zoom, basePos.y + rootDepth * camera.zoom);
+    ctx.quadraticCurveTo(
+      basePos.x - 8 * camera.zoom,
+      basePos.y + rootDepth * 0.5 * camera.zoom,
+      basePos.x + 5 * camera.zoom,
+      basePos.y + rootDepth * camera.zoom
+    );
     ctx.stroke();
 
     ctx.lineWidth = Math.max(1, 1.5 * camera.zoom);
@@ -270,7 +362,7 @@ class PlantEngine {
     ctx.restore();
   }
 
-  // 幹・枝の描画
+  // 幹・枝の描画 (風ゆらぎ & 凍結 & 炭化 & 酸性腐食対応)
   drawPlantBranches(ctx, camera, p) {
     if (!p.rootNode) return;
 
@@ -278,13 +370,18 @@ class PlantEngine {
     const d = p.data;
     const currentH = p.targetHeight;
 
+    // 自然な風のそよぎ (時間経過 + 個体別オフセット + 竜巻風力)
+    const time = Date.now() * 0.002;
+    const windAngle = Math.sin(time + p.swayOffset) * 0.06 + (p.swayForce || 0) * Math.sin(time * 8);
+
     ctx.save();
     ctx.translate(basePos.x, basePos.y);
+    ctx.rotate(windAngle);
 
     const drawNode = (node) => {
       if (!node) return;
 
-      const startThreshold = node.depth * 0.15;
+      const startThreshold = node.depth * 0.12;
       const branchProgress = Math.max(0, Math.min(1.0, (p.growth - startThreshold) / 0.22));
 
       if (branchProgress <= 0) return;
@@ -294,6 +391,7 @@ class PlantEngine {
       let strokeColor = d.trunkColor || '#5c3a21';
       if (node.burnt > 0) strokeColor = '#1c1917';
       else if (node.acidified > 0) strokeColor = '#701a75';
+      else if (node.frozen > 0 && p.frozenTimer > 0) strokeColor = '#38bdf8';
 
       ctx.strokeStyle = strokeColor;
       const baseWidth = Math.max(1.5, (currentH * 0.055) * Math.pow(0.65, node.depth) * (0.4 + branchProgress * 0.6) * camera.zoom);
@@ -311,9 +409,10 @@ class PlantEngine {
       ctx.quadraticCurveTo(currCtrlX, currCtrlY, currEndX, currEndY);
       ctx.stroke();
 
+      // 葉・花・果実のクラスタ描画
       if (node.children.length === 0 || node.depth >= (d.maxBranchDepth || 4) - 1) {
-        if (branchProgress > 0.5) {
-          const leafScale = Math.max(0, Math.min(1.0, (branchProgress - 0.5) / 0.5));
+        if (branchProgress > 0.4) {
+          const leafScale = Math.max(0, Math.min(1.0, (branchProgress - 0.4) / 0.6));
           this.drawFoliageCluster(ctx, camera, p, currEndX, currEndY, node, leafScale);
         }
       }
@@ -329,11 +428,11 @@ class PlantEngine {
     ctx.restore();
   }
 
-  // 葉・花・果実の描画
+  // 葉・花・果実の描画 (発光・氷結・グラデーション追加)
   drawFoliageCluster(ctx, camera, p, x, y, node, scale) {
     if (!scale || scale <= 0.05) return;
     const d = p.data;
-    const leafSize = Math.max(1, 14 * scale * camera.zoom);
+    const leafSize = Math.max(2, 16 * scale * camera.zoom);
 
     ctx.save();
     ctx.translate(x, y);
@@ -341,13 +440,20 @@ class PlantEngine {
     let leafColor = d.leafColor || '#2e7d32';
     if (node.burnt > 0) leafColor = '#292524';
     else if (node.acidified > 0) leafColor = '#a855f7';
+    else if (node.frozen > 0 && p.frozenTimer > 0) leafColor = '#bae6fd';
+
+    // 発光植物（月夜茸、水晶草、黄金の薔薇）のグローエフェクト
+    if (d.glowing) {
+      ctx.shadowBlur = 15 * camera.zoom;
+      ctx.shadowColor = d.glowColor || '#4ade80';
+    }
 
     ctx.fillStyle = leafColor;
     const leafType = d.leafType || 'oval';
 
     if (leafType === 'needle') {
       ctx.strokeStyle = leafColor;
-      ctx.lineWidth = Math.max(1, 2 * camera.zoom);
+      ctx.lineWidth = Math.max(1, 2.5 * camera.zoom);
       for (let a = -0.8; a <= 0.8; a += 0.4) {
         ctx.beginPath();
         ctx.moveTo(0, 0);
@@ -359,40 +465,41 @@ class PlantEngine {
         const angle = (i / 3) * Math.PI * 2;
         const lx = Math.cos(angle) * leafSize * 0.4;
         const ly = Math.sin(angle) * leafSize * 0.4;
-        const rx = Math.max(0.5, leafSize * 0.5);
-        const ry = Math.max(0.5, leafSize * 0.8);
+        const rx = Math.max(1, leafSize * 0.55);
+        const ry = Math.max(1, leafSize * 0.85);
         ctx.beginPath();
         ctx.ellipse(lx, ly - leafSize * 0.5, rx, ry, angle, 0, Math.PI * 2);
         ctx.fill();
       }
     }
 
-    // 花
-    if (d.flowerColor && scale > 0.6 && p.growth >= (d.flowerStage || 0.45)) {
-      const flowerRadius = Math.max(1, leafSize * 0.8 * scale);
+    // 花の開花
+    if (d.flowerColor && scale > 0.4 && p.growth >= (d.flowerStage || 0.4)) {
+      const flowerRadius = Math.max(1.5, leafSize * 0.85 * scale);
       ctx.fillStyle = d.flowerColor;
 
       for (let f = 0; f < 5; f++) {
         const fa = (f / 5) * Math.PI * 2;
         ctx.beginPath();
-        ctx.arc(Math.cos(fa) * flowerRadius * 0.5, Math.sin(fa) * flowerRadius * 0.5 - leafSize * 0.5, Math.max(0.5, flowerRadius * 0.45), 0, Math.PI * 2);
+        ctx.arc(Math.cos(fa) * flowerRadius * 0.5, Math.sin(fa) * flowerRadius * 0.5 - leafSize * 0.5, Math.max(0.8, flowerRadius * 0.45), 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.fillStyle = '#fef08a';
       ctx.beginPath();
-      ctx.arc(0, -leafSize * 0.5, Math.max(0.5, flowerRadius * 0.3), 0, Math.PI * 2);
+      ctx.arc(0, -leafSize * 0.5, Math.max(0.8, flowerRadius * 0.3), 0, Math.PI * 2);
       ctx.fill();
     }
 
-    // 果実
-    if (d.fruitType && scale > 0.8 && p.growth >= (d.fruitStage || 0.65)) {
-      const fruitRadius = Math.max(1, leafSize * 0.85 * scale);
+    // 果実の結実
+    if (d.fruitType && scale > 0.6 && p.growth >= (d.fruitStage || 0.6)) {
+      const fruitRadius = Math.max(2, leafSize * 0.9 * scale);
       ctx.fillStyle = d.fruitColor || '#e53935';
       ctx.beginPath();
       ctx.arc(0, fruitRadius * 0.4, fruitRadius, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+      // ハイライト
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
       ctx.beginPath();
       ctx.arc(-fruitRadius * 0.3, fruitRadius * 0.1, Math.max(0.5, fruitRadius * 0.3), 0, Math.PI * 2);
       ctx.fill();
@@ -401,3 +508,4 @@ class PlantEngine {
     ctx.restore();
   }
 }
+

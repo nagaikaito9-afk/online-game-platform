@@ -3,7 +3,7 @@ class Camera {
   constructor(canvas) {
     this.canvas = canvas;
     this.x = 0; // ワールド座標におけるカメラの中心X
-    this.y = 0; // ワールド座標におけるカメラの中心Y
+    this.y = 100; // ワールド座標におけるカメラの中心Y (地表250が画角下中央に見えるベストポジ)
     this.zoom = 1.0;
     this.targetZoom = 1.0;
 

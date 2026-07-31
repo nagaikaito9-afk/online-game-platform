@@ -17,53 +17,112 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const GROUND_Y = 250; // 草むら地表
 
-  let selectedToolType = 'seed';
+  let selectedToolType = 'seed'; // 'seed' または 'tool'
   let currentSeed = PLANT_DATABASE[0];
   let currentToolId = 'rain';
   let gameSpeed = 1.0;
   let isMouseDownLeft = false;
 
-  // 初期配置（最初いくつかの植物を植える）
-  plantEngine.plantSeed(PLANT_DATABASE[0], -150, GROUND_Y);
-  plantEngine.plantSeed(PLANT_DATABASE[1], 0, GROUND_Y);
-  plantEngine.plantSeed(PLANT_DATABASE[2], 150, GROUND_Y);
+  // クリック波紋・テキストインジケーター配列
+  const clickRipples = [];
 
-  // --- Web Audio サウンド ---
+  // 初期配置（美しい3本の植物からスタート）
+  plantEngine.plantSeed(PLANT_DATABASE[0], -180, GROUND_Y);
+  plantEngine.plantSeed(PLANT_DATABASE[1], 0, GROUND_Y);
+  plantEngine.plantSeed(PLANT_DATABASE[2], 180, GROUND_Y);
+
+  // --- Web Audio サウンド合成エンジン ---
   let audioCtx = null;
   function getAudioContext() {
     if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (AudioContextClass) {
+        audioCtx = new AudioContextClass();
+      }
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume();
     }
     return audioCtx;
   }
 
   function playSound(type) {
     try {
-      const ctxA = getAudioContext();
-      if (!ctxA) return;
+      const actx = getAudioContext();
+      if (!actx) return;
 
-      const osc = ctxA.createOscillator();
-      const gain = ctxA.createGain();
+      const now = actx.currentTime;
+      const osc = actx.createOscillator();
+      const gain = actx.createGain();
       osc.connect(gain);
-      gain.connect(ctxA.destination);
-
-      const now = ctxA.currentTime;
+      gain.connect(actx.destination);
 
       if (type === 'plant') {
-        osc.frequency.setValueAtTime(300, now);
-        osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.exponentialRampToValueAtTime(580, now + 0.18);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.18);
+        osc.start(now);
+        osc.stop(now + 0.18);
+      } else if (type === 'water' || type === 'rain') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(300, now + 0.12);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.12);
+        osc.start(now);
+        osc.stop(now + 0.12);
+      } else if (type === 'sun' || type === 'fertilizer') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, now); // C5
+        osc.frequency.setValueAtTime(659.25, now + 0.06); // E5
+        osc.frequency.setValueAtTime(783.99, now + 0.12); // G5
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.2);
+        osc.start(now);
+        osc.stop(now + 0.2);
+      } else if (type === 'lava' || type === 'acid') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.linearRampToValueAtTime(60, now + 0.2);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.2);
+        osc.start(now);
+        osc.stop(now + 0.2);
+      } else if (type === 'prune' || type === 'eraser') {
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(800, now);
+        osc.frequency.exponentialRampToValueAtTime(200, now + 0.08);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.08);
+        osc.start(now);
+        osc.stop(now + 0.08);
+      } else if (type === 'freeze') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1200, now);
+        osc.frequency.linearRampToValueAtTime(1800, now + 0.15);
         gain.gain.setValueAtTime(0.2, now);
         gain.gain.linearRampToValueAtTime(0, now + 0.15);
         osc.start(now);
         osc.stop(now + 0.15);
+      } else if (type === 'ui') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.06);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.06);
+        osc.start(now);
+        osc.stop(now + 0.06);
       }
     } catch (e) {}
   }
 
-  // --- 左クリック操作 ---
+  // --- クリック/タッチ操作ハンドリング ---
   canvas.addEventListener('mousedown', (e) => {
-    if (e.button === 0) {
+    if (e.button === 0) { // 左クリック
       isMouseDownLeft = true;
+      getAudioContext(); // 音声再生コンテキストのアクティベート
       handleLeftClick(e.clientX, e.clientY, true);
     }
   });
@@ -80,6 +139,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // タッチデバイス対応
+  canvas.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) {
+      isMouseDownLeft = true;
+      getAudioContext();
+      const touch = e.touches[0];
+      handleLeftClick(touch.clientX, touch.clientY, true);
+    }
+  }, { passive: true });
+
+  canvas.addEventListener('touchmove', (e) => {
+    if (isMouseDownLeft && e.touches.length === 1) {
+      const touch = e.touches[0];
+      handleLeftClick(touch.clientX, touch.clientY, false);
+    }
+  }, { passive: true });
+
+  canvas.addEventListener('touchend', () => {
+    isMouseDownLeft = false;
+  });
+
   function handleLeftClick(screenX, screenY, isInitialClick) {
     const worldPos = camera.screenToWorld(screenX, screenY);
 
@@ -87,23 +167,66 @@ document.addEventListener('DOMContentLoaded', () => {
       if (isInitialClick) {
         plantEngine.plantSeed(currentSeed, worldPos.x, GROUND_Y);
         playSound('plant');
+
+        // 波紋インジケーター生成
+        clickRipples.push({
+          x: screenX,
+          y: screenY,
+          radius: 10,
+          maxRadius: 40,
+          alpha: 1.0,
+          text: `🌱 ${currentSeed.name} 発芽！`,
+          color: '#4ade80'
+        });
       }
     } else if (selectedToolType === 'tool') {
       experimentEngine.triggerTool(currentToolId, worldPos.x, worldPos.y, plantEngine, isInitialClick);
+      playSound(currentToolId);
+
+      if (isInitialClick) {
+        const activeToolBtn = document.querySelector(`.tool-btn[data-tool="${currentToolId}"]`);
+        const label = activeToolBtn ? activeToolBtn.textContent.trim() : '✨';
+        clickRipples.push({
+          x: screenX,
+          y: screenY,
+          radius: 8,
+          maxRadius: 35,
+          alpha: 1.0,
+          text: `${label} 発動`,
+          color: '#38bdf8'
+        });
+      }
     }
   }
 
-  // --- UI イベント ---
+  // --- UI イベント & モーダル ---
   const seedTriggerBtn = document.getElementById('seed-catalog-trigger');
+  const seedPlantModeBtn = document.getElementById('seed-plant-mode-btn');
   const modalOverlay = document.getElementById('seed-modal');
   const modalCloseBtn = document.getElementById('modal-close-btn');
   const seedGrid = document.getElementById('seed-grid');
   const currentBadge = document.getElementById('current-selection-badge');
 
-  seedTriggerBtn?.addEventListener('click', () => modalOverlay.classList.add('open'));
-  modalCloseBtn?.addEventListener('click', () => modalOverlay.classList.remove('open'));
+  seedTriggerBtn?.addEventListener('click', () => {
+    playSound('ui');
+    modalOverlay.classList.add('open');
+  });
+
+  seedPlantModeBtn?.addEventListener('click', () => {
+    playSound('ui');
+    selectedToolType = 'seed';
+    updateSelectionUI();
+  });
+
+  modalCloseBtn?.addEventListener('click', () => {
+    playSound('ui');
+    modalOverlay.classList.remove('open');
+  });
+
   modalOverlay?.addEventListener('click', (e) => {
-    if (e.target === modalOverlay) modalOverlay.classList.remove('open');
+    if (e.target === modalOverlay) {
+      modalOverlay.classList.remove('open');
+    }
   });
 
   function renderSeedGrid(categoryFilter = 'all') {
@@ -116,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     filtered.forEach(plant => {
       const card = document.createElement('div');
-      card.className = 'seed-card';
+      card.className = `seed-card ${currentSeed.id === plant.id ? 'active' : ''}`;
       card.setAttribute('tabindex', '0');
       card.setAttribute('role', 'button');
       card.innerHTML = `
@@ -128,11 +251,11 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
 
       const selectPlant = () => {
+        playSound('plant');
         currentSeed = plant;
         selectedToolType = 'seed';
-        updateSelectionBadge();
+        updateSelectionUI();
         modalOverlay.classList.remove('open');
-        document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
       };
 
       card.addEventListener('click', selectPlant);
@@ -150,6 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.querySelectorAll('.tab-btn').forEach(tab => {
     tab.addEventListener('click', () => {
+      playSound('ui');
       document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       renderSeedGrid(tab.getAttribute('data-cat'));
@@ -158,28 +282,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.querySelectorAll('.tool-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-
+      playSound('ui');
       currentToolId = btn.getAttribute('data-tool');
       selectedToolType = 'tool';
-      updateSelectionBadge();
+      updateSelectionUI();
     });
   });
 
   // 倍速ボタン
   document.querySelectorAll('.speed-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+      playSound('ui');
       document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       gameSpeed = parseFloat(btn.getAttribute('data-speed'));
     });
   });
 
-  function updateSelectionBadge() {
+  function updateSelectionUI() {
+    // ツールボタンアクティブ付け替え
+    document.querySelectorAll('.tool-btn').forEach(btn => {
+      if (selectedToolType === 'tool' && btn.getAttribute('data-tool') === currentToolId) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+
+    if (seedPlantModeBtn) {
+      if (selectedToolType === 'seed') {
+        seedPlantModeBtn.classList.add('active');
+      } else {
+        seedPlantModeBtn.classList.remove('active');
+      }
+    }
+
     if (!currentBadge) return;
     if (selectedToolType === 'seed') {
-      currentBadge.innerHTML = `<span>選択中:</span> ${currentSeed.icon} <strong>${currentSeed.name}</strong> (種植え)`;
+      currentBadge.innerHTML = `<span>選択中:</span> ${currentSeed.icon} <strong>${currentSeed.name}</strong> (種植えモード)`;
     } else {
       const activeToolBtn = document.querySelector(`.tool-btn[data-tool="${currentToolId}"]`);
       const tooltip = activeToolBtn ? activeToolBtn.getAttribute('data-tooltip') : currentToolId;
@@ -187,7 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
       currentBadge.innerHTML = `<span>選択中:</span> ${icon} <strong>${tooltip}</strong>`;
     }
   }
-  updateSelectionBadge();
+  updateSelectionUI();
 
   // --- 環境描画 (空・ゆったり雲・緑の草むら・茶色の土) ---
   function drawEnvironment() {
@@ -199,9 +339,9 @@ document.addEventListener('DOMContentLoaded', () => {
     ctx.fillStyle = skyGrad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 雲（スピードを従来比 1/20 に超低速化）
+    // 雲
     ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
-    const cloudTime = Date.now() * 0.000003; // 超スロー
+    const cloudTime = Date.now() * 0.000003;
     for (let i = 0; i < 5; i++) {
       const cx = ((i * 450 + cloudTime * 10000) % (canvas.width + 600)) - 300;
       const cy = 70 + (i % 3) * 35;
@@ -232,7 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ctx.rect(0, groundScreen.y - 3 * camera.zoom, canvas.width, 8 * camera.zoom);
     ctx.fill();
 
-    // 静的・安定したきれいな草むらの葉
+    // 草むらの葉
     ctx.strokeStyle = '#22c55e';
     ctx.lineWidth = Math.max(1, 2 * camera.zoom);
     const step = 7 * camera.zoom;
@@ -243,6 +383,37 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.lineTo(x + Math.sin(x * 0.15) * 2, groundScreen.y - grassHeight);
     }
     ctx.stroke();
+  }
+
+  // クリック波紋描画
+  function drawRipples() {
+    for (let i = clickRipples.length - 1; i >= 0; i--) {
+      const r = clickRipples[i];
+      r.radius += 1.5;
+      r.alpha -= 0.03;
+
+      if (r.alpha <= 0) {
+        clickRipples.splice(i, 1);
+        continue;
+      }
+
+      ctx.save();
+      ctx.globalAlpha = r.alpha;
+      ctx.strokeStyle = r.color || '#4ade80';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+      ctx.stroke();
+
+      if (r.text) {
+        ctx.fillStyle = r.color || '#ffffff';
+        ctx.font = 'bold 13px "Outfit", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(r.text, r.x, r.y - r.radius - 8);
+      }
+
+      ctx.restore();
+    }
   }
 
   // --- メインアニメーションループ ---
@@ -256,9 +427,11 @@ document.addEventListener('DOMContentLoaded', () => {
     drawEnvironment();
     plantEngine.draw(ctx, camera);
     experimentEngine.draw(ctx, camera);
+    drawRipples();
 
     requestAnimationFrame(loop);
   }
 
   loop();
 });
+
