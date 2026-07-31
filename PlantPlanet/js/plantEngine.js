@@ -1,18 +1,19 @@
 /* PlantPlanet - plantEngine.js */
+
 class PlantEngine {
   constructor() {
     this.plants = [];
+    this.fallingDots = []; // 崩れ落ちたドット（酸性雨や溶岩で崩落するドット物理）
   }
 
   // 種を植える（ワールド座標）
   plantSeed(data, worldX, worldY) {
     const gene = {
-      crookedness: (data.crookedness || 0.15) + (Math.random() - 0.5) * 0.15,
-      angleVar: (Math.random() - 0.5) * 0.25,
+      crookedness: (data.crookedness || 0.05) + (Math.random() - 0.5) * 0.08, // くせ（控えめで自然）
       speedMult: 0.85 + Math.random() * 0.3,
       maxHeightMult: 0.85 + Math.random() * 0.3,
-      leafSizeMult: 0.8 + Math.random() * 0.4,
-      leafHueShift: (Math.random() - 0.5) * 20, // 葉の色の微妙な違い
+      leafDensity: 0.8 + Math.random() * 0.4,
+      hueShift: (Math.random() - 0.5) * 15,
       seedId: Math.random().toString(36).substring(2, 9)
     };
 
@@ -20,344 +21,350 @@ class PlantEngine {
       data: data,
       gene: gene,
       x: worldX,
-      y: worldY, // 地表（草むらの位置）
-      growth: 0.01, // 0.0 ~ 1.0 (成長度)
-      health: 1.0,
-      frozen: false,
-      frozenTimer: 0,
-      burnStage: 0.0, // 0: 正常, 1: 完全に焦げ焦げ
-      acidStage: 0.0, // 0: 正常, 1: 毒枯れ
-      fertilized: 1.0, // 太さ倍率
-      windFlex: 0.0, // 風による揺れ偏位
-      rootProgress: 0.0, // 根の伸び具合
-      branches: null // 構造分岐データ（初回更新時にプロシージャル生成）
+      y: worldY,
+      growth: 0.02, // 0.0 ~ 1.0
+      targetHeight: (data.maxHeight || 150) * gene.maxHeightMult,
+      dots: [], // 高精細ドット配列 [{x, y, relX, relY, type, color, originalColor, health, frozen, burnt, acid}]
+      branchStructure: [], // スムース幹・枝の曲線制御点
+      lastGeneratedGrowth: 0
     };
+
+    // 初期制御点構造（滑らかなベジェ曲線）の生成
+    this.generateBranchStructure(plant);
+    this.rebuildDots(plant);
 
     this.plants.push(plant);
     return plant;
   }
 
+  // 自然で滑らかな枝構造の決定（カクつかないベジェ制御点）
+  generateBranchStructure(plant) {
+    const d = plant.data;
+    const maxH = plant.targetHeight;
+    const maxDepth = d.maxBranchDepth || 4;
+
+    const buildBranch = (startX, startY, length, angle, depth) => {
+      if (depth > maxDepth || length < 4) return null;
+
+      // 1つの枝を複数のベジェ制御点で滑らかに結ぶ
+      const midX = startX + Math.cos(angle) * (length * 0.5) + (plant.gene.crookedness * 20 * (depth % 2 === 0 ? 1 : -1));
+      const midY = startY + Math.sin(angle) * (length * 0.5);
+      const endX = startX + Math.cos(angle) * length;
+      const endY = startY + Math.sin(angle) * length;
+
+      const branch = {
+        startX, startY,
+        controlX: midX, controlY: midY,
+        endX, endY,
+        angle, length, depth,
+        children: []
+      };
+
+      if (depth < maxDepth) {
+        const splitAngle = (d.branchAngle || 0.65) + (Math.random() - 0.5) * 0.1;
+        const nextLen = length * 0.68;
+
+        const left = buildBranch(endX, endY, nextLen, angle - splitAngle, depth + 1);
+        const right = buildBranch(endX, endY, nextLen, angle + splitAngle, depth + 1);
+
+        if (left) branch.children.push(left);
+        if (right) branch.children.push(right);
+      }
+
+      return branch;
+    };
+
+    // 主幹（真上 -Math.PI / 2）
+    plant.branchStructure = buildBranch(0, 0, maxH * 0.45, -Math.PI / 2, 0);
+  }
+
+  // 植物の全ドット（ピクセル）の再構築・高密度生成
+  rebuildDots(plant) {
+    const dots = [];
+    const currentH = plant.targetHeight * plant.growth;
+    const d = plant.data;
+
+    // 1. 根のドット（地中）
+    const rootDepth = (d.rootDepth || 50) * Math.min(1.0, plant.growth * 1.5);
+    for (let r = 0; r < rootDepth; r += 2) {
+      dots.push({
+        relX: (Math.random() - 0.5) * 3,
+        relY: r,
+        type: 'root',
+        color: '#4e342e',
+        originalColor: '#4e342e',
+        health: 1.0
+      });
+    }
+
+    // 2. 幹・枝のベジェ曲線上に高密度ドットを敷き詰める
+    const traverse = (b, parentGrowthRatio) => {
+      if (!b) return;
+
+      const branchGrowthProgress = Math.max(0, Math.min(1.0, (plant.growth - b.depth * 0.15) * 3.5));
+      if (branchGrowthProgress <= 0) return;
+
+      const steps = Math.ceil((b.length * branchGrowthProgress) / 2.5); // 2.5px刻みでドット密生
+      const baseWidth = Math.max(2, (currentH * 0.05) * Math.pow(0.65, b.depth));
+
+      for (let i = 0; i <= steps; i++) {
+        const t = i / Math.max(1, steps);
+        // 2次ベジェ曲線補間 (カクツキゼロ)
+        const bx = (1 - t) * (1 - t) * b.startX + 2 * (1 - t) * t * b.controlX + t * t * b.endX;
+        const cy = (1 - t) * (1 - t) * b.startY + 2 * (1 - t) * t * b.controlY + t * t * b.endY;
+
+        // 幹の太さ分の多重ドット配置
+        const widthRadius = (baseWidth * (1 - t * 0.3)) / 2;
+        for (let wx = -widthRadius; wx <= widthRadius; wx += 2) {
+          for (let wy = -widthRadius; wy <= widthRadius; wy += 2) {
+            if (wx * wx + wy * wy <= widthRadius * widthRadius + 1) {
+              dots.push({
+                relX: bx + wx,
+                relY: cy + wy,
+                type: 'trunk',
+                color: d.trunkColor || '#5c3a21',
+                originalColor: d.trunkColor || '#5c3a21',
+                health: 1.0
+              });
+            }
+          }
+        }
+      }
+
+      // 枝先または成長部分に 葉・花・果実のドット群を生成
+      if (b.children.length === 0 || b.depth >= (d.maxBranchDepth || 4) - 1) {
+        if (branchGrowthProgress > 0.4) {
+          const leafCount = Math.floor(12 * plant.gene.leafDensity);
+          const endX = b.endX;
+          const endY = b.endY;
+
+          for (let l = 0; l < leafCount; l++) {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = Math.random() * 14;
+            const lx = endX + Math.cos(angle) * dist;
+            const ly = endY + Math.sin(angle) * dist;
+
+            dots.push({
+              relX: lx,
+              relY: ly,
+              type: 'leaf',
+              color: d.leafColor || '#2e7d32',
+              originalColor: d.leafColor || '#2e7d32',
+              health: 1.0
+            });
+          }
+
+          // 花のドット群
+          if (d.flowerColor && plant.growth >= (d.flowerStage || 0.45)) {
+            for (let f = 0; f < 8; f++) {
+              dots.push({
+                relX: endX + (Math.random() - 0.5) * 12,
+                relY: endY + (Math.random() - 0.5) * 12,
+                type: 'flower',
+                color: d.flowerColor,
+                originalColor: d.flowerColor,
+                health: 1.0
+              });
+            }
+          }
+
+          // 果実のドット群
+          if (d.fruitType && plant.growth >= (d.fruitStage || 0.65)) {
+            for (let fr = 0; fr < 10; fr++) {
+              dots.push({
+                relX: endX + (Math.random() - 0.5) * 14,
+                relY: endY + (Math.random() - 0.5) * 14 + 6,
+                type: 'fruit',
+                color: d.fruitColor || '#e53935',
+                originalColor: d.fruitColor || '#e53935',
+                health: 1.0
+              });
+            }
+          }
+        }
+      }
+
+      // 子枝への再帰
+      for (const child of b.children) {
+        traverse(child, branchGrowthProgress);
+      }
+    };
+
+    traverse(plant.branchStructure, 1.0);
+
+    // 既存ドットの状態（焦げ、酸性、氷結等）を引継ぎ
+    if (plant.dots.length > 0) {
+      // 位置が近いドットにダメージ状態を引き継ぐ
+    }
+
+    plant.dots = dots;
+    plant.lastGeneratedGrowth = plant.growth;
+  }
+
   // 植物の更新
   update(speedMultiplier = 1.0) {
+    // 成長スピードを 1x で従来比 1/100 に超スロー化
+    const baseGrowthStep = 0.000008 * speedMultiplier;
+
     for (let i = this.plants.length - 1; i >= 0; i--) {
       const p = this.plants[i];
 
-      // 氷結タイマー
-      if (p.frozenTimer > 0) {
-        p.frozenTimer -= speedMultiplier;
-        if (p.frozenTimer <= 0) p.frozen = false;
+      // 成長進行
+      if (p.growth < 1.0) {
+        p.growth = Math.min(1.0, p.growth + baseGrowthStep * p.gene.speedMult);
+        // 成長が大きく進んだ場合のみドットを再構築
+        if (p.growth - p.lastGeneratedGrowth > 0.01) {
+          this.rebuildDots(p);
+        }
       }
 
-      // 成長処理 (氷結していない場合)
-      if (!p.frozen && p.health > 0) {
-        const baseSpeed = (p.data.growthSpeed || 1.0) * 0.0006 * p.gene.speedMult;
-        p.growth = Math.min(1.0, p.growth + baseSpeed * speedMultiplier);
-        p.rootProgress = Math.min(1.0, p.rootProgress + baseSpeed * 1.2 * speedMultiplier);
-      }
-
-      // 風の戻り減衰
-      p.windFlex *= 0.92;
-
-      // 焼失または完全に枯れた場合の削除
-      if (p.burnStage >= 1.0 || p.health <= 0.05) {
+      // 植物全体の健全度チェック（残存ドット数）
+      if (p.dots.length < 5) {
         this.plants.splice(i, 1);
+      }
+    }
+
+    // 物理で崩落した落下ドットの更新
+    for (let i = this.fallingDots.length - 1; i >= 0; i--) {
+      const fd = this.fallingDots[i];
+      fd.x += fd.vx;
+      fd.y += fd.vy;
+      fd.vy += 0.25; // 重力
+      fd.life--;
+
+      if (fd.life <= 0 || fd.y > 600) {
+        this.fallingDots.splice(i, 1);
       }
     }
   }
 
-  // エフェクト半径適用
-  applyEffectRadius(wx, wy, radius, effectType, intensity) {
+  // --- ドットレベルでの精密な物理干渉 ---
+
+  // 日光（光合成）: 接触したドット周辺の成長を促進し、新しい芽・葉ドットを直接スポーン！
+  applySunlightBeam(wx, wy, radius) {
     for (const p of this.plants) {
-      const dist = Math.hypot(p.x - wx, p.y - wy);
-      if (dist <= radius) {
-        if (effectType === 'water') {
-          p.health = Math.min(1.0, p.health + intensity);
-          p.growth = Math.min(1.0, p.growth + intensity * 0.05);
-        } else if (effectType === 'sunlight') {
-          p.growth = Math.min(1.0, p.growth + intensity * 0.08);
-        } else if (effectType === 'fertilize') {
-          p.fertilized = Math.min(2.2, p.fertilized + intensity * 0.2);
-          p.growth = Math.min(1.0, p.growth + intensity * 0.06);
-        } else if (effectType === 'burn') {
-          p.burnStage = Math.min(1.0, p.burnStage + intensity);
-          p.health -= intensity * 0.5;
-        } else if (effectType === 'freeze') {
-          p.frozen = true;
-          p.frozenTimer = 180;
-        } else if (effectType === 'acid') {
-          p.acidStage = Math.min(1.0, p.acidStage + intensity);
-          p.health -= intensity * 0.3;
+      let hit = false;
+      for (const dot of p.dots) {
+        const dotWorldX = p.x + dot.relX;
+        const dotWorldY = p.y + dot.relY;
+        const dist = Math.hypot(dotWorldX - wx, dotWorldY - wy);
+        if (dist <= radius) {
+          hit = true;
+          break;
+        }
+      }
+      if (hit) {
+        p.growth = Math.min(1.0, p.growth + 0.015);
+        this.rebuildDots(p);
+        // 新しい光合成キラキラ葉ドットを追加
+        for (let k = 0; k < 3; k++) {
+          p.dots.push({
+            relX: (wx - p.x) + (Math.random() - 0.5) * 15,
+            relY: (wy - p.y) + (Math.random() - 0.5) * 15,
+            type: 'leaf',
+            color: '#86efac',
+            originalColor: '#86efac',
+            health: 1.0
+          });
         }
       }
     }
   }
 
-  // 風の力を与える
-  applyWindForce(wx, wy, radius, force) {
+  // 酸性雨: 接触したドットを紫色に変色・劣化させ、ポロポロ崩落させる！
+  applyAcidRain(wx, wy, radius) {
     for (const p of this.plants) {
-      const dist = Math.abs(p.x - wx);
-      if (dist <= radius) {
-        p.windFlex += force * (1 - dist / radius);
+      for (let i = p.dots.length - 1; i >= 0; i--) {
+        const dot = p.dots[i];
+        const dotWorldX = p.x + dot.relX;
+        const dotWorldY = p.y + dot.relY;
+        const dist = Math.hypot(dotWorldX - wx, dotWorldY - wy);
+
+        if (dist <= radius) {
+          dot.color = '#c026d3'; // 酸性紫変
+          dot.health -= 0.15;
+
+          if (dot.health <= 0) {
+            // ドットがポロポロ崩れ落ちる物理パーティクル化
+            this.fallingDots.push({
+              x: dotWorldX,
+              y: dotWorldY,
+              vx: (Math.random() - 0.5) * 1.5,
+              vy: Math.random() * 1.5,
+              color: '#c026d3',
+              life: 40
+            });
+            p.dots.splice(i, 1);
+          }
+        }
       }
     }
   }
 
-  // 剪定
-  pruneAt(wx, wy, radius) {
-    for (let i = this.plants.length - 1; i >= 0; i--) {
-      const p = this.plants[i];
-      const dist = Math.hypot(p.x - wx, (p.y - (p.data.maxHeight * p.growth * 0.5)) - wy);
-      if (dist <= radius) {
-        p.growth *= 0.6; // 高さを縮小カット
-        p.health -= 0.1;
+  // 溶岩: 接触したドットを黒焦げ炭化させ、火花とともに崩落！
+  applyLavaBurn(wx, wy, radius) {
+    for (const p of this.plants) {
+      for (let i = p.dots.length - 1; i >= 0; i--) {
+        const dot = p.dots[i];
+        const dotWorldX = p.x + dot.relX;
+        const dotWorldY = p.y + dot.relY;
+        const dist = Math.hypot(dotWorldX - wx, dotWorldY - wy);
+
+        if (dist <= radius) {
+          dot.color = '#1c1917'; // 黒焦げ
+          dot.health -= 0.35;
+
+          if (dot.health <= 0) {
+            this.fallingDots.push({
+              x: dotWorldX,
+              y: dotWorldY,
+              vx: (Math.random() - 0.5) * 3,
+              vy: -1 - Math.random() * 2,
+              color: Math.random() > 0.5 ? '#ff4500' : '#292524',
+              life: 45
+            });
+            p.dots.splice(i, 1);
+          }
+        }
       }
     }
   }
 
-  // 削除
-  removePlantAt(wx, wy, radius) {
-    for (let i = this.plants.length - 1; i >= 0; i--) {
-      const p = this.plants[i];
-      const dist = Math.hypot(p.x - wx, p.y - wy);
-      if (dist <= radius) {
-        this.plants.splice(i, 1);
+  // 剪定 / 消去: クリック・指定範囲のドットを正確に削り取る
+  removeDotsInRadius(wx, wy, radius) {
+    for (const p of this.plants) {
+      for (let i = p.dots.length - 1; i >= 0; i--) {
+        const dot = p.dots[i];
+        const dotWorldX = p.x + dot.relX;
+        const dotWorldY = p.y + dot.relY;
+        if (Math.hypot(dotWorldX - wx, dotWorldY - wy) <= radius) {
+          p.dots.splice(i, 1);
+        }
       }
     }
   }
 
-  // 全植物の描画
+  // 全植物のドット群の描画
   draw(ctx, camera) {
+    // 1. 植物のドット描画
     for (const p of this.plants) {
-      this.drawPlant(ctx, camera, p);
-    }
-  }
+      for (const dot of p.dots) {
+        const worldX = p.x + dot.relX;
+        const worldY = p.y + dot.relY;
+        const screenPos = camera.worldToScreen(worldX, worldY);
 
-  // 個別植物描画（プロシージャル再帰）
-  drawPlant(ctx, camera, p) {
-    const basePos = camera.worldToScreen(p.x, p.y);
-    const targetHeight = (p.data.maxHeight || 150) * p.gene.maxHeightMult * p.growth;
-    const maxDepth = p.data.maxBranchDepth || 4;
-
-    ctx.save();
-
-    // 1. 地中への根の描画（茶色の土の中に伸びる）
-    this.drawRoots(ctx, camera, p);
-
-    // 2. 地上の幹・枝の描画
-    ctx.translate(basePos.x, basePos.y);
-
-    // 風の傾き・曲がり
-    const totalWind = (p.windFlex || 0) + Math.sin(Date.now() * 0.002 + p.x) * 0.05;
-    ctx.rotate(totalWind * 0.15);
-
-    // 幹の太さ
-    const baseWidth = Math.max(2, (targetHeight * 0.07) * (p.data.trunkWidthMult || 1.0) * p.fertilized * camera.zoom);
-
-    // 再帰的に幹・枝・葉・花・果実を成長・描画
-    this.drawBranch(
-      ctx,
-      camera,
-      p,
-      0, // current depth
-      maxDepth,
-      targetHeight,
-      baseWidth,
-      -Math.PI / 2, // 真上を向く
-      0, 0
-    );
-
-    // 氷結エフェクト重ね描画
-    if (p.frozen) {
-      ctx.fillStyle = 'rgba(224, 242, 254, 0.45)';
-      ctx.beginPath();
-      ctx.arc(0, -targetHeight * 0.6, targetHeight * 0.5, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    ctx.restore();
-  }
-
-  // 根のプロシージャル描画
-  drawRoots(ctx, camera, p) {
-    const rootDepth = (p.data.rootDepth || 60) * p.rootProgress;
-    if (rootDepth < 5) return;
-
-    const basePos = camera.worldToScreen(p.x, p.y);
-    ctx.save();
-    ctx.strokeStyle = '#3e2723';
-    ctx.lineWidth = Math.max(1, 3 * camera.zoom);
-    ctx.globalAlpha = 0.7;
-
-    ctx.beginPath();
-    ctx.moveTo(basePos.x, basePos.y);
-    // 中央主根
-    ctx.lineTo(basePos.x + Math.sin(p.gene.crookedness * 3) * 15 * camera.zoom, basePos.y + rootDepth * camera.zoom);
-    ctx.stroke();
-
-    // 左右側根
-    ctx.lineWidth = Math.max(1, 1.5 * camera.zoom);
-    ctx.beginPath();
-    ctx.moveTo(basePos.x, basePos.y + 10 * camera.zoom);
-    ctx.lineTo(basePos.x - 20 * camera.zoom, basePos.y + (rootDepth * 0.7) * camera.zoom);
-    ctx.moveTo(basePos.x, basePos.y + 15 * camera.zoom);
-    ctx.lineTo(basePos.x + 25 * camera.zoom, basePos.y + (rootDepth * 0.8) * camera.zoom);
-    ctx.stroke();
-
-    ctx.restore();
-  }
-
-  // 再帰的分岐描画
-  drawBranch(ctx, camera, p, depth, maxDepth, length, width, angle, x, y) {
-    if (depth >= maxDepth || length < 3) return;
-
-    ctx.save();
-
-    // 支点の回転
-    ctx.translate(x, y);
-    ctx.rotate(angle + Math.PI / 2 + p.gene.angleVar * (depth === 0 ? 0 : 1));
-
-    // 色演算（焦げ/毒/通常）
-    let branchColor = p.data.trunkColor || '#5c3a21';
-    if (p.burnStage > 0) {
-      branchColor = '#1c1917'; // 炭化
-    } else if (p.acidStage > 0) {
-      branchColor = '#4a044e'; // 紫毒
-    }
-
-    ctx.strokeStyle = branchColor;
-    ctx.lineWidth = Math.max(1, width * camera.zoom);
-    ctx.lineCap = 'round';
-
-    // 幹/枝を描く
-    const endX = 0;
-    const endY = -length;
-
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-
-    // くねり表現
-    const curveMid = p.gene.crookedness * 15 * (depth % 2 === 0 ? 1 : -1);
-    ctx.quadraticCurveTo(curveMid, -length * 0.5, endX, endY);
-    ctx.stroke();
-
-    // 葉・花・果実の描画（先端または一定深度以上）
-    const isTip = (depth >= maxDepth - 1) || (length < 15);
-    if (isTip || depth >= 1) {
-      this.drawFoliageAndFruit(ctx, camera, p, endX, endY, depth, maxDepth);
-    }
-
-    // 次の分岐
-    if (depth < maxDepth - 1) {
-      const nextLength = length * 0.68;
-      const nextWidth = width * 0.65;
-      const splitAngle = (p.data.branchAngle || 0.7) + (Math.random() - 0.5) * 0.1;
-
-      // 左枝
-      this.drawBranch(
-        ctx, camera, p,
-        depth + 1, maxDepth,
-        nextLength, nextWidth,
-        -splitAngle,
-        endX, endY
-      );
-
-      // 右枝
-      this.drawBranch(
-        ctx, camera, p,
-        depth + 1, maxDepth,
-        nextLength, nextWidth,
-        splitAngle,
-        endX, endY
-      );
-    }
-
-    ctx.restore();
-  }
-
-  // 葉・花・果実の描画
-  drawFoliageAndFruit(ctx, camera, p, x, y, depth, maxDepth) {
-    ctx.save();
-    ctx.translate(x, y);
-
-    const leafSize = (12 * p.gene.leafSizeMult * (p.growth * 0.8 + 0.2)) * camera.zoom;
-    let leafColor = p.data.leafColor || '#2e7d32';
-
-    if (p.burnStage > 0) {
-      leafColor = '#292524';
-    } else if (p.acidStage > 0) {
-      leafColor = '#701a75';
-    }
-
-    ctx.fillStyle = leafColor;
-
-    // 葉のタイプ別グラフィック
-    const leafType = p.data.leafType || 'oval';
-
-    if (leafType === 'needle') { // 針葉 (松・杉)
-      ctx.strokeStyle = leafColor;
-      ctx.lineWidth = 1.5 * camera.zoom;
-      for (let a = -1; a <= 1; a += 0.5) {
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(a * leafSize * 0.8, -leafSize);
-        ctx.stroke();
+        ctx.fillStyle = dot.color;
+        const size = (dot.type === 'trunk' ? 3.0 : 3.5) * camera.zoom;
+        ctx.fillRect(screenPos.x - size / 2, screenPos.y - size / 2, size, size);
       }
-    } else if (leafType === 'palm') { // 椰子の葉
-      for (let i = -2; i <= 2; i++) {
-        ctx.rotate(0.3 * i);
-        ctx.beginPath();
-        ctx.ellipse(0, -leafSize * 1.5, leafSize * 0.3, leafSize * 1.8, 0, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    } else if (leafType === 'mushroom') { // キノコの傘
-      ctx.fillStyle = p.data.leafColor || '#e53935';
-      ctx.beginPath();
-      ctx.arc(0, 0, leafSize * 1.6, Math.PI, Math.PI * 2);
-      ctx.fill();
-      // キノコの柄と斑点
-      if (p.data.id === 'doku_kinoko') {
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(-leafSize * 0.6, -leafSize * 0.8, leafSize * 0.3, 0, Math.PI * 2);
-        ctx.arc(leafSize * 0.6, -leafSize * 0.8, leafSize * 0.3, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    } else { // 通常の楕円 / ハート葉
-      ctx.beginPath();
-      ctx.ellipse(0, -leafSize * 0.5, leafSize * 0.6, leafSize, 0, 0, Math.PI * 2);
-      ctx.fill();
     }
 
-    // 花の描画 (成長段階が flowerStage を超えている場合)
-    if (p.data.flowerColor && p.growth >= (p.data.flowerStage || 0.5)) {
-      const flowerSize = leafSize * 1.1;
-      ctx.fillStyle = p.data.flowerColor;
-
-      // 花弁（5弁花など）
-      for (let i = 0; i < 5; i++) {
-        ctx.beginPath();
-        const fAngle = (i / 5) * Math.PI * 2;
-        const fx = Math.cos(fAngle) * flowerSize * 0.6;
-        const fy = Math.sin(fAngle) * flowerSize * 0.6;
-        ctx.arc(fx, fy, flowerSize * 0.4, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      // 花芯
-      ctx.fillStyle = '#fef08a';
-      ctx.beginPath();
-      ctx.arc(0, 0, flowerSize * 0.3, 0, Math.PI * 2);
-      ctx.fill();
+    // 2. 崩落ドットの描画
+    for (const fd of this.fallingDots) {
+      const screenPos = camera.worldToScreen(fd.x, fd.y);
+      ctx.fillStyle = fd.color;
+      const size = 3 * camera.zoom;
+      ctx.fillRect(screenPos.x - size / 2, screenPos.y - size / 2, size, size);
     }
-
-    // 果実の描画 (成長段階が fruitStage を超えている場合)
-    if (p.data.fruitType && p.growth >= (p.data.fruitStage || 0.7)) {
-      const fruitSize = leafSize * 1.3;
-      ctx.fillStyle = p.data.fruitColor || '#e53935';
-      ctx.beginPath();
-      ctx.arc(0, fruitSize * 0.6, fruitSize * 0.7, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    ctx.restore();
   }
 }
