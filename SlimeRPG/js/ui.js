@@ -63,6 +63,38 @@ class UIManager {
     });
   }
 
+  showGameNotice(message, duration = 4000) {
+    let noticeEl = document.getElementById('game-notice');
+    if (!noticeEl) {
+      noticeEl = document.createElement('div');
+      noticeEl.id = 'game-notice';
+      noticeEl.style.cssText = `
+        position: absolute;
+        top: 4.8rem;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 0.6rem 1.2rem;
+        background: rgba(15, 23, 42, 0.9);
+        border: 2px solid #ef4444;
+        border-radius: 12px;
+        color: #fca5a5;
+        font-weight: 700;
+        font-size: 0.95rem;
+        z-index: 40;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+        transition: opacity 0.3s;
+      `;
+      document.body.appendChild(noticeEl);
+    }
+    noticeEl.textContent = message;
+    noticeEl.style.opacity = '1';
+
+    if (this.noticeTimeout) clearTimeout(this.noticeTimeout);
+    this.noticeTimeout = setTimeout(() => {
+      noticeEl.style.opacity = '0';
+    }, duration);
+  }
+
   setPlayerName(name) {
     if (!name || !name.trim()) name = 'アース';
     this.playerName = name.trim();

@@ -100,22 +100,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     gameStarted = true;
 
-    // 2.png: ～プロローグ～ 会話イベント発動！
+    // 2.png: ～プロローグ～ 完全な会話イベント発動！
     ui.startDialogueSequence([
-      { speaker: 'ナレーション', text: '昔々、人間と魔物という対立した種族がいました。', face: '📜' },
-      { speaker: 'ナレーション', text: '魔物にはたくさんの種類があり、その中でも一番弱いのがスライムでした。', face: '🟢' },
-      { speaker: 'ナレーション', text: 'スライムは人間にたやすく倒され、ほかの魔物にも見下され、もう我慢の限界でした。', face: '💧' },
-      { speaker: ui.playerName, text: '「ボクたちが一番弱いなんて嫌だ！人間のいじめに立ち向かうんだ！」', face: '🔴' },
-      { speaker: '緑スライム', text: '「ハハハ！見ろよアイツ！緑色じゃなくて真っ赤だし、一番弱いくせに何言ってるんだよ！」', face: '🟢' },
-      { speaker: '長老スライム', text: '「そうだぞ赤スライムの' + ui.playerName + 'や...人間は強すぎる。お前には何もできやせん...」', face: '👴' },
-      { speaker: ui.playerName, text: '「笑われたって関係ない！ボクは強くなってスライムのみんなを助けるんだ！」', face: '🔴' }
+      { speaker: 'ナレーター', text: '昔々、人間と魔物という対立した種族がいました。', face: '📜' },
+      { speaker: 'ナレーター', text: '魔物にはたくさんの種類があり、その中でも一番弱いのがスライムでした。', face: '🟢' },
+      { speaker: 'ナレーター', text: 'スライムは人間にたやすく倒され、ほかの魔物にも見下され、もう我慢の限界でした。', face: '💧' },
+      { speaker: 'ナレーター', text: 'ですが何もできることはありませんでした。', face: '📜' },
+      { speaker: 'ナレーター', text: 'その中で勇気を出して立ち上がったのが' + ui.playerName + 'です。', face: '🔴' },
+      { speaker: 'ナレーター', text: 'ですがみんなは' + ui.playerName + 'を笑いました。', face: '🟢' },
+      { speaker: 'ナレーター', text: 'なぜなら' + ui.playerName + 'は通常とは違い、赤い色でとても弱かったのです。', face: '🔴' },
+      { speaker: ui.playerName, text: '「笑わないでよ！僕は本気なんだ！」', face: '🔴' },
+      { speaker: 'スライム1', text: '「本気だと？」', face: '🟢' },
+      { speaker: 'スライム2(おばあさん)', text: '「' + ui.playerName + '、人間はとても強いんだ。いかないでおくれ」', face: '👵' },
+      { speaker: 'スライム3', text: '「じゃあ人間を一人でも倒して来いよ！そしたら認めてやる」', face: '🟢' },
+      { speaker: ui.playerName + '(心の声)', text: '（みんなで僕をバカにして...）', face: '🔴' },
+      { speaker: ui.playerName, text: '「もういいよ！僕は行くぞ！」', face: '🔴' },
+      { speaker: 'スライム1', text: '「どうせ泣いて帰ってくるさ」', face: '🟢' },
+      { speaker: 'スライム4', text: '「大丈夫かな...」', face: '🟢' },
+      { speaker: 'ナレーター', text: ui.playerName + 'は森をでて後悔しました。だって人間なんて倒せるわけがないんだもの。', face: '🌲' },
+      { speaker: ui.playerName + '(心の声)', text: '（まずはそこら辺の動物を吸収して経験値を集めてレベルアップしよう！）', face: '🔴' }
     ], () => {
-      // 最初の試練の戦闘イベントテスト発動 (3.png FF3スタイル)
-      ui.startDialogueSequence([
-        { speaker: '村を襲う人間', text: '「おい！弱っちい赤スライムめ、俺様の経験値になれ！」', face: '👨' }
-      ], () => {
-        ui.startBattle({ name: '村を襲う人間', icon: '👨' });
-      });
+      // プロローグ終了後、森の外フィールドで「動物を吸収してレベルアップ！」チュートリアル開始
+      ui.showGameNotice('🎯 目的: フィールドの動物に近づいて [Space] キーで「吸収」してレベルアップしよう！');
     });
   });
 
@@ -129,6 +135,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (e.code === 'Escape') {
       ui.toggleMenu();
+    }
+    // Spaceキー: アクション音 ＆ 近くの動物を吸収！
+    if (e.code === 'Space' && !ui.inventoryOpen && !ui.menuOpen && !ui.dialogueActive && !ui.battleActive) {
+      playSE('action');
+
+      // 近くの動物を吸収
+      const absorbedAnimal = map.absorbNearbyAnimal(player.x, player.y, 50);
+      if (absorbedAnimal) {
+        player.exp = (player.exp || 0) + absorbedAnimal.exp;
+        playSE('select');
+
+        // レベルアップ判定 (例: 30expごとにLvUP)
+        const nextLvExp = (player.level || 1) * 30;
+        if (player.exp >= nextLvExp) {
+          player.level = (player.level || 1) + 1;
+          player.maxHp += 15;
+          player.hp = player.maxHp;
+          player.maxMp += 8;
+          player.mp = player.maxMp;
+
+          ui.showGameNotice(`✨ レベルアップ！ Lv.${player.level} になった！ (最大HP:${player.maxHp} HP全回復！)`, 5000);
+        } else {
+          ui.showGameNotice(`🍖 ${absorbedAnimal.name} を吸収した！ 経験値 +${absorbedAnimal.exp} (Total: ${player.exp}/${nextLvExp})`);
+        }
+      }
     }
   });
 
