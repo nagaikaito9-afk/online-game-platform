@@ -3,31 +3,103 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Plant Planet | 植物惑星テラフォーミングシミュレーター</title>
+  <title>Plant Planet | リアル植物育成 ＆ 物理実験シミュレーター</title>
   <link rel="icon" type="image/png" href="./favicon.png">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <div class="header">
-    <h2 style="background: linear-gradient(135deg, #22c55e, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">🌱 Plant Planet (植物惑星開発)</h2>
-    <a href="../index.html" class="portal-link">🏠 Versa Game Portal へ戻る</a>
+  <!-- フルスクリーン ゲームキャンバス -->
+  <canvas id="game-canvas"></canvas>
+
+  <!-- トップ ヘッダー -->
+  <div class="header-bar">
+    <div class="brand">
+      <h1>🌱 Plant Planet</h1>
+    </div>
+    <div id="current-selection-badge" class="current-selection-badge">
+      <span>選択中:</span> 🍅 トマト (種植え)
+    </div>
+    <a href="../index.html" class="portal-link portal-btn">🏠 Versa Game Portal へ戻る</a>
   </div>
 
-  <div class="main-container">
-    <canvas id="planet-canvas" width="600" height="450"></canvas>
+  <!-- メイン ツールバー (上部中央) -->
+  <div class="toolbar-container">
+    <!-- 種カタログ呼び出しボタン -->
+    <button id="seed-catalog-trigger" class="seed-catalog-trigger">
+      🌱 種カタログ (全50種)
+    </button>
 
-    <div style="display: flex; gap: 2rem; background: rgba(0,0,0,0.5); padding: 0.8rem 1.5rem; border-radius: 12px; border: 1px solid rgba(34, 197, 94, 0.3);">
-      <div>💧 水分量: <strong id="stat-water" style="color: #06b6d4;">50%</strong></div>
-      <div>💨 酸素濃度: <strong id="stat-o2" style="color: #22c55e;">20%</strong></div>
-      <div>🌿 植物数: <strong id="stat-plants" style="color: #eab308;">10 本</strong></div>
+    <div class="divider"></div>
+
+    <!-- 10種類の実験ツール -->
+    <div class="tool-group">
+      <button class="tool-btn" data-tool="rain" data-tooltip="🌧️ 雨雲 (水分補給/急速成長)">🌧️</button>
+      <button class="tool-btn" data-tool="water_drop" data-tooltip="💧 水 (ピンポイント散水)">💧</button>
+      <button class="tool-btn" data-tool="lava" data-tooltip="🌋 溶岩 (熱波/燃焼炭化)">🌋</button>
+      <button class="tool-btn" data-tool="sunbeam" data-tooltip="☀️ 太陽光 (光合成活性化)">☀️</button>
+      <button class="tool-btn" data-tool="fertilizer" data-tooltip="🧪 栄養剤 (太さ強化/爆発成長)">🧪</button>
+      <button class="tool-btn" data-tool="prune" data-tooltip="✂️ 剪定ハサミ (枝葉カット整形)">✂️</button>
+      <button class="tool-btn" data-tool="freeze" data-tooltip="❄️ 氷結 (成長凍結/雪結晶)">❄️</button>
+      <button class="tool-btn" data-tool="tornado" data-tooltip="🌪️ 竜巻 (強風で揺らす/種飛散)">🌪️</button>
+      <button class="tool-btn" data-tool="acid" data-tooltip="☣️ 酸性雨 (紫腐食/枯死)">☣️</button>
+      <button class="tool-btn" data-tool="eraser" data-tooltip="🧹 消去 (左クリック除外)">🧹</button>
     </div>
 
-    <div class="controls">
-      <button id="btn-water" class="btn">💧 雨を降らせる (播種・水補給)</button>
-      <button id="btn-sun" class="btn">☀️ 太陽光照射 (光合成活性)</button>
+    <div class="divider"></div>
+
+    <!-- 倍速コントローラー -->
+    <div class="speed-control">
+      <button class="speed-btn" data-speed="0">PAUSE</button>
+      <button class="speed-btn active" data-speed="1.0">1x</button>
+      <button class="speed-btn" data-speed="3.0">3x</button>
+      <button class="speed-btn" data-speed="10.0">10x</button>
+      <button class="speed-btn" data-speed="30.0">30x</button>
+      <button class="speed-btn" data-speed="100.0">100x</button>
     </div>
   </div>
 
+  <!-- 種カタログ モーダル -->
+  <div id="seed-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>🌱 種カタログ (全50種類以上)</h2>
+        <button id="modal-close-btn" class="modal-close-btn">✕</button>
+      </div>
+
+      <!-- カテゴリタブ -->
+      <div class="category-tabs">
+        <button class="tab-btn active" data-cat="all">すべて</button>
+        <button class="tab-btn" data-cat="tree">🌲 樹木</button>
+        <button class="tab-btn" data-cat="crop">🍅 野菜・果物</button>
+        <button class="tab-btn" data-cat="flower">🌸 花卉・草本</button>
+        <button class="tab-btn" data-cat="special">🌵 珍種・ファンタジー</button>
+      </div>
+
+      <!-- 種カード一覧グリッド -->
+      <div id="seed-grid" class="seed-grid">
+        <!-- JavaScriptで動的生成 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 下部 操作ヒントバー -->
+  <div class="hint-bar">
+    <div class="hint-item">
+      <span class="hint-key">右クリック長押し</span> 画面無限移動 (カメラパン)
+    </div>
+    <div class="hint-item">
+      <span class="hint-key">左クリック</span> 種を植える / ツール使用
+    </div>
+    <div class="hint-item">
+      <span class="hint-key">マウスホイール</span> 拡大・縮小ズーム
+    </div>
+  </div>
+
+  <!-- スクリプト類 -->
+  <script src="js/plantData.js"></script>
+  <script src="js/camera.js"></script>
+  <script src="js/experimentEngine.js"></script>
+  <script src="js/plantEngine.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
