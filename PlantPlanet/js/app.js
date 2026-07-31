@@ -117,6 +117,8 @@ document.addEventListener('DOMContentLoaded', () => {
     filtered.forEach(plant => {
       const card = document.createElement('div');
       card.className = 'seed-card';
+      card.setAttribute('tabindex', '0');
+      card.setAttribute('role', 'button');
       card.innerHTML = `
         <div class="seed-icon">${plant.icon}</div>
         <div class="seed-info">
@@ -125,12 +127,20 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
 
-      card.addEventListener('click', () => {
+      const selectPlant = () => {
         currentSeed = plant;
         selectedToolType = 'seed';
         updateSelectionBadge();
         modalOverlay.classList.remove('open');
         document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+      };
+
+      card.addEventListener('click', selectPlant);
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          selectPlant();
+        }
       });
 
       seedGrid.appendChild(card);
