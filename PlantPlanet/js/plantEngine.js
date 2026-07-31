@@ -287,7 +287,7 @@ class PlantEngine {
     if (!p.rootNode) return;
 
     const basePos = camera.worldToScreen(p.x, p.y);
-    const d = plantData = p.data;
+    const d = p.data;
     const currentH = p.targetHeight * p.growth;
 
     ctx.save();
