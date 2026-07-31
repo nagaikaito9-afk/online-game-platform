@@ -8,15 +8,15 @@ class ExperimentEngine {
   triggerTool(toolId, worldX, worldY, plantEngine, isMouseDown) {
     switch (toolId) {
       case 'sunbeam':
-        // ☀️ 太陽光ビーム: 光線パーティクル ＋ 植物ドットの直接光合成＆急速芽吹き
+        // ☀️ 太陽光ビーム: 光線 ＋ 新緑成長
         for (let i = 0; i < 8; i++) {
           this.particles.push({
             type: 'sun',
             x: worldX + (Math.random() - 0.5) * 40,
             y: worldY - 180 + Math.random() * 180,
             vx: (Math.random() - 0.5) * 0.4,
-            vy: 4 + Math.random() * 5,
-            radius: 2 + Math.random() * 5,
+            vy: 5 + Math.random() * 4,
+            radius: 2 + Math.random() * 4,
             life: 25,
             maxLife: 25,
             color: 'rgba(255, 235, 59, 0.9)'
@@ -26,7 +26,7 @@ class ExperimentEngine {
         break;
 
       case 'acid':
-        // ☣️ 酸性雨: 紫の液滴 ＋ ドットの紫変色・ポロポロ崩死
+        // ☣️ 酸性雨: 紫の液滴 ＋ ノードの酸性溶け変色・ポタポタ崩れ落ち
         for (let i = 0; i < 7; i++) {
           this.particles.push({
             type: 'acid',
@@ -44,7 +44,7 @@ class ExperimentEngine {
         break;
 
       case 'lava':
-        // 🌋 溶岩: 赤熱マグマドット ＋ ドットの黒焦げ炭化＆爆発崩落
+        // 🌋 溶岩: 溶岩ドロップ ＋ ノードの黒焦げ炭化＆焼き切り崩落
         for (let i = 0; i < 6; i++) {
           this.particles.push({
             type: 'lava',
@@ -62,7 +62,7 @@ class ExperimentEngine {
         break;
 
       case 'rain':
-        // 🌧️ 雨雲: 雨粒 ＋ 成長促進
+        // 🌧️ 雨雲
         for (let i = 0; i < 8; i++) {
           this.particles.push({
             type: 'rain',
@@ -75,7 +75,7 @@ class ExperimentEngine {
             color: 'rgba(56, 189, 248, 0.85)'
           });
         }
-        plantEngine.applySunlightBeam(worldX, worldY, 40); // 水分によるドット活性化
+        plantEngine.applySunlightBeam(worldX, worldY, 40);
         break;
 
       case 'water_drop':
@@ -115,13 +115,13 @@ class ExperimentEngine {
         break;
 
       case 'prune':
-        // ✂️ 剪定ハサミ: クリックなぞり範囲のドット切断
-        plantEngine.removeDotsInRadius(worldX, worldY, 30);
+        // ✂️ 剪定ハサミ: 滑らかな枝切断
+        plantEngine.removeNodesInRadius(worldX, worldY, 30);
         break;
 
       case 'eraser':
-        // 🧹 消去ツール: 範囲内のドットを一発消去
-        plantEngine.removeDotsInRadius(worldX, worldY, 40);
+        // 🧹 消去ツール
+        plantEngine.removeNodesInRadius(worldX, worldY, 40);
         break;
 
       case 'freeze':
