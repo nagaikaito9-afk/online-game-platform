@@ -24,10 +24,10 @@ class EarthSlime {
     this.animTimer = 0;
     this.actionPulse = 0; // Spaceキーアクションエフェクト
 
-    // ドット絵ピクセルデータ定義 (16x16 スライムグラフィック)
-    this.colorMain = '#4ade80'; // フレッシュグリーン
-    this.colorHighlight = '#86efac';
-    this.colorShadow = '#15803d';
+    // ドット絵ピクセルデータ定義 (16x16 赤い格下スライムグラフィック)
+    this.colorMain = '#ef4444'; // 赤い格下スライム
+    this.colorHighlight = '#fca5a5';
+    this.colorShadow = '#991b1b';
     this.colorEye = '#0f172a';
   }
 
