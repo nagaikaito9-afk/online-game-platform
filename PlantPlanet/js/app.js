@@ -21,18 +21,17 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentSeed = PLANT_DATABASE[0];
   let currentToolId = 'rain';
   let gameSpeed = 1.0;
-  let isMouseDownLeft = false;
-  let lastToolTriggerTime = 0;
 
-  // さりげない水面・土のシンプル波紋リング（文字なし）
-  const cleanRipples = [];
+  let mouseScreenX = -1000;
+  let mouseScreenY = -1000;
+  let isMouseOverCanvas = false;
 
   // 初期配置（美しい3本の植物からスタート）
   plantEngine.plantSeed(PLANT_DATABASE[0], -180, GROUND_Y);
   plantEngine.plantSeed(PLANT_DATABASE[1], 0, GROUND_Y);
   plantEngine.plantSeed(PLANT_DATABASE[2], 180, GROUND_Y);
 
-  // --- Web Audio サウンド合成エンジン (優しく静かな自然音) ---
+  // --- Web Audio サウンド合成エンジン ---
   let audioCtx = null;
   function getAudioContext() {
     if (!audioCtx) {
@@ -62,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(260, now);
         osc.frequency.exponentialRampToValueAtTime(520, now + 0.12);
-        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.setValueAtTime(0.12, now);
         gain.gain.linearRampToValueAtTime(0, now + 0.12);
         osc.start(now);
         osc.stop(now + 0.12);
@@ -70,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(450, now);
         osc.frequency.linearRampToValueAtTime(320, now + 0.08);
-        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.setValueAtTime(0.06, now);
         gain.gain.linearRampToValueAtTime(0, now + 0.08);
         osc.start(now);
         osc.stop(now + 0.08);
@@ -78,23 +77,23 @@ document.addEventListener('DOMContentLoaded', () => {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(523.25, now);
         osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.1);
-        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.setValueAtTime(0.08, now);
         gain.gain.linearRampToValueAtTime(0, now + 0.1);
         osc.start(now);
         osc.stop(now + 0.1);
       } else if (type === 'lava' || type === 'acid') {
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(140, now);
-        osc.frequency.linearRampToValueAtTime(70, now + 0.15);
-        gain.gain.setValueAtTime(0.12, now);
-        gain.gain.linearRampToValueAtTime(0, now + 0.15);
+        osc.frequency.linearRampToValueAtTime(70, now + 0.12);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.12);
         osc.start(now);
-        osc.stop(now + 0.15);
+        osc.stop(now + 0.12);
       } else if (type === 'prune' || type === 'eraser') {
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(600, now);
-        osc.frequency.linearRampToValueAtTime(300, now + 0.06);
-        gain.gain.setValueAtTime(0.12, now);
+        osc.frequency.setValueAtTime(550, now);
+        osc.frequency.linearRampToValueAtTime(280, now + 0.06);
+        gain.gain.setValueAtTime(0.1, now);
         gain.gain.linearRampToValueAtTime(0, now + 0.06);
         osc.start(now);
         osc.stop(now + 0.06);
@@ -102,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(440, now);
         osc.frequency.exponentialRampToValueAtTime(660, now + 0.05);
-        gain.gain.setValueAtTime(0.05, now);
+        gain.gain.setValueAtTime(0.04, now);
         gain.gain.linearRampToValueAtTime(0, now + 0.05);
         osc.start(now);
         osc.stop(now + 0.05);
@@ -111,80 +110,56 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- マウス/タッチ操作ハンドリング ---
-  canvas.addEventListener('mousedown', (e) => {
-    if (e.button === 0) { // 左クリック
-      isMouseDownLeft = true;
+  canvas.addEventListener('mouseenter', () => {
+    isMouseOverCanvas = true;
+  });
+
+  canvas.addEventListener('mouseleave', () => {
+    isMouseOverCanvas = false;
+    mouseScreenX = -1000;
+    mouseScreenY = -1000;
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    mouseScreenX = e.clientX;
+    mouseScreenY = e.clientY;
+  });
+
+  // クリック（ドラッグパン移動でなければツール/種植え発動）
+  canvas.addEventListener('mouseup', (e) => {
+    if (e.button === 0 && !camera.hasMovedFar) {
       getAudioContext();
-      handleLeftClick(e.clientX, e.clientY, true);
-    }
-  });
-
-  window.addEventListener('mouseup', (e) => {
-    if (e.button === 0) {
-      isMouseDownLeft = false;
-    }
-  });
-
-  canvas.addEventListener('mousemove', (e) => {
-    if (isMouseDownLeft) {
-      const now = Date.now();
-      if (now - lastToolTriggerTime > 80) { // 連続トリガーの間隔を80msに制限
-        handleLeftClick(e.clientX, e.clientY, false);
-        lastToolTriggerTime = now;
-      }
+      handleActionClick(e.clientX, e.clientY);
     }
   });
 
   // タッチデバイス対応
   canvas.addEventListener('touchstart', (e) => {
     if (e.touches.length === 1) {
-      isMouseDownLeft = true;
       getAudioContext();
       const touch = e.touches[0];
-      handleLeftClick(touch.clientX, touch.clientY, true);
+      mouseScreenX = touch.clientX;
+      mouseScreenY = touch.clientY;
+      isMouseOverCanvas = true;
     }
   }, { passive: true });
 
-  canvas.addEventListener('touchmove', (e) => {
-    if (isMouseDownLeft && e.touches.length === 1) {
-      const now = Date.now();
-      if (now - lastToolTriggerTime > 80) {
-        const touch = e.touches[0];
-        handleLeftClick(touch.clientX, touch.clientY, false);
-        lastToolTriggerTime = now;
-      }
+  canvas.addEventListener('touchend', (e) => {
+    if (!camera.hasMovedFar && e.changedTouches.length === 1) {
+      const touch = e.changedTouches[0];
+      handleActionClick(touch.clientX, touch.clientY);
     }
-  }, { passive: true });
-
-  canvas.addEventListener('touchend', () => {
-    isMouseDownLeft = false;
   });
 
-  function handleLeftClick(screenX, screenY, isInitialClick) {
+  function handleActionClick(screenX, screenY) {
     const worldPos = camera.screenToWorld(screenX, screenY);
 
     if (selectedToolType === 'seed') {
-      // 種植えはクリックした瞬間だけ（ドラッグでの連続大量発生を防止）
-      if (isInitialClick) {
-        plantEngine.plantSeed(currentSeed, worldPos.x, GROUND_Y);
-        playSound('plant');
-
-        // シンプルで繊細な土の小さな波紋（テキスト・文字は一切表示しない）
-        const groundScreen = camera.worldToScreen(worldPos.x, GROUND_Y);
-        cleanRipples.push({
-          x: groundScreen.x,
-          y: groundScreen.y,
-          radius: 4,
-          maxRadius: 24,
-          alpha: 0.8,
-          color: '#86efac'
-        });
-      }
+      plantEngine.plantSeed(currentSeed, worldPos.x, GROUND_Y);
+      playSound('plant');
     } else if (selectedToolType === 'tool') {
-      experimentEngine.triggerTool(currentToolId, worldPos.x, worldPos.y, plantEngine, isInitialClick);
-      if (isInitialClick) {
-        playSound(currentToolId);
-      }
+      experimentEngine.triggerTool(currentToolId, worldPos.x, worldPos.y, plantEngine, true);
+      playSound(currentToolId);
     }
   }
 
@@ -373,27 +348,62 @@ document.addEventListener('DOMContentLoaded', () => {
     ctx.stroke();
   }
 
-  // シンプルな土の波紋（文字なし）
-  function drawRipples() {
-    for (let i = cleanRipples.length - 1; i >= 0; i--) {
-      const r = cleanRipples[i];
-      r.radius += 0.8;
-      r.alpha -= 0.04;
+  // --- カーソル追従ガイド描画（超クリアな操作感） ---
+  function drawCursorGuide() {
+    if (!isMouseOverCanvas || mouseScreenX < 0 || mouseScreenY < 0) return;
 
-      if (r.alpha <= 0) {
-        cleanRipples.splice(i, 1);
-        continue;
-      }
+    const worldPos = camera.screenToWorld(mouseScreenX, mouseScreenY);
+    const groundScreen = camera.worldToScreen(worldPos.x, GROUND_Y);
 
-      ctx.save();
-      ctx.globalAlpha = r.alpha;
-      ctx.strokeStyle = r.color || '#86efac';
+    ctx.save();
+
+    if (selectedToolType === 'seed') {
+      // 種植えモードガイド: マウスから地面への点線 ＋ 地面の植え付けリング
+      ctx.strokeStyle = 'rgba(74, 222, 128, 0.4)';
+      ctx.setLineDash([4, 4]);
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+      ctx.moveTo(mouseScreenX, mouseScreenY);
+      ctx.lineTo(groundScreen.x, groundScreen.y);
       ctx.stroke();
-      ctx.restore();
+      ctx.setLineDash([]);
+
+      // 地面の植え付けプレビュー円
+      ctx.fillStyle = 'rgba(74, 222, 128, 0.2)';
+      ctx.strokeStyle = '#4ade80';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(groundScreen.x, groundScreen.y, 12 * camera.zoom, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // アイコンプレビュー
+      ctx.font = `${Math.max(14, 20 * camera.zoom)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(currentSeed.icon, groundScreen.x, groundScreen.y - 14 * camera.zoom);
+    } else {
+      // ツールモードガイド: 効果範囲リング
+      let toolRadiusWorld = 60;
+      let toolColor = 'rgba(56, 189, 248, 0.6)';
+
+      if (currentToolId === 'lava') { toolColor = 'rgba(255, 69, 0, 0.6)'; }
+      else if (currentToolId === 'acid') { toolColor = 'rgba(192, 38, 211, 0.6)'; }
+      else if (currentToolId === 'sunbeam') { toolColor = 'rgba(254, 240, 138, 0.7)'; toolRadiusWorld = 80; }
+      else if (currentToolId === 'fertilizer') { toolColor = 'rgba(132, 204, 22, 0.6)'; toolRadiusWorld = 90; }
+      else if (currentToolId === 'freeze') { toolColor = 'rgba(186, 230, 253, 0.7)'; toolRadiusWorld = 70; }
+      else if (currentToolId === 'prune' || currentToolId === 'eraser') { toolColor = 'rgba(244, 63, 94, 0.6)'; toolRadiusWorld = 45; }
+
+      const screenRadius = toolRadiusWorld * camera.zoom;
+      ctx.strokeStyle = toolColor;
+      ctx.fillStyle = toolColor.replace(/0\.\d+/, '0.1');
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(mouseScreenX, mouseScreenY, screenRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
     }
+
+    ctx.restore();
   }
 
   // --- メインアニメーションループ ---
@@ -407,12 +417,13 @@ document.addEventListener('DOMContentLoaded', () => {
     drawEnvironment();
     plantEngine.draw(ctx, camera);
     experimentEngine.draw(ctx, camera);
-    drawRipples();
+    drawCursorGuide();
 
     requestAnimationFrame(loop);
   }
 
   loop();
 });
+
 
 
