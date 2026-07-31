@@ -22,16 +22,17 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentToolId = 'rain';
   let gameSpeed = 1.0;
   let isMouseDownLeft = false;
+  let lastToolTriggerTime = 0;
 
-  // クリック波紋・テキストインジケーター配列
-  const clickRipples = [];
+  // さりげない水面・土のシンプル波紋リング（文字なし）
+  const cleanRipples = [];
 
   // 初期配置（美しい3本の植物からスタート）
   plantEngine.plantSeed(PLANT_DATABASE[0], -180, GROUND_Y);
   plantEngine.plantSeed(PLANT_DATABASE[1], 0, GROUND_Y);
   plantEngine.plantSeed(PLANT_DATABASE[2], 180, GROUND_Y);
 
-  // --- Web Audio サウンド合成エンジン ---
+  // --- Web Audio サウンド合成エンジン (優しく静かな自然音) ---
   let audioCtx = null;
   function getAudioContext() {
     if (!audioCtx) {
@@ -59,70 +60,61 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (type === 'plant') {
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(220, now);
-        osc.frequency.exponentialRampToValueAtTime(580, now + 0.18);
-        gain.gain.setValueAtTime(0.3, now);
-        gain.gain.linearRampToValueAtTime(0, now + 0.18);
-        osc.start(now);
-        osc.stop(now + 0.18);
-      } else if (type === 'water' || type === 'rain') {
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(600, now);
-        osc.frequency.exponentialRampToValueAtTime(300, now + 0.12);
+        osc.frequency.setValueAtTime(260, now);
+        osc.frequency.exponentialRampToValueAtTime(520, now + 0.12);
         gain.gain.setValueAtTime(0.15, now);
         gain.gain.linearRampToValueAtTime(0, now + 0.12);
         osc.start(now);
         osc.stop(now + 0.12);
-      } else if (type === 'sun' || type === 'fertilizer') {
+      } else if (type === 'water' || type === 'rain') {
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(523.25, now); // C5
-        osc.frequency.setValueAtTime(659.25, now + 0.06); // E5
-        osc.frequency.setValueAtTime(783.99, now + 0.12); // G5
-        gain.gain.setValueAtTime(0.2, now);
-        gain.gain.linearRampToValueAtTime(0, now + 0.2);
-        osc.start(now);
-        osc.stop(now + 0.2);
-      } else if (type === 'lava' || type === 'acid') {
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(180, now);
-        osc.frequency.linearRampToValueAtTime(60, now + 0.2);
-        gain.gain.setValueAtTime(0.25, now);
-        gain.gain.linearRampToValueAtTime(0, now + 0.2);
-        osc.start(now);
-        osc.stop(now + 0.2);
-      } else if (type === 'prune' || type === 'eraser') {
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(800, now);
-        osc.frequency.exponentialRampToValueAtTime(200, now + 0.08);
-        gain.gain.setValueAtTime(0.2, now);
+        osc.frequency.setValueAtTime(450, now);
+        osc.frequency.linearRampToValueAtTime(320, now + 0.08);
+        gain.gain.setValueAtTime(0.08, now);
         gain.gain.linearRampToValueAtTime(0, now + 0.08);
         osc.start(now);
         osc.stop(now + 0.08);
-      } else if (type === 'freeze') {
+      } else if (type === 'sun' || type === 'fertilizer') {
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(1200, now);
-        osc.frequency.linearRampToValueAtTime(1800, now + 0.15);
-        gain.gain.setValueAtTime(0.2, now);
+        osc.frequency.setValueAtTime(523.25, now);
+        osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.1);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.1);
+        osc.start(now);
+        osc.stop(now + 0.1);
+      } else if (type === 'lava' || type === 'acid') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(140, now);
+        osc.frequency.linearRampToValueAtTime(70, now + 0.15);
+        gain.gain.setValueAtTime(0.12, now);
         gain.gain.linearRampToValueAtTime(0, now + 0.15);
         osc.start(now);
         osc.stop(now + 0.15);
-      } else if (type === 'ui') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(440, now);
-        osc.frequency.exponentialRampToValueAtTime(880, now + 0.06);
-        gain.gain.setValueAtTime(0.1, now);
+      } else if (type === 'prune' || type === 'eraser') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.linearRampToValueAtTime(300, now + 0.06);
+        gain.gain.setValueAtTime(0.12, now);
         gain.gain.linearRampToValueAtTime(0, now + 0.06);
         osc.start(now);
         osc.stop(now + 0.06);
+      } else if (type === 'ui') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(660, now + 0.05);
+        gain.gain.setValueAtTime(0.05, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.05);
+        osc.start(now);
+        osc.stop(now + 0.05);
       }
     } catch (e) {}
   }
 
-  // --- クリック/タッチ操作ハンドリング ---
+  // --- マウス/タッチ操作ハンドリング ---
   canvas.addEventListener('mousedown', (e) => {
     if (e.button === 0) { // 左クリック
       isMouseDownLeft = true;
-      getAudioContext(); // 音声再生コンテキストのアクティベート
+      getAudioContext();
       handleLeftClick(e.clientX, e.clientY, true);
     }
   });
@@ -135,7 +127,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   canvas.addEventListener('mousemove', (e) => {
     if (isMouseDownLeft) {
-      handleLeftClick(e.clientX, e.clientY, false);
+      const now = Date.now();
+      if (now - lastToolTriggerTime > 80) { // 連続トリガーの間隔を80msに制限
+        handleLeftClick(e.clientX, e.clientY, false);
+        lastToolTriggerTime = now;
+      }
     }
   });
 
@@ -151,8 +147,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   canvas.addEventListener('touchmove', (e) => {
     if (isMouseDownLeft && e.touches.length === 1) {
-      const touch = e.touches[0];
-      handleLeftClick(touch.clientX, touch.clientY, false);
+      const now = Date.now();
+      if (now - lastToolTriggerTime > 80) {
+        const touch = e.touches[0];
+        handleLeftClick(touch.clientX, touch.clientY, false);
+        lastToolTriggerTime = now;
+      }
     }
   }, { passive: true });
 
@@ -164,37 +164,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const worldPos = camera.screenToWorld(screenX, screenY);
 
     if (selectedToolType === 'seed') {
+      // 種植えはクリックした瞬間だけ（ドラッグでの連続大量発生を防止）
       if (isInitialClick) {
         plantEngine.plantSeed(currentSeed, worldPos.x, GROUND_Y);
         playSound('plant');
 
-        // 波紋インジケーター生成
-        clickRipples.push({
-          x: screenX,
-          y: screenY,
-          radius: 10,
-          maxRadius: 40,
-          alpha: 1.0,
-          text: `🌱 ${currentSeed.name} 発芽！`,
-          color: '#4ade80'
+        // シンプルで繊細な土の小さな波紋（テキスト・文字は一切表示しない）
+        const groundScreen = camera.worldToScreen(worldPos.x, GROUND_Y);
+        cleanRipples.push({
+          x: groundScreen.x,
+          y: groundScreen.y,
+          radius: 4,
+          maxRadius: 24,
+          alpha: 0.8,
+          color: '#86efac'
         });
       }
     } else if (selectedToolType === 'tool') {
       experimentEngine.triggerTool(currentToolId, worldPos.x, worldPos.y, plantEngine, isInitialClick);
-      playSound(currentToolId);
-
       if (isInitialClick) {
-        const activeToolBtn = document.querySelector(`.tool-btn[data-tool="${currentToolId}"]`);
-        const label = activeToolBtn ? activeToolBtn.textContent.trim() : '✨';
-        clickRipples.push({
-          x: screenX,
-          y: screenY,
-          radius: 8,
-          maxRadius: 35,
-          alpha: 1.0,
-          text: `${label} 発動`,
-          color: '#38bdf8'
-        });
+        playSound(currentToolId);
       }
     }
   }
@@ -300,7 +289,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function updateSelectionUI() {
-    // ツールボタンアクティブ付け替え
     document.querySelectorAll('.tool-btn').forEach(btn => {
       if (selectedToolType === 'tool' && btn.getAttribute('data-tool') === currentToolId) {
         btn.classList.add('active');
@@ -329,7 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   updateSelectionUI();
 
-  // --- 環境描画 (空・ゆったり雲・緑の草むら・茶色の土) ---
+  // --- 環境描画 ---
   function drawEnvironment() {
     // 空
     const skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
@@ -385,33 +373,25 @@ document.addEventListener('DOMContentLoaded', () => {
     ctx.stroke();
   }
 
-  // クリック波紋描画
+  // シンプルな土の波紋（文字なし）
   function drawRipples() {
-    for (let i = clickRipples.length - 1; i >= 0; i--) {
-      const r = clickRipples[i];
-      r.radius += 1.5;
-      r.alpha -= 0.03;
+    for (let i = cleanRipples.length - 1; i >= 0; i--) {
+      const r = cleanRipples[i];
+      r.radius += 0.8;
+      r.alpha -= 0.04;
 
       if (r.alpha <= 0) {
-        clickRipples.splice(i, 1);
+        cleanRipples.splice(i, 1);
         continue;
       }
 
       ctx.save();
       ctx.globalAlpha = r.alpha;
-      ctx.strokeStyle = r.color || '#4ade80';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = r.color || '#86efac';
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
       ctx.stroke();
-
-      if (r.text) {
-        ctx.fillStyle = r.color || '#ffffff';
-        ctx.font = 'bold 13px "Outfit", sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(r.text, r.x, r.y - r.radius - 8);
-      }
-
       ctx.restore();
     }
   }
@@ -434,4 +414,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loop();
 });
+
 
