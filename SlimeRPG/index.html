@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SLIME & RPG | 格下スライム「アース」の冒険</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- メイン ゲームキャンバス -->
+  <canvas id="game-canvas"></canvas>
+
+  <!-- 常時表示 HUD (アースのステータス) -->
+  <div id="hud" class="hud-container">
+    <div class="hud-profile">
+      <div class="slime-avatar">🟢</div>
+      <div class="profile-info">
+        <div class="profile-name">アース <span class="profile-title">(格下スライム)</span></div>
+        <div class="bar-group">
+          <div class="bar-label">HP</div>
+          <div class="bar-outer"><div id="hp-bar-fill" class="bar-fill hp" style="width: 100%;"></div></div>
+          <span id="hp-text">50 / 50</span>
+        </div>
+        <div class="bar-group">
+          <div class="bar-label">MP</div>
+          <div class="bar-outer"><div id="mp-bar-fill" class="bar-fill mp" style="width: 100%;"></div></div>
+          <span id="mp-text">20 / 20</span>
+        </div>
+      </div>
+    </div>
+    <div class="hud-controls-hint">
+      <span>[WASD] 移動</span>
+      <span>[Shift] 走る</span>
+      <span>[Space] アクション</span>
+      <span>[E] 持ち物</span>
+      <span>[Esc] メニュー</span>
+    </div>
+  </div>
+
+  <!-- Eキー: 持ち物 (インベントリ) モーダル -->
+  <div id="inventory-modal" class="ui-modal">
+    <div class="ui-card">
+      <div class="ui-header">
+        <h2>🎒 アースの持ち物 (E)</h2>
+        <button class="close-btn" data-close="inventory">✕</button>
+      </div>
+      <div class="inventory-grid" id="inventory-grid">
+        <!-- JSで生成 -->
+      </div>
+      <div class="inventory-detail" id="inventory-detail">
+        <div class="item-detail-title">アイテムを選択してください</div>
+        <div class="item-detail-desc">フィールドで拾ったアイテムやドロップ品がここに保管されます。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Escキー: システムメニュー モーダル -->
+  <div id="menu-modal" class="ui-modal">
+    <div class="ui-card">
+      <div class="ui-header">
+        <h2>⚙️ メニュー (Esc)</h2>
+        <button class="close-btn" data-close="menu">✕</button>
+      </div>
+      <div class="menu-body">
+        <div class="menu-stats">
+          <h3>📊 アースのステータス</h3>
+          <ul>
+            <li>種族: 最弱下級スライム</li>
+            <li>レベル: Lv.1</li>
+            <li>攻撃力: 3</li>
+            <li>防御力: 2</li>
+            <li>すばやさ: 5</li>
+            <li>経験値: 0 / 100</li>
+          </ul>
+        </div>
+        <div class="menu-actions">
+          <button class="menu-btn" id="save-btn">💾 セーブ (準備中)</button>
+          <button class="menu-btn close-menu-btn" data-close="menu">▶️ ゲームに戻る</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- スクリプト類 -->
+  <script src="js/input.js"></script>
+  <script src="js/camera.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
